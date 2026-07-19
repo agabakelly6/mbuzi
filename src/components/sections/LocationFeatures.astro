@@ -1,0 +1,101 @@
+---
+// src/components/sections/LocationFeatures.astro
+//
+// A comparison matrix rather than repeating amenities inside each
+// LocationCard again — Branch Overview already covers name/address/
+// hours/phone per branch; this section answers "which branch has X"
+// at a glance across all of them, which a per-card list can't do well.
+import { Check, ParkingCircle, Sofa, TreePine, Users, DoorClosed, Truck, ShoppingBag } from "lucide-react";
+import { LOCATIONS } from "../../data/locations";
+import type { BranchService } from "../../types/location";
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+  serviceLabels: Record<BranchService, string>;
+}
+
+const { eyebrow, heading, serviceLabels } = Astro.props;
+
+const SERVICE_ICONS: Record<BranchService, typeof ParkingCircle> = {
+  parking: ParkingCircle,
+  indoorSeating: Sofa,
+  outdoorSeating: TreePine,
+  familyFriendly: Users,
+  privateDining: DoorClosed,
+  delivery: Truck,
+  takeaway: ShoppingBag,
+};
+
+const SERVICES = Object.keys(serviceLabels) as BranchService[];
+---
+
+<section
+  id="branch-details"
+  aria-labelledby="branch-details-heading"
+  class="scroll-mt-36 bg-[#14100D] py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="branch-details-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-white sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    <FadeIn className="mt-14 overflow-x-auto">
+      <table class="w-full min-w-[560px] border-collapse text-left">
+        <thead>
+          <tr class="border-b border-white/10">
+            <th class="py-4 pr-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/50">
+              Amenity
+            </th>
+            {
+              LOCATIONS.map((location) => (
+                <th class="px-4 py-4 text-center font-serif text-base font-semibold text-white">
+                  {location.city}
+                </th>
+              ))
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            SERVICES.map((service) => {
+              const Icon = SERVICE_ICONS[service];
+              return (
+                <tr class="border-b border-white/5">
+                  <th scope="row" class="flex items-center gap-2.5 py-4 pr-4 text-sm font-medium text-white/80">
+                    <Icon className="h-4 w-4 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+                    {serviceLabels[service]}
+                  </th>
+                  {
+                    LOCATIONS.map((location) => (
+                      <td class="px-4 py-4 text-center">
+                        {location.services.includes(service) ? (
+                          <Check
+                            className="mx-auto h-4 w-4 text-[#C89A4B]"
+                            strokeWidth={2.5}
+                            aria-label={`Available at ${location.city}`}
+                          />
+                        ) : (
+                          <span class="text-white/20" aria-label={`Not available at ${location.city}`}>
+                            —
+                          </span>
+                        )}
+                      </td>
+                    ))
+                  }
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </FadeIn>
+  </div>
+</section>

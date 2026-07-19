@@ -1,0 +1,19 @@
+---
+// src/components/sections/FoodQualityStory.astro
+import StorySplit from "./StorySplit.astro";
+import { MENU_CONTENT } from "../../content/menu";
+
+const { eyebrow, heading, description, cta } = MENU_CONTENT.foodQualityStory;
+---
+
+<StorySplit
+  id="food-quality"
+  eyebrow={eyebrow}
+  heading={heading}
+  body={description}
+  imageSrc="/images/food/food-quality-story.jpg"
+  imageAlt="Goat choma being grilled over open charcoal at YPA Mbuzi Choma"
+  buttonHref="/farm-story"
+  buttonLabel={cta?.label ?? "Our Farm Story"}
+  imagePosition="right"
+/>

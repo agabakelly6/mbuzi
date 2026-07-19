@@ -1,0 +1,20 @@
+---
+// src/components/sections/Sustainability.astro
+import StorySplit from "./StorySplit.astro";
+import { FARM_STORY_CONTENT } from "../../content/farm-story";
+import { SUSTAINABILITY_IMAGE } from "../../data/farm-story";
+
+const { eyebrow, heading, description, cta } = FARM_STORY_CONTENT.sustainability;
+---
+
+<StorySplit
+  id="sustainability"
+  eyebrow={eyebrow}
+  heading={heading}
+  body={description}
+  imageSrc={SUSTAINABILITY_IMAGE.src}
+  imageAlt={SUSTAINABILITY_IMAGE.alt}
+  buttonHref="/contact"
+  buttonLabel={cta?.label ?? "Plan A Visit"}
+  imagePosition="right"
+/>

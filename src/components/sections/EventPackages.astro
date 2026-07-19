@@ -1,0 +1,58 @@
+---
+// src/components/sections/EventPackages.astro
+import { EVENT_PACKAGES, CATERING_SERVICES } from "../../data/catering";
+import { EventPackageCard } from "../cards/EventPackageCard";
+import FadeIn from "../animations/FadeIn.astro";
+import { getWhatsAppUrl } from "../../config/site";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+  description?: string;
+  ctaLabel: string;
+}
+
+const { eyebrow, heading, description, ctaLabel } = Astro.props;
+
+function getServiceLabels(ids: string[]): string[] {
+  return ids.map((id) => CATERING_SERVICES.find((service) => service.id === id)?.label ?? id);
+}
+---
+
+<section
+  id="packages"
+  aria-labelledby="packages-heading"
+  class="scroll-mt-36 bg-[#F5EFE4] py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="packages-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+      {description && <p class="mt-4 text-base text-[#14100D]/65">{description}</p>}
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        EVENT_PACKAGES.map((pkg, index) => {
+          const message = `Hi YPA, I'd like a quote for the ${pkg.title} package (approx. ${pkg.minGuests}-${pkg.maxGuests} guests).`;
+          const quoteHref = getWhatsAppUrl(message);
+          return (
+            <FadeIn delay={index * 0.08} className="h-full">
+              <EventPackageCard
+                pkg={pkg}
+                serviceLabels={getServiceLabels(pkg.serviceIds)}
+                quoteHref={quoteHref}
+                ctaLabel={ctaLabel}
+              />
+            </FadeIn>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

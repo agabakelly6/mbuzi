@@ -1,0 +1,20 @@
+---
+// src/components/sections/BookingProcess.astro
+import Timeline from "./Timeline.astro";
+import { BOOKING_PROCESS } from "../../data/catering";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+}
+
+const { eyebrow, heading } = Astro.props;
+---
+
+<Timeline
+  id="booking-process"
+  eyebrow={eyebrow}
+  heading={heading}
+  steps={BOOKING_PROCESS}
+  tone="dark"
+/>

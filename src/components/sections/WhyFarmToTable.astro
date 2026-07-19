@@ -1,0 +1,29 @@
+---
+// src/components/sections/WhyFarmToTable.astro
+//
+// Thin content wrapper around the shared PillarGrid (see that file's
+// header comment). Output is identical to the original standalone
+// version — only the layout implementation moved.
+import PillarGrid from "./PillarGrid.astro";
+import { Clock, BadgeCheck, MapPin, Landmark } from "lucide-react";
+import { FARM_STORY_CONTENT } from "../../content/farm-story";
+
+const { eyebrow, heading, pillars } = FARM_STORY_CONTENT.whyFarmToTable;
+
+const ICONS = {
+  freshness: Clock,
+  quality: BadgeCheck,
+  traceability: MapPin,
+  authenticity: Landmark,
+};
+---
+
+<PillarGrid
+  id="why-farm-to-table"
+  eyebrow={eyebrow}
+  heading={heading}
+  pillars={pillars}
+  icons={ICONS}
+  tone="dark"
+  columns={4}
+/>

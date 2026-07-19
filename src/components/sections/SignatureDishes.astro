@@ -1,0 +1,56 @@
+---
+// src/components/sections/SignatureDishes.astro
+//
+// Homepage preview of the menu — only items flagged `featured` in
+// data/menu.ts render here; the full catalogue belongs to /menu. Copy
+// comes from content/homepage.ts (homepage-only section, imports its own
+// content rather than requiring index.astro to thread it down).
+import { FEATURED_MENU_ITEMS } from "../../data/menu";
+import { FoodCard } from "../cards/FoodCard";
+import FadeIn from "../animations/FadeIn.astro";
+import Button from "../ui/Button.astro";
+import { HOME_CONTENT } from "../../content/homepage";
+
+const { eyebrow, heading, description, cta } = HOME_CONTENT.signatureDishes;
+---
+
+<section
+  id="signature-dishes"
+  aria-labelledby="signature-dishes-heading"
+  class="bg-white py-20 sm:py-28"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+        {eyebrow}
+      </p>
+      <h2
+        id="signature-dishes-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+      <p class="mt-4 text-base text-[#14100D]/65">
+        {description}
+      </p>
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        FEATURED_MENU_ITEMS.map((item, index) => (
+          <FadeIn delay={index * 0.1}>
+            <FoodCard item={item} />
+          </FadeIn>
+        ))
+      }
+    </div>
+
+    {cta && (
+      <FadeIn className="mt-14 flex justify-center">
+        <Button href="/menu" variant="outline" tone="light" size="md">
+          {cta.label}
+        </Button>
+      </FadeIn>
+    )}
+  </div>
+</section>

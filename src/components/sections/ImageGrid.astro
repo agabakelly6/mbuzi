@@ -1,0 +1,101 @@
+---
+// src/components/sections/ImageGrid.astro
+//
+// Shared image-grid-with-hover-reveal layout. RestaurantExperience
+// (homepage) and FarmGalleryPreview (farm story page) are both thin
+// content wrappers around this — same reasoning as StorySplit: one
+// layout implementation, not two copy-pasted grids.
+import FadeIn from "../animations/FadeIn.astro";
+import Button from "../ui/Button.astro";
+
+interface GridItem {
+  label: string;
+  image: string;
+}
+
+interface Props {
+  id: string;
+  eyebrow: string;
+  heading: string;
+  items: GridItem[];
+  /** Grid column count at the lg breakpoint. Defaults to 2 (RestaurantExperience's original layout). */
+  columns?: 2 | 3;
+  tone?: "light" | "dark";
+  /** Optional trailing CTA (e.g. "View Full Gallery"). Omitted entirely if either is left unset. */
+  ctaHref?: string;
+  ctaLabel?: string;
+}
+
+const {
+  id,
+  eyebrow,
+  heading,
+  items,
+  columns = 2,
+  tone = "light",
+  ctaHref,
+  ctaLabel,
+} = Astro.props;
+
+const isDark = tone === "dark";
+const colsClass = columns === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
+---
+
+<section
+  id={id}
+  aria-labelledby={`${id}-heading`}
+  class:list={[
+    "scroll-mt-36 py-20 sm:py-28 lg:scroll-mt-40",
+    isDark ? "bg-[#14100D]" : "bg-[#F5EFE4]",
+  ]}
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+        {eyebrow}
+      </p>
+      <h2
+        id={`${id}-heading`}
+        class:list={[
+          "mt-4 font-serif text-3xl font-semibold sm:text-4xl lg:text-[42px]",
+          isDark ? "text-white" : "text-[#14100D]",
+        ]}
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    <div class:list={["mt-14 grid grid-cols-1 gap-5", colsClass]}>
+      {
+        items.map((item, index) => (
+          <FadeIn
+            delay={index * 0.1}
+            className="group relative aspect-[4/3] overflow-hidden rounded-2xl"
+          >
+            <img
+              src={item.image}
+              alt={item.label}
+              loading="lazy"
+              decoding="async"
+              class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#14100D]/70 via-[#14100D]/10 to-transparent" />
+            <span class="absolute bottom-6 left-6 font-serif text-xl font-semibold text-white">
+              {item.label}
+            </span>
+          </FadeIn>
+        ))
+      }
+    </div>
+
+    {
+      ctaHref && ctaLabel && (
+        <FadeIn className="mt-14 flex justify-center">
+          <Button href={ctaHref} variant="outline" tone={tone} size="md">
+            {ctaLabel}
+          </Button>
+        </FadeIn>
+      )
+    }
+  </div>
+</section>

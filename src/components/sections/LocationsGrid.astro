@@ -1,0 +1,55 @@
+---
+// src/components/sections/LocationsGrid.astro
+import { LOCATIONS } from "../../data/locations";
+import { LOCATION_IMAGES } from "../../media/restaurant";
+import { LocationCard } from "../cards/LocationCard";
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+  description?: string;
+  reserveLabel: string;
+  directionsLabel: string;
+}
+
+const { eyebrow, heading, description, reserveLabel, directionsLabel } = Astro.props;
+---
+
+<section
+  id="branches"
+  aria-labelledby="branches-heading"
+  class="scroll-mt-36 bg-[#F5EFE4] py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="branches-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+      {description && <p class="mt-4 text-base text-[#14100D]/65">{description}</p>}
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      {
+        LOCATIONS.map((location, index) => {
+          const heroImage = LOCATION_IMAGES.find((img) => img.id === location.heroImage);
+          return (
+            <FadeIn delay={index * 0.1}>
+              <LocationCard
+                location={location}
+                heroImageSrc={heroImage?.src ?? ""}
+                heroImageAlt={heroImage?.alt ?? location.name}
+                reserveLabel={reserveLabel}
+                directionsLabel={directionsLabel}
+              />
+            </FadeIn>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

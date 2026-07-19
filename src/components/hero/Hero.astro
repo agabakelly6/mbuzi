@@ -1,0 +1,134 @@
+---
+// src/components/hero/Hero.astro
+//
+// Reusable, full-bleed page hero. Every prop has a sensible default
+// sourced from data/navigation.ts so the *homepage* can call <Hero />
+// with zero props and get Section 1 exactly as specified — but Menu,
+// Farm Story, Gallery, etc. can reuse this same component for their own
+// hero banners by overriding eyebrow/mottoLines/media/height.
+import { HeroContent } from "./HeroContent";
+import { NAV_CTAS, PRIMARY_NAV } from "../../data/navigation";
+import { SITE } from "../../config/site";
+
+interface Props {
+  eyebrow?: string;
+  /** Pre-split display lines for the H1. Defaults to SITE.motto's two sentences. */
+  mottoLines?: string[];
+  supportingText?: string;
+  posterSrc?: string;
+  videoSrc?: string;
+  reserveHref?: string;
+  reserveLabel?: string;
+  exploreHref?: string;
+  exploreLabel?: string;
+  /** id on the section immediately below the hero — the scroll cue jumps here */
+  nextSectionId?: string;
+  /** Tailwind height utility. Defaults to a full 100vh hero per the wireframe. */
+  heightClass?: string;
+}
+
+const defaultReserve = NAV_CTAS.find((cta) => cta.label === "Reserve Table");
+const defaultMenuLink = PRIMARY_NAV.find((link) => link.label === "Menu");
+
+// SITE.motto is one string ("Raised By Us. Grilled For You.") — split it
+// into the two stacked display lines the wireframe calls for, rather than
+// hardcoding the lines a second time in config/site.ts.
+const defaultMottoLines = SITE.motto
+  .split(". ")
+  .map((line) => line.trim())
+  .filter(Boolean)
+  .map((line) => (line.endsWith(".") ? line : `${line}.`));
+
+const {
+  eyebrow = "Authentic Ugandan Goat Choma",
+  mottoLines = defaultMottoLines,
+  supportingText = "Farm fresh goat meat prepared with authentic Ugandan flavour.",
+  posterSrc = "/images/hero/hero-poster.jpg",
+  videoSrc = "/videos/hero.mp4",
+  reserveHref = defaultReserve?.href ?? "/booking",
+  reserveLabel = defaultReserve?.label ?? "Reserve Table",
+  exploreHref = defaultMenuLink?.href ?? "/menu",
+  exploreLabel = "Explore Menu",
+  nextSectionId = "hero-next",
+  heightClass = "h-screen",
+} = Astro.props;
+---
+
+<section
+  aria-labelledby="hero-heading"
+  class={`relative flex w-full items-center justify-center overflow-hidden bg-[#14100D] ${heightClass}`}
+>
+  {/* Background layer: static poster paints instantly (and is the LCP
+      candidate); video fades in on top once it can play. Pure CSS drives
+      both the slow Ken Burns scale and the reduced-motion fallback, so
+      none of it costs a byte of JS. */}
+  <div class="hero-media absolute inset-0 h-full w-full">
+    <img
+      src={posterSrc}
+      alt=""
+      class="absolute inset-0 h-full w-full object-cover"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+    />
+    <video
+      class="hero-video absolute inset-0 h-full w-full object-cover"
+      src={videoSrc}
+      poster={posterSrc}
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      aria-hidden="true"
+    ></video>
+  </div>
+
+  <div
+    class="absolute inset-0 bg-gradient-to-b from-[#14100D]/35 via-[#14100D]/55 to-[#14100D]/85"
+    aria-hidden="true"
+  ></div>
+  <div
+    class="absolute inset-0 [background:radial-gradient(ellipse_at_center,transparent_35%,rgba(20,16,13,0.5)_100%)]"
+    aria-hidden="true"
+  ></div>
+
+  <HeroContent
+    client:load
+    headingId="hero-heading"
+    eyebrow={eyebrow}
+    mottoLines={mottoLines}
+    supportingText={supportingText}
+    reserveHref={reserveHref}
+    reserveLabel={reserveLabel}
+    exploreHref={exploreHref}
+    exploreLabel={exploreLabel}
+    nextSectionId={nextSectionId}
+  />
+</section>
+
+<style>
+  .hero-media {
+    animation: hero-zoom 20s ease-out forwards;
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-media {
+      animation: none;
+    }
+    .hero-video {
+      display: none;
+    }
+  }
+</style>

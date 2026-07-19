@@ -1,0 +1,93 @@
+---
+// src/components/sections/Timeline.astro
+//
+// Shared numbered-timeline layout. FarmTimeline.astro (farm story) is
+// now a thin wrapper around this; BookingProcess.astro (catering) is
+// the second. Uses a div-based ARIA list (role="list"/"listitem")
+// rather than native <ol>/<li> — each item wraps a hydrated FadeIn
+// island, and browsers don't reliably preserve native list semantics
+// around custom elements injected between <ol> and <li>.
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Step {
+  id: string;
+  title: string;
+  description: string;
+}
+
+interface Props {
+  id: string;
+  eyebrow: string;
+  heading: string;
+  steps: Step[];
+  tone?: "light" | "dark";
+}
+
+const { id, eyebrow, heading, steps, tone = "light" } = Astro.props;
+const isDark = tone === "dark";
+---
+
+<section
+  id={id}
+  aria-labelledby={`${id}-heading`}
+  class:list={[
+    "scroll-mt-36 py-20 sm:py-28 lg:scroll-mt-40",
+    isDark ? "bg-[#14100D]" : "bg-white",
+  ]}
+>
+  <div class="mx-auto max-w-[900px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id={`${id}-heading`}
+        class:list={[
+          "mt-4 font-serif text-3xl font-semibold sm:text-4xl lg:text-[42px]",
+          isDark ? "text-white" : "text-[#14100D]",
+        ]}
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    <div
+      role="list"
+      class:list={[
+        "relative mt-16 border-l pl-10 sm:pl-12",
+        isDark ? "border-white/15" : "border-[#14100D]/10",
+      ]}
+    >
+      {
+        steps.map((step, index) => (
+          <div role="listitem" class="relative pb-14 last:pb-0">
+            <FadeIn delay={index * 0.08}>
+              <span
+                class:list={[
+                  "absolute -left-[3.05rem] flex h-9 w-9 items-center justify-center rounded-full border border-[#C89A4B]/40 font-serif text-sm font-semibold text-[#C89A4B] sm:-left-[3.55rem] sm:h-10 sm:w-10",
+                  isDark ? "bg-[#14100D]" : "bg-white",
+                ]}
+              >
+                {index + 1}
+              </span>
+              <h3
+                class:list={[
+                  "font-serif text-xl font-semibold",
+                  isDark ? "text-white" : "text-[#14100D]",
+                ]}
+              >
+                {step.title}
+              </h3>
+              <p
+                class:list={[
+                  "mt-2 max-w-md text-sm leading-relaxed",
+                  isDark ? "text-white/65" : "text-[#14100D]/65",
+                ]}
+              >
+                {step.description}
+              </p>
+            </FadeIn>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

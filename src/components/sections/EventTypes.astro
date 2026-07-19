@@ -1,0 +1,63 @@
+---
+// src/components/sections/EventTypes.astro
+import { Briefcase, PartyPopper, Users, GraduationCap, Heart, Sparkles } from "lucide-react";
+import { EVENT_TYPES } from "../../data/catering";
+import type { EventTypeIcon } from "../../data/catering";
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+  description?: string;
+}
+
+const { eyebrow, heading, description } = Astro.props;
+
+const ICONS: Record<EventTypeIcon, typeof Briefcase> = {
+  corporate: Briefcase,
+  birthday: PartyPopper,
+  family: Users,
+  graduation: GraduationCap,
+  wedding: Heart,
+  private: Sparkles,
+};
+---
+
+<section
+  id="events-overview"
+  aria-labelledby="events-overview-heading"
+  class="scroll-mt-36 bg-white py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="events-overview-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+      {description && <p class="mt-4 text-base text-[#14100D]/65">{description}</p>}
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        EVENT_TYPES.map((eventType, index) => {
+          const Icon = ICONS[eventType.icon];
+          return (
+            <FadeIn
+              delay={index * 0.08}
+              className="rounded-2xl border border-[#14100D]/10 p-6 transition-shadow duration-300 hover:shadow-[0_20px_45px_-20px_rgba(20,16,13,0.2)]"
+            >
+              <span class="flex h-11 w-11 items-center justify-center rounded-full border border-[#C89A4B]/30">
+                <Icon className="h-5 w-5 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              <h3 class="mt-4 font-serif text-lg font-semibold text-[#14100D]">{eventType.title}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-[#14100D]/65">{eventType.description}</p>
+            </FadeIn>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

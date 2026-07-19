@@ -1,0 +1,41 @@
+---
+// src/components/sections/ReservationPolicies.astro
+import { RESERVATION_POLICIES } from "../../data/booking";
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+}
+
+const { eyebrow, heading } = Astro.props;
+---
+
+<section
+  id="policies"
+  aria-labelledby="policies-heading"
+  class="scroll-mt-36 bg-white py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto max-w-[1000px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="policies-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-3">
+      {
+        RESERVATION_POLICIES.map((policy, index) => (
+          <FadeIn delay={index * 0.1} className="rounded-2xl border border-[#14100D]/10 p-6">
+            <h3 class="font-serif text-lg font-semibold text-[#14100D]">{policy.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-[#14100D]/65">{policy.description}</p>
+          </FadeIn>
+        ))
+      }
+    </div>
+  </div>
+</section>

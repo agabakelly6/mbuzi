@@ -1,0 +1,23 @@
+---
+// src/components/sections/FarmGalleryPreview.astro
+//
+// ImageGrid expects {label, image} items; media/farm.ts's FarmImage[]
+// uses {title, src} (the richer shared media shape). Mapped at this
+// boundary rather than changing ImageGrid's contract, which two other
+// static call sites already depend on.
+import ImageGrid from "./ImageGrid.astro";
+import { FARM_IMAGES } from "../../media/farm";
+
+const items = FARM_IMAGES.map((image) => ({ label: image.title, image: image.src }));
+---
+
+<ImageGrid
+  id="farm-gallery"
+  eyebrow="A Look Around"
+  heading="The Farm, In Pictures"
+  items={items}
+  columns={3}
+  tone="light"
+  ctaHref="/gallery"
+  ctaLabel="View Full Gallery"
+/>

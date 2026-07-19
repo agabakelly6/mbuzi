@@ -1,0 +1,89 @@
+---
+// src/components/layout/Footer.astro
+//
+// Fully static — no client directives anywhere in this file. Every piece
+// of contact/business info now comes from config/site.ts instead of
+// being typed directly here — this file used to be the single biggest
+// concentration of hardcoded business facts in the project.
+import { Logo } from "../ui/Logo";
+import { WhatsAppButton } from "../ui/WhatsAppButton";
+import { PRIMARY_NAV, NAV_CTAS } from "../../data/navigation";
+import { SITE, getTelUrl, getMailtoUrl, getCopyrightText } from "../../config/site";
+
+const whatsapp = NAV_CTAS.find((cta) => cta.icon === "whatsapp");
+---
+
+<footer class="border-t border-white/10 bg-[#14100D]">
+  <div class="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-20">
+    <div class="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="sm:col-span-2 lg:col-span-1">
+        <Logo tone="light" />
+        <p class="mt-5 max-w-xs text-sm leading-relaxed text-white/60">
+          {SITE.motto}
+        </p>
+        {
+          whatsapp && (
+            <div class="mt-6">
+              <WhatsAppButton href={whatsapp.href} label="Chat With Us" variant="outline" />
+            </div>
+          )
+        }
+      </div>
+
+      <div>
+        <h2 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#C89A4B]">
+          Explore
+        </h2>
+        <ul class="mt-5 flex flex-col gap-3">
+          {
+            PRIMARY_NAV.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  class="text-sm text-white/70 transition-colors duration-300 hover:text-white"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#C89A4B]">
+          Visit
+        </h2>
+        <address class="mt-5 flex flex-col gap-3 text-sm not-italic text-white/70">
+          <span>{SITE.address}</span>
+          <a href={getTelUrl()} class="transition-colors duration-300 hover:text-white">
+            {SITE.phone}
+          </a>
+          <a href={getMailtoUrl()} class="transition-colors duration-300 hover:text-white">
+            {SITE.email}
+          </a>
+        </address>
+      </div>
+
+      <div>
+        <h2 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#C89A4B]">
+          Hours
+        </h2>
+        <dl class="mt-5 flex flex-col gap-2 text-sm text-white/70">
+          {
+            SITE.hours.map((entry) => (
+              <div class="flex justify-between gap-4">
+                <dt>{entry.days}</dt>
+                <dd>{entry.hours}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+
+    <div class="mt-16 flex flex-col items-center justify-center border-t border-white/10 pt-8 text-xs text-white/50 sm:flex-row">
+      <p>{getCopyrightText()}</p>
+    </div>
+  </div>
+</footer>

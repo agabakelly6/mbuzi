@@ -1,0 +1,13 @@
+---
+// src/components/sections/FarmTimeline.astro
+//
+// Thin content wrapper around the shared Timeline (see that file's
+// header comment). Output is identical to the original standalone
+// version — only the layout implementation moved.
+import Timeline from "./Timeline.astro";
+import { FARM_STORY_CONTENT } from "../../content/farm-story";
+
+const { eyebrow, heading, steps } = FARM_STORY_CONTENT.timeline;
+---
+
+<Timeline id="farm-journey" eyebrow={eyebrow} heading={heading} steps={steps} tone="light" />

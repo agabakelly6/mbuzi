@@ -1,0 +1,64 @@
+---
+// src/components/sections/TrustBar.astro
+//
+// Icons render as static SVG — no client directive, so lucide-react
+// ships zero JS here. Only the FadeIn wrapper around each item hydrates,
+// and only once it scrolls into view. Icons are written out individually
+// rather than mapped over an array, so each is a statically-analyzable
+// import Astro can resolve at build time. Labels come from
+// content/homepage.ts — this section is homepage-only, so it imports its
+// own copy rather than requiring the page to thread it down as props.
+import { Sprout, Flame, Leaf, Award } from "lucide-react";
+import FadeIn from "../animations/FadeIn.astro";
+import { HOME_CONTENT } from "../../content/homepage";
+
+const [farmRaised, charcoalGrilled, freshIngredients, authenticTaste] = HOME_CONTENT.trustBar.items;
+---
+
+<section
+  id="hero-next"
+  aria-label="Why YPA Mbuzi Choma"
+  class="bg-[#F5EFE4] py-10 sm:py-14"
+>
+  <div class="mx-auto grid max-w-[1280px] grid-cols-2 gap-x-4 gap-y-10 px-6 sm:grid-cols-4 sm:gap-y-0 lg:px-12">
+    <FadeIn
+      delay={0}
+      className="flex flex-col items-center gap-3 px-4 text-center"
+    >
+      <Sprout className="h-7 w-7 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+      <span class="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#14100D]">
+        {farmRaised}
+      </span>
+    </FadeIn>
+
+    <FadeIn
+      delay={0.08}
+      className="flex flex-col items-center gap-3 border-l border-[#14100D]/10 px-4 text-center"
+    >
+      <Flame className="h-7 w-7 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+      <span class="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#14100D]">
+        {charcoalGrilled}
+      </span>
+    </FadeIn>
+
+    <FadeIn
+      delay={0.16}
+      className="flex flex-col items-center gap-3 px-4 text-center sm:border-l sm:border-[#14100D]/10"
+    >
+      <Leaf className="h-7 w-7 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+      <span class="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#14100D]">
+        {freshIngredients}
+      </span>
+    </FadeIn>
+
+    <FadeIn
+      delay={0.24}
+      className="flex flex-col items-center gap-3 border-l border-[#14100D]/10 px-4 text-center"
+    >
+      <Award className="h-7 w-7 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+      <span class="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#14100D]">
+        {authenticTaste}
+      </span>
+    </FadeIn>
+  </div>
+</section>

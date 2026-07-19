@@ -1,0 +1,23 @@
+---
+// src/components/sections/FarmStoryPreview.astro
+//
+// Homepage-specific content wrapper around the shared StorySplit layout.
+// Copy comes from content/homepage.ts; the image path (not content-layer
+// material) stays here since it's a one-off, not part of a reusable
+// gallery collection in media/.
+import StorySplit from "./StorySplit.astro";
+import { HOME_CONTENT } from "../../content/homepage";
+
+const { eyebrow, heading, description, cta } = HOME_CONTENT.farmStory;
+---
+
+<StorySplit
+  id="farm-story"
+  eyebrow={eyebrow}
+  heading={heading}
+  body={description}
+  imageSrc="/images/farm/farm-story-preview.jpg"
+  imageAlt="YPA Mbuzi Choma's farm, where goats are raised before reaching the grill"
+  buttonHref="/farm-story"
+  buttonLabel={cta?.label ?? "Read Our Story"}
+/>

@@ -1,0 +1,90 @@
+---
+// src/components/sections/LocationsMap.astro
+//
+// Deliberately abstracted from any specific map provider. Renders each
+// branch as a positioned pin (from real lat/lng in data/locations.ts) on
+// a stylized static panel — zero client JS, and every pin already links
+// to real driving directions today. When a real interactive map is
+// wanted, swap the contents of #map-canvas for a Google Maps/Leaflet
+// mount and keep feeding it the same `locations` prop — nothing else on
+// the page needs to change, since coordinates are never hardcoded here.
+import { MapPin } from "lucide-react";
+import type { Location } from "../../types/location";
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Props {
+  locations: Location[];
+  eyebrow: string;
+  heading: string;
+}
+
+const { locations, eyebrow, heading } = Astro.props;
+
+// Rough bounding box for Uganda, used only to place decorative pins
+// proportionally on the placeholder panel — has no bearing on the real
+// coordinates in data/locations.ts, which is exactly what a real map
+// SDK would consume directly instead of this normalization.
+const BOUNDS = { minLat: -1.5, maxLat: 4.2, minLng: 29.5, maxLng: 35.0 };
+
+function toPosition(lat: number, lng: number) {
+  const x = ((lng - BOUNDS.minLng) / (BOUNDS.maxLng - BOUNDS.minLng)) * 100;
+  const y = 100 - ((lat - BOUNDS.minLat) / (BOUNDS.maxLat - BOUNDS.minLat)) * 100;
+  return { x: Math.min(94, Math.max(6, x)), y: Math.min(88, Math.max(12, y)) };
+}
+---
+
+<section id="map" aria-labelledby="map-heading" class="scroll-mt-36 bg-white py-20 sm:py-28 lg:scroll-mt-40">
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="map-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    {
+      /*
+        #map-canvas is the intended mount point for a future Leaflet/
+        Google Maps instance. Until then it's a static, styled panel with
+        real, working pins — not a fake loading state.
+      */
+    }
+    <div
+      id="map-canvas"
+      data-locations-count={locations.length}
+      class="relative mt-14 aspect-[16/10] w-full overflow-hidden rounded-2xl border border-[#14100D]/10 bg-[#F5EFE4] sm:aspect-[16/7]"
+    >
+      <div
+        class="absolute inset-0 [background-image:radial-gradient(#14100d14_1px,transparent_1px)] [background-size:24px_24px]"
+        aria-hidden="true"
+      >
+      </div>
+
+      {
+        locations.map((location) => {
+          const { x, y } = toPosition(location.coordinates.lat, location.coordinates.lng);
+          return (
+            <a
+              href={location.googleMapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group absolute -translate-x-1/2 -translate-y-full"
+              style={`left:${x}%; top:${y}%;`}
+              aria-label={`Get directions to ${location.name}`}
+            >
+              <span class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#C89A4B] text-[#14100D] shadow-lg transition-transform duration-300 group-hover:scale-110">
+                <MapPin className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              </span>
+              <span class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#14100D] px-3 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100">
+                {location.city}
+              </span>
+            </a>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

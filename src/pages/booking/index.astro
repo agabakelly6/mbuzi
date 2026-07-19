@@ -1,0 +1,114 @@
+---
+// src/pages/booking/index.astro
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Hero from "../../components/hero/Hero.astro";
+import { BookingForm } from "../../components/forms/BookingForm";
+import ReservationPolicies from "../../components/sections/ReservationPolicies.astro";
+import PaymentOptions from "../../components/sections/PaymentOptions.astro";
+import FAQSection from "../../components/sections/FAQSection.astro";
+import CTASection from "../../components/sections/CTASection.astro";
+import Footer from "../../components/layout/Footer.astro";
+import FadeIn from "../../components/animations/FadeIn.astro";
+import { BOOKING_CONTENT } from "../../content/booking";
+import { getTelUrl } from "../../config/site";
+import { getPageStructuredData } from "../../config/seo";
+
+const { hero, form, summary, payment, policies, privateEvents, faq, cta } = BOOKING_CONTENT;
+---
+
+<Layout
+  title={BOOKING_CONTENT.seo.title}
+  description={BOOKING_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: BOOKING_CONTENT.seo.title,
+    description: BOOKING_CONTENT.seo.description,
+    breadcrumbs: [
+      { name: "Home", url: `${Astro.url.origin}/` },
+      { name: "Booking", url: Astro.url.href },
+    ],
+    faqItems: [...faq.items],
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={hero.eyebrow}
+      mottoLines={hero.headline}
+      supportingText={hero.description}
+      heightClass="h-[55vh]"
+      nextSectionId="reservation-form"
+    />
+
+    <section
+      id="reservation-form"
+      aria-labelledby="reservation-form-heading"
+      class="scroll-mt-36 bg-[#F5EFE4] py-20 sm:py-28 lg:scroll-mt-40"
+    >
+      <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+        <FadeIn className="mx-auto max-w-2xl text-center">
+          <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+            {form.eyebrow}
+          </p>
+          <h2
+            id="reservation-form-heading"
+            class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+          >
+            {form.heading}
+          </h2>
+          <p class="mt-4 text-base text-[#14100D]/65">{form.description}</p>
+        </FadeIn>
+
+        <div class="mt-14">
+          <BookingForm
+            client:visible
+            fields={form.fields}
+            whatsappCtaLabel={form.whatsappCta}
+            callCtaLabel={form.callCta}
+            summaryHeading={summary.heading}
+            summaryEmptyMessage={summary.emptyMessage}
+          />
+        </div>
+      </div>
+    </section>
+
+    <PaymentOptions eyebrow={payment.eyebrow} heading={payment.heading} description={payment.description} />
+
+    <ReservationPolicies eyebrow={policies.eyebrow} heading={policies.heading} />
+
+    <section aria-labelledby="private-events-heading" class="bg-[#14100D] py-20 text-center sm:py-24">
+      <div class="mx-auto max-w-xl px-6">
+        <FadeIn>
+          <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+            {privateEvents.eyebrow}
+          </p>
+          <h2
+            id="private-events-heading"
+            class="mt-4 font-serif text-2xl font-semibold text-white sm:text-3xl"
+          >
+            {privateEvents.heading}
+          </h2>
+          <p class="mt-3 text-sm text-white/65">{privateEvents.description}</p>
+          <div class="mt-6">
+            <a
+              href="/catering"
+              class="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white transition-colors duration-300 hover:border-[#C89A4B] hover:text-[#C89A4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C89A4B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#14100D]"
+            >
+              {privateEvents.cta?.label ?? "Explore Catering"}
+            </a>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+
+    <FAQSection eyebrow={faq.eyebrow} heading={faq.heading} items={[...faq.items]} />
+
+    <CTASection
+      headline={cta.headline}
+      supportingText={cta.description}
+      secondary={[{ label: cta.secondaryCta.label, href: getTelUrl() }, "whatsapp"]}
+    />
+  </main>
+  <Footer />
+</Layout>

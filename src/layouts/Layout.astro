@@ -1,0 +1,122 @@
+---
+// src/layouts/Layout.astro
+//
+// Root document shell: <html>/<head>/SEO meta/<body>. Deliberately does
+// NOT render Navbar or Footer — pages compose those explicitly (see
+// pages/index.astro) so a page can opt out of either without fighting
+// the layout.
+//
+// SEO defaults now come from config/seo.ts and config/theme.ts instead
+// of being retyped here — a page's own title/description still always
+// wins; these are only the fallback/composition layer.
+import "../styles/global.css";
+import { DEFAULT_SEO } from "../config/seo";
+import { COLORS } from "../config/theme";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Root-relative or absolute URL to the Open Graph / Twitter card image. */
+  ogImage?: string;
+  ogType?: "website" | "article";
+  /** Defaults to the current page's URL. Override for canonicalized duplicate routes. */
+  canonicalURL?: string;
+  /** JSON-LD object (e.g. from config/seo.ts's getPageStructuredData()) rendered as a <script type="application/ld+json">. Omit for pages that don't need structured data. */
+  structuredData?: Record<string, unknown>;
+  /** Defaults to indexable. Override to "noindex, follow" on pages that shouldn't appear in search results (e.g. 404). */
+  robots?: string;
+}
+
+const {
+  title,
+  description,
+  ogImage = DEFAULT_SEO.defaultOgImage,
+  ogType = DEFAULT_SEO.ogType,
+  canonicalURL = Astro.url.href,
+  structuredData,
+  robots = "index, follow",
+} = Astro.props;
+
+const siteTitle = DEFAULT_SEO.titleTemplate(title);
+const absoluteOgImage = new URL(ogImage, Astro.site ?? Astro.url.origin).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <title>{siteTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content={DEFAULT_SEO.keywords.join(", ")} />
+    <meta name="author" content={DEFAULT_SEO.author} />
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={absoluteOgImage} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:site_name" content={DEFAULT_SEO.defaultTitle} />
+    <meta property="og:locale" content={DEFAULT_SEO.locale} />
+
+    <meta name="twitter:card" content={DEFAULT_SEO.twitterCard} />
+    <meta name="twitter:title" content={siteTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={absoluteOgImage} />
+
+    <meta name="theme-color" content={COLORS.secondary} />
+
+    {
+      structuredData && (
+        <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+      )
+    }
+
+    <style is:global>
+      /*
+        Sitewide smooth scroll for plain anchor navigation (the Hero's
+        "Explore Menu" CTA, browser hash navigation, back/forward). The
+        menu page's MenuCategories nav also does its own JS-driven smooth
+        scroll for click handling and active-state sync, so this is what
+        covers every OTHER anchor link that isn't wired through it.
+      */
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-[#14100D] font-sans antialiased">
+    <slot />
+
+    <script>
+      // Drives every FadeIn.astro instance (`.fade-in` elements) sitewide
+      // with one shared observer instead of a per-instance hydrated
+      // component — see components/animations/FadeIn.astro for why.
+      // rootMargin "-80px" matches the old Framer Motion
+      // `viewport={{ once: true, margin: "-80px" }}` trigger point.
+      const fadeInObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              fadeInObserver.unobserve(entry.target);
+            }
+          }
+        },
+        { rootMargin: "-80px", threshold: 0.01 }
+      );
+
+      document.querySelectorAll(".fade-in").forEach((el) => fadeInObserver.observe(el));
+    </script>
+  </body>
+</html>

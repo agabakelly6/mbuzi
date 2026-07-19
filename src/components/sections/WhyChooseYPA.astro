@@ -1,0 +1,26 @@
+---
+// src/components/sections/WhyChooseYPA.astro
+import PillarGrid from "./PillarGrid.astro";
+import { Award, Sprout, SlidersHorizontal, Users, Utensils } from "lucide-react";
+import { CATERING_CONTENT } from "../../content/catering";
+
+const { eyebrow, heading, reasons } = CATERING_CONTENT.whyChooseYPA;
+
+const ICONS = {
+  professional: Award,
+  farmFresh: Sprout,
+  flexible: SlidersHorizontal,
+  experienced: Users,
+  authentic: Utensils,
+};
+---
+
+<PillarGrid
+  id="why-choose-ypa"
+  eyebrow={eyebrow}
+  heading={heading}
+  pillars={reasons}
+  icons={ICONS}
+  tone="light"
+  columns={5}
+/>

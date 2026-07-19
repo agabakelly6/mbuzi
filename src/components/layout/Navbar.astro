@@ -1,0 +1,12 @@
+---
+// src/components/layout/Navbar.astro
+//
+// Static shell for the site header. The interactive parts — scroll
+// transition, entrance animation, mobile drawer — live in the React
+// island below, so Framer Motion only ships to the client while the
+// semantic <header> and nav data are resolved server-side at build time.
+import { NavbarIsland } from "./NavbarIsland";
+import { PRIMARY_NAV, NAV_CTAS } from "../../data/navigation";
+---
+
+<NavbarIsland client:load links={PRIMARY_NAV} ctas={NAV_CTAS} />

@@ -1,0 +1,22 @@
+---
+// src/components/sections/RestaurantExperience.astro
+//
+// Thin content wrapper around ImageGrid (see that file's header comment).
+// Image data now comes from media/restaurant.ts instead of a local
+// const — output is otherwise identical to the original version.
+import ImageGrid from "./ImageGrid.astro";
+import { RESTAURANT_IMAGES } from "../../media/restaurant";
+import { HOME_CONTENT } from "../../content/homepage";
+
+const items = RESTAURANT_IMAGES.map((image) => ({ label: image.title, image: image.src }));
+const { eyebrow, heading } = HOME_CONTENT.experience;
+---
+
+<ImageGrid
+  id="experience"
+  eyebrow={eyebrow}
+  heading={heading}
+  items={items}
+  columns={2}
+  tone="light"
+/>

@@ -1,0 +1,51 @@
+---
+// src/components/animations/FadeIn.astro
+//
+// Was a Framer Motion React island (client:visible), instantiated 80+
+// times across the site — every section heading and every card in every
+// grid got its own hydrated React root just to fade up on scroll. Same
+// visual result (opacity + translateY, 0.7s cubic-bezier(0.16,1,0.3,1)
+// ease-out, animates once, respects prefers-reduced-motion) with zero
+// JS shipped per instance: a CSS transition driven by one shared
+// IntersectionObserver (registered once, in Layout.astro) that toggles
+// a single class.
+interface Props {
+  /** Delay before this element's animation starts, in seconds — increment per item to stagger a list without a shared parent. */
+  delay?: number;
+  /** Vertical offset animated from, in pixels. */
+  y?: number;
+  class?: string;
+  className?: string;
+}
+
+const { delay = 0, y = 24, class: classProp, className } = Astro.props;
+const extraClass = classProp ?? className ?? "";
+---
+
+<div class={`fade-in ${extraClass}`} style={`--fade-in-y:${y}px; --fade-in-delay:${delay}s;`}>
+  <slot />
+</div>
+
+<style>
+  .fade-in {
+    opacity: 0;
+    transform: translateY(var(--fade-in-y, 24px));
+    transition:
+      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--fade-in-delay, 0s);
+  }
+
+  .fade-in.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

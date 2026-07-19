@@ -1,0 +1,96 @@
+---
+// src/pages/catering/index.astro
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Hero from "../../components/hero/Hero.astro";
+import EventTypes from "../../components/sections/EventTypes.astro";
+import EventPackages from "../../components/sections/EventPackages.astro";
+import WhyChooseYPA from "../../components/sections/WhyChooseYPA.astro";
+import BookingProcess from "../../components/sections/BookingProcess.astro";
+import ImageGrid from "../../components/sections/ImageGrid.astro";
+import Testimonials from "../../components/sections/Testimonials.astro";
+import FAQSection from "../../components/sections/FAQSection.astro";
+import CTASection from "../../components/sections/CTASection.astro";
+import Footer from "../../components/layout/Footer.astro";
+import { EVENT_IMAGES } from "../../media/event";
+import { CATERING_TESTIMONIALS } from "../../data/testimonials";
+import { CATERING_CONTENT } from "../../content/catering";
+import { getWhatsAppUrl, getTelUrl } from "../../config/site";
+import { getPageStructuredData } from "../../config/seo";
+
+const { hero, eventsOverview, packages, bookingProcess, galleryPreview, testimonials, faq, cta } =
+  CATERING_CONTENT;
+
+const galleryItems = EVENT_IMAGES.map((image) => ({ label: image.title, image: image.src }));
+const quoteHref = getWhatsAppUrl("Hi YPA, I'd like a quote for an event. Here are the details:");
+---
+
+<Layout
+  title={CATERING_CONTENT.seo.title}
+  description={CATERING_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: CATERING_CONTENT.seo.title,
+    description: CATERING_CONTENT.seo.description,
+    breadcrumbs: [
+      { name: "Home", url: `${Astro.url.origin}/` },
+      { name: "Catering", url: Astro.url.href },
+    ],
+    faqItems: [...faq.items],
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={hero.eyebrow}
+      mottoLines={hero.headline}
+      supportingText={hero.description}
+      heightClass="h-[60vh]"
+      nextSectionId="events-overview"
+    />
+
+    <EventTypes
+      eyebrow={eventsOverview.eyebrow}
+      heading={eventsOverview.heading}
+      description={eventsOverview.description}
+    />
+
+    <EventPackages
+      eyebrow={packages.eyebrow}
+      heading={packages.heading}
+      description={packages.description}
+      ctaLabel={packages.cta?.label ?? "Request A Quote"}
+    />
+
+    <WhyChooseYPA />
+
+    <BookingProcess eyebrow={bookingProcess.eyebrow} heading={bookingProcess.heading} />
+
+    <ImageGrid
+      id="event-gallery"
+      eyebrow={galleryPreview.eyebrow}
+      heading={galleryPreview.heading}
+      items={galleryItems}
+      columns={2}
+      tone="light"
+      ctaHref="/gallery"
+      ctaLabel="View Full Gallery"
+    />
+
+    <Testimonials
+      eyebrow={testimonials.eyebrow}
+      heading={testimonials.heading}
+      testimonials={[...CATERING_TESTIMONIALS]}
+    />
+
+    <FAQSection eyebrow={faq.eyebrow} heading={faq.heading} items={[...faq.items]} />
+
+    <CTASection
+      headline={cta.headline}
+      supportingText={cta.description}
+      primary={{ label: cta.primaryCta.label, href: quoteHref }}
+      secondary={[{ label: cta.secondaryCta.label, href: getTelUrl() }, "whatsapp"]}
+    />
+  </main>
+  <Footer />
+</Layout>

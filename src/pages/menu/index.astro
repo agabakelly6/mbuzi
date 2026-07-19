@@ -1,0 +1,82 @@
+---
+// src/pages/menu/index.astro
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Hero from "../../components/hero/Hero.astro";
+import { MenuCategories } from "../../components/sections/MenuCategories";
+import MenuGrid from "../../components/sections/MenuGrid.astro";
+import ChefRecommendation from "../../components/sections/ChefRecommendation.astro";
+import FoodQualityStory from "../../components/sections/FoodQualityStory.astro";
+import CTASection from "../../components/sections/CTASection.astro";
+import Footer from "../../components/layout/Footer.astro";
+import { MENU_SECTIONS } from "../../data/menu-sections";
+import { SIGNATURE_ITEMS, PLATTER_ITEMS, SIDE_ITEMS, DRINK_ITEMS } from "../../data/menu";
+import { MENU_CONTENT } from "../../content/menu";
+import { getPageStructuredData } from "../../config/seo";
+
+const { hero, categorySections, cta } = MENU_CONTENT;
+---
+
+<Layout
+  title={MENU_CONTENT.seo.title}
+  description={MENU_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: MENU_CONTENT.seo.title,
+    description: MENU_CONTENT.seo.description,
+    breadcrumbs: [
+      { name: "Home", url: `${Astro.url.origin}/` },
+      { name: "Menu", url: Astro.url.href },
+    ],
+    includeMenu: true,
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={hero.eyebrow}
+      mottoLines={hero.headline}
+      supportingText={hero.description}
+      heightClass="h-[60vh]"
+      exploreHref="#signature-specials"
+      exploreLabel={hero.secondaryCta?.label}
+      nextSectionId="signature-specials"
+    />
+
+    <MenuCategories client:load sections={MENU_SECTIONS} />
+
+    <MenuGrid
+      id="signature-specials"
+      eyebrow={categorySections["signature-specials"].eyebrow}
+      heading={categorySections["signature-specials"].heading}
+      items={SIGNATURE_ITEMS}
+      tone="light"
+    />
+    <MenuGrid
+      id="platters"
+      eyebrow={categorySections.platters.eyebrow}
+      heading={categorySections.platters.heading}
+      items={PLATTER_ITEMS}
+      tone="dark"
+    />
+    <MenuGrid
+      id="sides"
+      eyebrow={categorySections.sides.eyebrow}
+      heading={categorySections.sides.heading}
+      items={SIDE_ITEMS}
+      tone="light"
+    />
+    <MenuGrid
+      id="drinks"
+      eyebrow={categorySections.drinks.eyebrow}
+      heading={categorySections.drinks.heading}
+      items={DRINK_ITEMS}
+      tone="dark"
+    />
+
+    <ChefRecommendation />
+    <FoodQualityStory />
+    <CTASection headline={cta.headline} supportingText={cta.description} />
+  </main>
+  <Footer />
+</Layout>

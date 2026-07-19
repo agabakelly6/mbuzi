@@ -1,0 +1,56 @@
+---
+// src/components/sections/Testimonials.astro
+//
+// Responsive grid rather than a slider — the brief allowed either, and a
+// grid needs zero carousel JS/library while staying just as elegant at
+// this count. Props default to the homepage's exact original behavior
+// (zero-prop call unaffected) — Catering overrides eyebrow/heading/
+// testimonials to show event-specific quotes instead.
+import { DINING_TESTIMONIALS } from "../../data/testimonials";
+import type { Testimonial } from "../../data/testimonials";
+import { TestimonialCard } from "../cards/TestimonialCard";
+import FadeIn from "../animations/FadeIn.astro";
+import { HOME_CONTENT } from "../../content/homepage";
+
+interface Props {
+  eyebrow?: string;
+  heading?: string;
+  testimonials?: Testimonial[];
+}
+
+const {
+  eyebrow = HOME_CONTENT.testimonials.eyebrow,
+  heading = HOME_CONTENT.testimonials.heading,
+  testimonials = DINING_TESTIMONIALS,
+} = Astro.props;
+---
+
+<section
+  id="testimonials"
+  aria-labelledby="testimonials-heading"
+  class="bg-[#14100D] py-20 sm:py-28"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+        {eyebrow}
+      </p>
+      <h2
+        id="testimonials-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-white sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {
+        testimonials.map((testimonial, index) => (
+          <FadeIn delay={index * 0.12} className="h-full">
+            <TestimonialCard testimonial={testimonial} />
+          </FadeIn>
+        ))
+      }
+    </div>
+  </div>
+</section>

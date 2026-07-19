@@ -1,0 +1,45 @@
+---
+// src/pages/index.astro
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/layout/Navbar.astro";
+import Hero from "../components/hero/Hero.astro";
+import TrustBar from "../components/sections/TrustBar.astro";
+import SignatureDishes from "../components/sections/SignatureDishes.astro";
+import FarmStoryPreview from "../components/sections/FarmStoryPreview.astro";
+import RestaurantExperience from "../components/sections/RestaurantExperience.astro";
+import Testimonials from "../components/sections/Testimonials.astro";
+import CTASection from "../components/sections/CTASection.astro";
+import Footer from "../components/layout/Footer.astro";
+import { HOME_CONTENT } from "../content/homepage";
+import { getPageStructuredData } from "../config/seo";
+---
+
+<Layout
+  title={HOME_CONTENT.seo.title}
+  description={HOME_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: HOME_CONTENT.seo.title,
+    description: HOME_CONTENT.seo.description,
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={HOME_CONTENT.hero.eyebrow}
+      supportingText={HOME_CONTENT.hero.description}
+      reserveLabel={HOME_CONTENT.hero.primaryCta?.label}
+      exploreLabel={HOME_CONTENT.hero.secondaryCta?.label}
+    />
+    <TrustBar />
+    <SignatureDishes />
+    <FarmStoryPreview />
+    <RestaurantExperience />
+    <Testimonials />
+    <CTASection
+      headline={HOME_CONTENT.cta.headline}
+      supportingText={HOME_CONTENT.cta.description}
+    />
+  </main>
+  <Footer />
+</Layout>

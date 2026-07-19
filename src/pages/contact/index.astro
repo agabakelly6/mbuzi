@@ -1,0 +1,110 @@
+---
+// src/pages/contact/index.astro
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Hero from "../../components/hero/Hero.astro";
+import ContactChannels from "../../components/sections/ContactChannels.astro";
+import { ContactForm } from "../../components/forms/ContactForm";
+import LocationsGrid from "../../components/sections/LocationsGrid.astro";
+import LocationsMap from "../../components/sections/LocationsMap.astro";
+import BusinessHours from "../../components/sections/BusinessHours.astro";
+import FAQSection from "../../components/sections/FAQSection.astro";
+import CTASection from "../../components/sections/CTASection.astro";
+import Footer from "../../components/layout/Footer.astro";
+import FadeIn from "../../components/animations/FadeIn.astro";
+import { LOCATIONS } from "../../data/locations";
+import { CONTACT_CONTENT } from "../../content/contact";
+import { SITE } from "../../config/site";
+import { getPageStructuredData } from "../../config/seo";
+
+const { hero, channels, form, branches, map, hours, responseExpectations, faq, cta } =
+  CONTACT_CONTENT;
+---
+
+<Layout
+  title={CONTACT_CONTENT.seo.title}
+  description={CONTACT_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: CONTACT_CONTENT.seo.title,
+    description: CONTACT_CONTENT.seo.description,
+    breadcrumbs: [
+      { name: "Home", url: `${Astro.url.origin}/` },
+      { name: "Contact", url: Astro.url.href },
+    ],
+    faqItems: [...faq.items],
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={hero.eyebrow}
+      mottoLines={hero.headline}
+      supportingText={hero.description}
+      heightClass="h-[55vh]"
+      nextSectionId="contact-channels"
+    />
+
+    <ContactChannels eyebrow={channels.eyebrow} heading={channels.heading} />
+
+    <section
+      id="contact-form"
+      aria-labelledby="contact-form-heading"
+      class="scroll-mt-36 bg-[#F5EFE4] py-20 sm:py-28 lg:scroll-mt-40"
+    >
+      <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+        <FadeIn className="mx-auto max-w-2xl text-center">
+          <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+            {form.eyebrow}
+          </p>
+          <h2
+            id="contact-form-heading"
+            class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+          >
+            {form.heading}
+          </h2>
+          <p class="mt-4 text-base text-[#14100D]/65">{form.description}</p>
+        </FadeIn>
+
+        <div class="mt-14">
+          <ContactForm
+            client:visible
+            fields={form.fields}
+            whatsappCtaLabel={form.whatsappCta}
+            emailCtaLabel={form.emailCta}
+          />
+        </div>
+      </div>
+    </section>
+
+    <LocationsGrid
+      eyebrow={branches.eyebrow}
+      heading={branches.heading}
+      description={branches.description}
+      reserveLabel="Reserve Table"
+      directionsLabel="Directions"
+    />
+
+    <LocationsMap locations={LOCATIONS} eyebrow={map.eyebrow} heading={map.heading} />
+
+    <BusinessHours
+      eyebrow={hours.eyebrow}
+      heading={hours.heading}
+      responseHeading={responseExpectations.heading}
+    />
+
+    <FAQSection eyebrow={faq.eyebrow} heading={faq.heading} items={[...faq.items]} />
+
+    <CTASection
+      headline={cta.headline}
+      supportingText={cta.description}
+      primary={{ label: cta.primaryCta.label, href: SITE.reservationUrl }}
+      secondary={[
+        { label: cta.secondaryCta.label, href: SITE.menuUrl },
+        { label: "Request Catering", href: "/catering" },
+        "whatsapp",
+      ]}
+    />
+  </main>
+  <Footer />
+</Layout>

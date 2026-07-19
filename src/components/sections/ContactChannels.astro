@@ -1,0 +1,89 @@
+---
+// src/components/sections/ContactChannels.astro
+import { Phone, MessageCircle, Mail, Users, Camera, Music2 } from "lucide-react";
+import { CONTACT_CHANNELS } from "../../data/contact";
+import type { ContactChannelKind } from "../../data/contact";
+import { SITE, getTelUrl, getWhatsAppUrl, getMailtoUrl } from "../../config/site";
+import FadeIn from "../animations/FadeIn.astro";
+
+interface Props {
+  eyebrow: string;
+  heading: string;
+}
+
+const { eyebrow, heading } = Astro.props;
+
+const ICONS: Record<ContactChannelKind, typeof Phone> = {
+  phone: Phone,
+  whatsapp: MessageCircle,
+  email: Mail,
+  facebook: Users,
+  instagram: Camera,
+  tiktok: Music2,
+};
+
+// Resolves each channel kind's real href/value from SITE — the single
+// place these get looked up, so a card's link can never drift out of
+// sync with the actual business info.
+function resolveChannel(kind: ContactChannelKind): { href: string; value: string; external: boolean } {
+  switch (kind) {
+    case "phone":
+      return { href: getTelUrl(), value: SITE.phone, external: false };
+    case "whatsapp":
+      return { href: getWhatsAppUrl(), value: SITE.phone, external: true };
+    case "email":
+      return { href: getMailtoUrl(), value: SITE.email, external: false };
+    case "facebook":
+      return { href: SITE.social.facebook, value: "@ypambuzichoma", external: true };
+    case "instagram":
+      return { href: SITE.social.instagram, value: "@ypambuzichoma", external: true };
+    case "tiktok":
+      return { href: SITE.social.tiktok, value: "@ypambuzichoma", external: true };
+  }
+}
+---
+
+<section
+  id="contact-channels"
+  aria-labelledby="contact-channels-heading"
+  class="scroll-mt-36 bg-white py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-12">
+    <FadeIn className="mx-auto max-w-2xl text-center">
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="contact-channels-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+    </FadeIn>
+
+    <div class="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        CONTACT_CHANNELS.map((channel, index) => {
+          const Icon = ICONS[channel.kind];
+          const resolved = resolveChannel(channel.kind);
+          return (
+            <FadeIn delay={index * 0.06}>
+              <a
+                href={resolved.href}
+                target={resolved.external ? "_blank" : undefined}
+                rel={resolved.external ? "noopener noreferrer" : undefined}
+                class="group flex items-center gap-4 rounded-2xl border border-[#14100D]/10 p-5 transition-shadow duration-300 hover:shadow-[0_20px_45px_-20px_rgba(20,16,13,0.2)]"
+              >
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C89A4B]/30 transition-colors duration-300 group-hover:border-[#C89A4B]">
+                  <Icon className="h-5 w-5 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+                </span>
+                <span class="flex flex-col">
+                  <span class="text-sm font-semibold text-[#14100D]">{channel.label}</span>
+                  <span class="text-sm text-[#14100D]/55">{resolved.value}</span>
+                </span>
+              </a>
+            </FadeIn>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

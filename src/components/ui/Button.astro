@@ -1,0 +1,50 @@
+---
+// src/components/ui/Button.astro
+//
+// Static button/link primitive for anywhere on the site that doesn't
+// need Framer Motion (most buttons — forms, cards, footer). Pulls its
+// visual style from lib/button-variants.ts, the same module HeroButtons
+// uses, so a solid gold button looks identical whether it's animated or
+// not, with one place to update if the brand palette ever changes.
+import { getButtonClasses, type ButtonVariant, type ButtonSize, type ButtonTone } from "../../lib/button-variants";
+
+interface Props {
+  /** If provided, renders an <a>. Otherwise renders a <button>. */
+  href?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  /** "dark" (default) for charcoal/hero backgrounds, "light" for cream/white sections. Only affects the outline variant. */
+  tone?: ButtonTone;
+  /** Open href in a new tab (external links). Ignored if href is absent. */
+  external?: boolean;
+  /** button[type] — ignored if href is present. */
+  type?: "button" | "submit" | "reset";
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  href,
+  variant = "solid",
+  size = "md",
+  tone = "dark",
+  external = false,
+  type = "button",
+  ariaLabel,
+  class: className = "",
+} = Astro.props;
+
+const classes = getButtonClasses({ variant, size, tone, className });
+const Tag = href ? "a" : "button";
+---
+
+<Tag
+  href={href}
+  type={href ? undefined : type}
+  target={href && external ? "_blank" : undefined}
+  rel={href && external ? "noopener noreferrer" : undefined}
+  aria-label={ariaLabel}
+  class={classes}
+>
+  <slot />
+</Tag>

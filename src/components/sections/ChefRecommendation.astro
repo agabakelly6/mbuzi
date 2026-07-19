@@ -1,0 +1,56 @@
+---
+// src/components/sections/ChefRecommendation.astro
+import { CHEF_PICK } from "../../data/menu";
+import { NAV_CTAS } from "../../data/navigation";
+import { MENU_CONTENT } from "../../content/menu";
+import FadeIn from "../animations/FadeIn.astro";
+import Button from "../ui/Button.astro";
+
+const reserveCta = NAV_CTAS.find((cta) => cta.label === "Reserve Table");
+const { eyebrow } = MENU_CONTENT.chefRecommendation;
+---
+
+{
+  CHEF_PICK && (
+    <section
+      id="chef-recommendation"
+      aria-labelledby="chef-recommendation-heading"
+      class="scroll-mt-36 bg-[#F5EFE4] py-20 sm:py-28 lg:scroll-mt-40"
+    >
+      <div class="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16 lg:px-12">
+        <FadeIn y={32} className="overflow-hidden rounded-2xl">
+          <img
+            src={CHEF_PICK.image}
+            alt={CHEF_PICK.name}
+            loading="lazy"
+            decoding="async"
+            class="aspect-[4/3] w-full object-cover"
+          />
+        </FadeIn>
+
+        <FadeIn>
+          <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">
+            {eyebrow}
+          </p>
+          <h2
+            id="chef-recommendation-heading"
+            class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+          >
+            {CHEF_PICK.name}
+          </h2>
+          <p class="mt-6 max-w-lg text-base leading-relaxed text-[#14100D]/65">
+            {CHEF_PICK.description}
+          </p>
+          <p class="mt-6 font-serif text-2xl font-semibold text-[#C89A4B]">{CHEF_PICK.price}</p>
+          {reserveCta && (
+            <div class="mt-8">
+              <Button href={reserveCta.href} variant="solid" size="md">
+                {reserveCta.label}
+              </Button>
+            </div>
+          )}
+        </FadeIn>
+      </div>
+    </section>
+  )
+}

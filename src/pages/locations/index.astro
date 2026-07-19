@@ -1,0 +1,82 @@
+---
+// src/pages/locations/index.astro
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Hero from "../../components/hero/Hero.astro";
+import LocationsGrid from "../../components/sections/LocationsGrid.astro";
+import LocationsMap from "../../components/sections/LocationsMap.astro";
+import LocationFeatures from "../../components/sections/LocationFeatures.astro";
+import StorySplit from "../../components/sections/StorySplit.astro";
+import FAQSection from "../../components/sections/FAQSection.astro";
+import CTASection from "../../components/sections/CTASection.astro";
+import Footer from "../../components/layout/Footer.astro";
+import { LOCATIONS } from "../../data/locations";
+import { LOCATIONS_CONTENT } from "../../content/locations";
+import { SITE } from "../../config/site";
+import { getPageStructuredData } from "../../config/seo";
+
+const { hero, branchOverview, map, features, whyVisit, faq, cta, branchCard } = LOCATIONS_CONTENT;
+---
+
+<Layout
+  title={LOCATIONS_CONTENT.seo.title}
+  description={LOCATIONS_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: LOCATIONS_CONTENT.seo.title,
+    description: LOCATIONS_CONTENT.seo.description,
+    breadcrumbs: [
+      { name: "Home", url: `${Astro.url.origin}/` },
+      { name: "Locations", url: Astro.url.href },
+    ],
+    faqItems: [...faq.items],
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={hero.eyebrow}
+      mottoLines={hero.headline}
+      supportingText={hero.description}
+      heightClass="h-[60vh]"
+      nextSectionId="branches"
+    />
+
+    <LocationsGrid
+      eyebrow={branchOverview.eyebrow}
+      heading={branchOverview.heading}
+      description={branchOverview.description}
+      reserveLabel={branchCard.reserveLabel}
+      directionsLabel={branchCard.directionsLabel}
+    />
+
+    <LocationsMap locations={LOCATIONS} eyebrow={map.eyebrow} heading={map.heading} />
+
+    <LocationFeatures
+      eyebrow={features.eyebrow}
+      heading={features.heading}
+      serviceLabels={features.serviceLabels}
+    />
+
+    <StorySplit
+      id="why-visit"
+      eyebrow={whyVisit.eyebrow}
+      heading={whyVisit.heading}
+      body={whyVisit.description ?? ""}
+      imageSrc="/images/farm/brand-story.jpg"
+      imageAlt="The YPA farm that supplies every branch"
+      buttonHref="/farm-story"
+      buttonLabel={whyVisit.cta?.label ?? "Read Our Farm Story"}
+      imagePosition="left"
+    />
+
+    <FAQSection eyebrow={faq.eyebrow} heading={faq.heading} items={[...faq.items]} />
+
+    <CTASection
+      headline={cta.headline}
+      supportingText={cta.description}
+      secondary={[{ label: cta.secondaryCta.label, href: SITE.menuUrl }, "whatsapp"]}
+    />
+  </main>
+  <Footer />
+</Layout>

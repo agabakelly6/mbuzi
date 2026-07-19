@@ -1,0 +1,93 @@
+---
+// src/components/sections/CTASection.astro
+//
+// `secondary` accepts a single value (original behavior — every existing
+// call site keeps working unchanged) OR an array, for pages needing more
+// than one secondary action (Locations needs "View Menu" + WhatsApp
+// alongside the primary Reserve Table button).
+import FadeIn from "../animations/FadeIn.astro";
+import Button from "../ui/Button.astro";
+import { WhatsAppButton } from "../ui/WhatsAppButton";
+import { NAV_CTAS } from "../../data/navigation";
+
+interface SecondaryLink {
+  label: string;
+  href: string;
+}
+
+type SecondaryOption = "whatsapp" | SecondaryLink;
+
+interface Props {
+  headline?: string;
+  supportingText?: string;
+  /** Overrides the solid primary button (default: "Reserve Table" from NAV_CTAS). Catering needs "Request A Quote" instead. */
+  primary?: SecondaryLink;
+  /** "whatsapp" (default) renders the WhatsApp CTA. Pass {label, href} for a plain outline Button, or an array to render more than one secondary action. */
+  secondary?: SecondaryOption | SecondaryOption[];
+}
+
+const {
+  headline = "Ready for Authentic Goat Choma?",
+  supportingText = "Book your table or reach us directly — we'll have the fire ready.",
+  primary,
+  secondary = "whatsapp",
+} = Astro.props;
+
+const reserveCta = primary ?? NAV_CTAS.find((cta) => cta.label === "Reserve Table");
+const secondaryItems: SecondaryOption[] = Array.isArray(secondary) ? secondary : [secondary];
+---
+
+<section
+  id="cta"
+  aria-labelledby="cta-heading"
+  class="relative overflow-hidden bg-[#14100D] py-24 sm:py-32"
+>
+  <div
+    class="pointer-events-none absolute inset-0 [background:radial-gradient(circle_at_center,rgba(200,154,75,0.14),transparent_60%)]"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="relative mx-auto max-w-2xl px-6 text-center lg:px-12">
+    <FadeIn>
+      <h2 id="cta-heading" class="font-serif text-3xl font-semibold text-white sm:text-4xl lg:text-[46px]">
+        {headline}
+      </h2>
+      <p class="mt-5 text-base text-white/70">
+        {supportingText}
+      </p>
+
+      <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap">
+        {
+          reserveCta && (
+            <Button href={reserveCta.href} variant="solid" size="md" class="w-full sm:w-auto">
+              {reserveCta.label}
+            </Button>
+          )
+        }
+        {
+          secondaryItems.map((item) => {
+            if (item === "whatsapp") {
+              const whatsappCta = NAV_CTAS.find((cta) => cta.icon === "whatsapp");
+              return (
+                whatsappCta && (
+                  <WhatsAppButton
+                    href={whatsappCta.href}
+                    label={whatsappCta.label}
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  />
+                )
+              );
+            }
+            return (
+              <Button href={item.href} variant="outline" size="md" class="w-full sm:w-auto">
+                {item.label}
+              </Button>
+            );
+          })
+        }
+      </div>
+    </FadeIn>
+  </div>
+</section>

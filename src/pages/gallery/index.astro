@@ -1,0 +1,87 @@
+---
+// src/pages/gallery/index.astro
+import { Camera } from "lucide-react";
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Hero from "../../components/hero/Hero.astro";
+import { GalleryFilters } from "../../components/sections/GalleryFilters";
+import StorySplit from "../../components/sections/StorySplit.astro";
+import Button from "../../components/ui/Button.astro";
+import CTASection from "../../components/sections/CTASection.astro";
+import Footer from "../../components/layout/Footer.astro";
+import { GALLERY_IMAGES, GALLERY_FILTERS } from "../../media/gallery";
+import { SITE } from "../../config/site";
+import { GALLERY_CONTENT } from "../../content/gallery";
+import { getPageStructuredData } from "../../config/seo";
+
+const instagramHandle = SITE.social.instagram.replace("https://instagram.com/", "@");
+const { hero, behindTheScenes, instagramCta, cta } = GALLERY_CONTENT;
+---
+
+<Layout
+  title={GALLERY_CONTENT.seo.title}
+  description={GALLERY_CONTENT.seo.description}
+  structuredData={getPageStructuredData({
+    canonicalURL: Astro.url.href,
+    name: GALLERY_CONTENT.seo.title,
+    description: GALLERY_CONTENT.seo.description,
+    breadcrumbs: [
+      { name: "Home", url: `${Astro.url.origin}/` },
+      { name: "Gallery", url: Astro.url.href },
+    ],
+  })}
+>
+  <Navbar />
+  <main>
+    <Hero
+      eyebrow={hero.eyebrow}
+      mottoLines={hero.headline}
+      supportingText={hero.description}
+      heightClass="h-[65vh]"
+      nextSectionId="gallery-grid"
+    />
+
+    <GalleryFilters client:visible images={GALLERY_IMAGES} filters={GALLERY_FILTERS} />
+
+    <StorySplit
+      id="behind-the-scenes"
+      eyebrow={behindTheScenes.eyebrow}
+      heading={behindTheScenes.heading}
+      body={behindTheScenes.description ?? ""}
+      imageSrc="/images/gallery/food/grill-master-at-work.jpg"
+      imageAlt="A YPA grill master tending the charcoal fire"
+      buttonHref="/farm-story"
+      buttonLabel={behindTheScenes.cta?.label ?? "Read Our Farm Story"}
+      imagePosition="left"
+    />
+
+    <section aria-labelledby="instagram-cta-heading" class="bg-white py-20 text-center sm:py-24">
+      <div class="mx-auto max-w-xl px-6">
+        <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#C89A4B]/30">
+          <Camera className="h-5 w-5 text-[#C89A4B]" strokeWidth={1.5} aria-hidden="true" />
+        </span>
+        <h2
+          id="instagram-cta-heading"
+          class="mt-5 font-serif text-2xl font-semibold text-[#14100D] sm:text-3xl"
+        >
+          {instagramCta.heading}
+        </h2>
+        <p class="mt-3 text-sm text-[#14100D]/65">
+          {instagramCta.description}
+        </p>
+        <div class="mt-6">
+          <Button href={SITE.social.instagram} variant="outline" tone="light" size="md" external>
+            {instagramCta.cta?.label ?? "Follow"} {instagramHandle}
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    <CTASection
+      headline={cta.headline}
+      supportingText={cta.description}
+      secondary={{ label: cta.secondaryCta.label, href: SITE.menuUrl }}
+    />
+  </main>
+  <Footer />
+</Layout>
