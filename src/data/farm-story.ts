@@ -11,20 +11,25 @@ export const BRAND_STORY_IMAGE = {
   alt: "The original YPA family farm outside Kampala",
 };
 
+export const FOUNDER_PORTRAIT = {
+  src: "/images/team/obed-ben.jpg",
+  alt: "Portrait of Obed Ben, founder of YPA Farms and YPA Mbuzi Choma",
+};
+
 export interface TeamRosterEntry {
-  /** References a TeamImage.id in src/media/team.ts — that's where the name/photo live. */
+  /** References a TeamImage.id in src/media/team.ts — that's where the photo lives. */
   imageId: string;
   role: string;
-  group: "Farmers" | "Chefs" | "Restaurant Team";
+  group: "Branch Leadership";
 }
 
+// Restaurant leadership, not farm staff — each entry is a placeholder
+// until a real branch manager's name is confirmed, so TeamImage.title
+// holds the branch (not an invented person's name) until then.
 export const TEAM_ROSTER: TeamRosterEntry[] = [
-  { imageId: "team-joseph-k", role: "Head Farmer", group: "Farmers" },
-  { imageId: "team-immaculate-n", role: "Livestock Manager", group: "Farmers" },
-  { imageId: "team-ronald-m", role: "Executive Chef", group: "Chefs" },
-  { imageId: "team-patience-a", role: "Grill Master", group: "Chefs" },
-  { imageId: "team-david-o", role: "Restaurant Manager", group: "Restaurant Team" },
-  { imageId: "team-grace-l", role: "Guest Experience Lead", group: "Restaurant Team" },
+  { imageId: "team-rubaga-manager", role: "Branch Manager", group: "Branch Leadership" },
+  { imageId: "team-ntinda-manager", role: "Branch Manager", group: "Branch Leadership" },
+  { imageId: "team-mbarara-manager", role: "Branch Manager", group: "Branch Leadership" },
 ];
 
 export const SUSTAINABILITY_IMAGE = {

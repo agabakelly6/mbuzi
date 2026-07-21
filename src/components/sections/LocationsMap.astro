@@ -66,6 +66,7 @@ function toPosition(lat: number, lng: number) {
       {
         locations.map((location) => {
           const { x, y } = toPosition(location.coordinates.lat, location.coordinates.lng);
+          const isComingSoon = location.status === "coming-soon";
           return (
             <a
               href={location.googleMapsLink}
@@ -73,13 +74,21 @@ function toPosition(lat: number, lng: number) {
               rel="noopener noreferrer"
               class="group absolute -translate-x-1/2 -translate-y-full"
               style={`left:${x}%; top:${y}%;`}
-              aria-label={`Get directions to ${location.name}`}
+              aria-label={`Get directions to ${location.name}${isComingSoon ? " (opening soon)" : ""}`}
             >
-              <span class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#C89A4B] text-[#14100D] shadow-lg transition-transform duration-300 group-hover:scale-110">
+              <span
+                class:list={[
+                  "flex h-9 w-9 items-center justify-center rounded-full border-2 shadow-lg transition-transform duration-300 group-hover:scale-110",
+                  isComingSoon
+                    ? "border-[#C89A4B] border-dashed bg-white text-[#C89A4B]"
+                    : "border-white bg-[#C89A4B] text-[#14100D]",
+                ]}
+              >
                 <MapPin className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
               </span>
               <span class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#14100D] px-3 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100">
                 {location.city}
+                {isComingSoon && " · Opening Soon"}
               </span>
             </a>
           );

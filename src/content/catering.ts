@@ -24,6 +24,8 @@ export const CATERING_CONTENT = {
     eyebrow: "Catering & Events",
     headline: ["Celebrate", "With YPA."],
     description: "The same farm, the same fire, wherever you're hosting.",
+    image: "/images/hero/hero-catering.webp",
+    imageAlt: "A large buffet spread set up for a wedding or corporate event",
   } satisfies HeroContent,
 
   eventsOverview: {
@@ -99,6 +101,11 @@ export const CATERING_CONTENT = {
         question: "Can you accommodate dietary restrictions?",
         answer:
           "Yes — let us know during your consultation and we'll tailor the menu, including vegetarian options.",
+      },
+      {
+        question: "Can we bring our own cake for the event?",
+        answer:
+          "No outside cakes — YPA bakes every event cake in-house, made to order. Tell us your flavour, design, and size during your consultation and we'll build it into your package.",
       },
       {
         question: "Do you deliver, or is there a minimum guest count?",

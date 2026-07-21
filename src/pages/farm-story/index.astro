@@ -4,6 +4,8 @@ import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/layout/Navbar.astro";
 import Hero from "../../components/hero/Hero.astro";
 import StorySplit from "../../components/sections/StorySplit.astro";
+import FounderMessage from "../../components/sections/FounderMessage.astro";
+import YpaConnection from "../../components/sections/YpaConnection.astro";
 import FarmTimeline from "../../components/sections/FarmTimeline.astro";
 import FarmGalleryPreview from "../../components/sections/FarmGalleryPreview.astro";
 import WhyFarmToTable from "../../components/sections/WhyFarmToTable.astro";
@@ -37,6 +39,8 @@ const { hero, brandStory, cta } = FARM_STORY_CONTENT;
       eyebrow={hero.eyebrow}
       mottoLines={hero.headline}
       supportingText={hero.description}
+      posterSrc={hero.image}
+      posterAlt={hero.imageAlt}
       heightClass="h-[70vh]"
       nextSectionId="brand-story"
     />
@@ -52,6 +56,9 @@ const { hero, brandStory, cta } = FARM_STORY_CONTENT;
       buttonLabel={brandStory.cta?.label ?? "See What We Grill"}
       imagePosition="left"
     />
+
+    <FounderMessage />
+    <YpaConnection />
 
     <FarmTimeline />
     <FarmGalleryPreview />

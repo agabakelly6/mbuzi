@@ -1,10 +1,22 @@
 // src/data/locations.ts
 //
-// Every branch the site knows about. The Locations page, map, and
-// features/FAQ sections all derive entirely from this array — adding a
-// 4th branch means appending one object here; no page or component
-// needs to change.
-import type { Location } from "../types/location";
+// Every branch the site knows about — open or upcoming. The Locations
+// page, map, and features/FAQ sections all derive entirely from this
+// array; adding a branch means appending one object here, no page or
+// component needs to change. Each branch declares its own `status`
+// ("active" | "coming-soon") — that single field is what every consumer
+// (booking form, structured data, location cards, the map) gates on,
+// rather than special-casing a branch by id or name.
+import type { Location, OpeningHoursEntry } from "../types/location";
+
+// Every currently operating branch shares this schedule. Kept as one
+// constant so a future hours change updates every active branch at once
+// instead of drifting per-location.
+const STANDARD_OPENING_HOURS: OpeningHoursEntry[] = [
+  { days: "Sun – Thu", hours: "06:00 – 23:00" },
+  { days: "Friday", hours: "06:00 – 18:00" },
+  { days: "Saturday", hours: "18:00 – 23:00" },
+];
 
 export const LOCATIONS: Location[] = [
   {
@@ -15,10 +27,7 @@ export const LOCATIONS: Location[] = [
     phone: "+256 700 000 000",
     whatsapp: "256700000000",
     email: "rubaga@ypambuzichoma.com",
-    openingHours: [
-      { days: "Tue – Sun", hours: "11:00 – 22:00" },
-      { days: "Monday", hours: "Closed" },
-    ],
+    openingHours: STANDARD_OPENING_HOURS,
     description: "Our original home — where the farm-to-fire story began.",
     services: [
       "parking",
@@ -26,17 +35,19 @@ export const LOCATIONS: Location[] = [
       "outdoorSeating",
       "familyFriendly",
       "privateDining",
+      "delivery",
       "takeaway",
     ],
     coordinates: { lat: 0.3106, lng: 32.5511 },
     googleMapsLink: "https://maps.google.com/?q=YPA+Mbuzi+Choma+Rubaga+Kampala",
-    heroImage: "restaurant-rubaga-terrace",
+    heroImage: "restaurant-rubaga-interior",
     galleryImages: [
-      "restaurant-rubaga-terrace",
-      "restaurant-rubaga-dining-room",
-      "restaurant-warm-atmosphere",
+      "restaurant-rubaga-interior",
+      "restaurant-rubaga-entrance",
+      "restaurant-rubaga-outside-sitting",
     ],
     featured: true,
+    status: "active",
   },
   {
     id: "ntinda",
@@ -46,10 +57,7 @@ export const LOCATIONS: Location[] = [
     phone: "+256 700 000 001",
     whatsapp: "256700000001",
     email: "ntinda@ypambuzichoma.com",
-    openingHours: [
-      { days: "Tue – Sun", hours: "11:00 – 22:00" },
-      { days: "Monday", hours: "Closed" },
-    ],
+    openingHours: STANDARD_OPENING_HOURS,
     description: "A neighbourhood favourite, built for weeknight dinners and weekend family tables.",
     services: ["indoorSeating", "outdoorSeating", "familyFriendly", "delivery", "takeaway"],
     coordinates: { lat: 0.3563, lng: 32.6205 },
@@ -57,10 +65,11 @@ export const LOCATIONS: Location[] = [
     heroImage: "restaurant-ntinda-interior",
     galleryImages: [
       "restaurant-ntinda-interior",
-      "restaurant-ntinda-bar",
-      "restaurant-family-dining",
+      "restaurant-ntinda-swimming-pool",
+      "restaurant-ntinda-relaxing-area",
     ],
     featured: false,
+    status: "active",
   },
   {
     id: "mbarara",
@@ -70,22 +79,64 @@ export const LOCATIONS: Location[] = [
     phone: "+256 700 000 002",
     whatsapp: "256700000002",
     email: "mbarara@ypambuzichoma.com",
-    openingHours: [
-      { days: "Wed – Sun", hours: "12:00 – 21:00" },
-      { days: "Mon – Tue", hours: "Closed" },
-    ],
+    openingHours: STANDARD_OPENING_HOURS,
     description: "Bringing the same farm and fire west, closer to the source.",
-    services: ["parking", "outdoorSeating", "familyFriendly", "takeaway"],
+    services: ["parking", "outdoorSeating", "familyFriendly", "delivery", "takeaway"],
     coordinates: { lat: -0.6072, lng: 30.6545 },
     googleMapsLink: "https://maps.google.com/?q=YPA+Mbuzi+Choma+Mbarara",
-    heroImage: "restaurant-mbarara-grill",
-    galleryImages: [
-      "restaurant-mbarara-grill",
-      "restaurant-mbarara-garden",
-      "restaurant-outdoor-seating",
-    ],
+    heroImage: "restaurant-mbarara-interior",
+    galleryImages: ["restaurant-mbarara-interior", "restaurant-mbarara-outside"],
     featured: false,
+    status: "active",
+  },
+  {
+    id: "maddu",
+    name: "YPA Mbuzi Choma — Maddu",
+    city: "Maddu",
+    address: "Maddu Town, Gomba District",
+    phone: "+256 700 000 003",
+    whatsapp: "256700000003",
+    email: "maddu@ypambuzichoma.com",
+    openingHours: STANDARD_OPENING_HOURS,
+    description: "Our newest operating branch, carrying the same fire out to Gomba District.",
+    services: ["parking", "outdoorSeating", "familyFriendly", "delivery", "takeaway"],
+    // Approximate coordinates for Maddu, Gomba District — confirm and
+    // replace with the exact site pin once it's surveyed.
+    coordinates: { lat: -0.2833, lng: 31.75 },
+    googleMapsLink: "https://maps.google.com/?q=YPA+Mbuzi+Choma+Maddu+Gomba+Uganda",
+    heroImage: "restaurant-maddu-terrace",
+    galleryImages: ["restaurant-maddu-terrace", "restaurant-maddu-dining"],
+    featured: false,
+    status: "active",
+  },
+  {
+    id: "nansana",
+    name: "YPA Mbuzi Choma — Nansana",
+    city: "Nansana",
+    address: "Nansana, Wakiso District",
+    // Intentionally empty — no live contact line for a branch that isn't
+    // open yet. LocationCard hides these rows automatically when empty.
+    phone: "",
+    whatsapp: "",
+    email: "",
+    // No hours to show until the branch actually opens.
+    openingHours: [],
+    description: "Under construction and opening soon — YPA's next branch, out in Wakiso District.",
+    services: [],
+    // Approximate coordinates for Nansana, Wakiso District — confirm and
+    // replace with the exact site pin once it's surveyed.
+    coordinates: { lat: 0.3667, lng: 32.5 },
+    googleMapsLink: "https://maps.google.com/?q=Nansana+Wakiso+Uganda",
+    heroImage: "restaurant-nansana",
+    galleryImages: [],
+    featured: false,
+    status: "coming-soon",
   },
 ];
 
 export const FEATURED_LOCATION: Location = LOCATIONS.find((loc) => loc.featured) ?? LOCATIONS[0];
+
+/** Branches that are open today — bookable, contactable, and shown with real hours. Use this wherever a booking, live contact, or SEO/structured-data listing must never include a not-yet-open branch. */
+export const ACTIVE_LOCATIONS: Location[] = LOCATIONS.filter(
+  (location) => location.status === "active"
+);

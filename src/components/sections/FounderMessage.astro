@@ -1,0 +1,54 @@
+---
+// src/components/sections/FounderMessage.astro
+//
+// A personal letter from the founder, not a biography — portrait beside
+// a first-person message ending in a signature block. Deliberately its
+// own layout rather than reusing StorySplit: a letter reads as one
+// continuous voice with several paragraphs and a signature, not a single
+// short marketing paragraph next to an image.
+import FadeIn from "../animations/FadeIn.astro";
+import OptimizedImage from "../ui/OptimizedImage.astro";
+import { FARM_STORY_CONTENT } from "../../content/farm-story";
+import { FOUNDER_PORTRAIT } from "../../data/farm-story";
+
+const { eyebrow, heading, paragraphs, signature } = FARM_STORY_CONTENT.founderMessage;
+---
+
+<section
+  id="founder-message"
+  aria-labelledby="founder-message-heading"
+  class="scroll-mt-36 bg-[#F5EFE4] py-20 sm:py-28 lg:scroll-mt-40"
+>
+  <div class="mx-auto grid max-w-[1280px] grid-cols-1 items-start gap-12 px-6 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-16 lg:px-12">
+    <FadeIn y={32} className="mx-auto w-full max-w-xs lg:mx-0 lg:max-w-none">
+      <div class="overflow-hidden rounded-2xl border border-[#C89A4B]/25">
+        <OptimizedImage
+          src={FOUNDER_PORTRAIT.src}
+          alt={FOUNDER_PORTRAIT.alt}
+          loading="lazy"
+          class="aspect-[4/5] w-full object-cover"
+        />
+      </div>
+    </FadeIn>
+
+    <FadeIn>
+      <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">{eyebrow}</p>
+      <h2
+        id="founder-message-heading"
+        class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]"
+      >
+        {heading}
+      </h2>
+
+      <div class="mt-8 flex max-w-2xl flex-col gap-5">
+        {paragraphs.map((paragraph) => <p class="text-base leading-relaxed text-[#14100D]/75">{paragraph}</p>)}
+      </div>
+
+      <div class="mt-10 border-t border-[#14100D]/10 pt-6">
+        <p class="font-serif text-xl font-semibold text-[#14100D]">{signature.name}</p>
+        <p class="mt-1 text-sm text-[#14100D]/60">{signature.title}</p>
+        {signature.organizations.map((org) => <p class="text-sm text-[#14100D]/60">{org}</p>)}
+      </div>
+    </FadeIn>
+  </div>
+</section>

@@ -128,13 +128,21 @@ export function GalleryLightbox({
             transition={{ duration: shouldReduceMotion ? 0.01 : 0.3 }}
             onClick={(event) => event.stopPropagation()}
           >
-            <img
-              src={image.src}
-              alt={image.alt}
-              width={image.width}
-              height={image.height}
-              className="max-h-[70vh] w-auto rounded-xl object-contain"
-            />
+            {image.src ? (
+              <img
+                src={image.src}
+                alt={image.alt}
+                width={image.width}
+                height={image.height}
+                className="max-h-[70vh] w-auto rounded-xl object-contain"
+              />
+            ) : (
+              <div
+                className="flex aspect-[4/3] w-full max-w-md items-center justify-center rounded-xl bg-white/5"
+                role="img"
+                aria-label={image.alt}
+              />
+            )}
             <div className="mt-4 text-center">
               <h3 className="font-serif text-lg font-semibold text-white">{image.title}</h3>
               <p className="mt-1 text-sm text-white/60">{image.description}</p>

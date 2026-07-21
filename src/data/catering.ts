@@ -68,7 +68,8 @@ export type ServiceId =
   | "custom-menu-tasting"
   | "delivery-setup"
   | "dedicated-coordinator"
-  | "decor-styling";
+  | "decor-styling"
+  | "custom-cake";
 
 export interface CateringService {
   id: ServiceId;
@@ -84,6 +85,7 @@ export const CATERING_SERVICES: CateringService[] = [
   { id: "delivery-setup", label: "Delivery & Setup" },
   { id: "dedicated-coordinator", label: "Dedicated Event Coordinator" },
   { id: "decor-styling", label: "Décor & Table Styling" },
+  { id: "custom-cake", label: "Custom Event Cake" },
 ];
 
 export interface EventPackage {
@@ -103,7 +105,7 @@ export const EVENT_PACKAGES: EventPackage[] = [
     description: "A smaller, closer setup — perfect for birthdays and family get-togethers.",
     minGuests: 10,
     maxGuests: 30,
-    serviceIds: ["charcoal-grill-station", "table-setup", "custom-menu-tasting"],
+    serviceIds: ["charcoal-grill-station", "table-setup", "custom-menu-tasting", "custom-cake"],
   },
   {
     id: "celebration-package",
@@ -117,6 +119,7 @@ export const EVENT_PACKAGES: EventPackage[] = [
       "table-setup",
       "sound-system",
       "custom-menu-tasting",
+      "custom-cake",
     ],
     featured: true,
   },
@@ -134,6 +137,7 @@ export const EVENT_PACKAGES: EventPackage[] = [
       "dedicated-coordinator",
       "decor-styling",
       "delivery-setup",
+      "custom-cake",
     ],
   },
   {

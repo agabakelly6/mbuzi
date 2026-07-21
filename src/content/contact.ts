@@ -16,6 +16,8 @@ export const CONTACT_CONTENT = {
     eyebrow: "Get In Touch",
     headline: ["Get In", "Touch."],
     description: "Questions, feedback, or just want to say hello — reach out any time.",
+    image: "/images/hero/hero-contact.webp",
+    imageAlt: "A friendly YPA front-of-house team member ready to welcome guests",
   } satisfies HeroContent,
 
   channels: {

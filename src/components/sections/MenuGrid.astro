@@ -2,11 +2,15 @@
 // src/components/sections/MenuGrid.astro
 //
 // One reusable category section, invoked once per category from
-// pages/menu/index.astro — Signature Specials, Platters, Sides, and
-// Drinks all render through this instead of four near-identical files.
+// pages/menu/index.astro — Breakfast, Main Course, Burgers, Sandwiches,
+// Pizza, Lusaniya, Smoothies, and Drinks all render through this instead
+// of eight near-identical files. Items with a `subcategory` (Drinks) are
+// grouped under their own sub-heading; everything else renders as one
+// flat grid, as it always did.
 import type { MenuItem } from "../../data/menu";
 import { FoodCard } from "../cards/FoodCard";
 import FadeIn from "../animations/FadeIn.astro";
+import { resolveImageSrc } from "../../lib/images";
 
 interface Props {
   id: string;
@@ -18,6 +22,27 @@ interface Props {
 
 const { id, eyebrow, heading, items, tone = "light" } = Astro.props;
 const isDark = tone === "dark";
+
+// FoodCard is a plain React component and can't call astro:assets itself,
+// so every item's image is resolved to a final optimized URL here first.
+const imageSrcById = new Map(
+  await Promise.all(items.map(async (item) => [item.id, await resolveImageSrc(item.image)] as const))
+);
+
+// Groups items by subcategory when present (e.g. Drinks: Milkshakes, Tea
+// & Hot Drinks, Juices...), preserving first-seen order. Categories with
+// no subcategories render as a single unlabeled group — the flat grid
+// this always used to be.
+const groups = items.reduce<{ label: string | null; items: typeof items }[]>((acc, item) => {
+  const label = item.subcategory ?? null;
+  const existing = acc.find((group) => group.label === label);
+  if (existing) {
+    existing.items.push(item);
+  } else {
+    acc.push({ label, items: [item] });
+  }
+  return acc;
+}, []);
 ---
 
 <section
@@ -44,14 +69,35 @@ const isDark = tone === "dark";
       </h2>
     </FadeIn>
 
-    <div class="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-      {
-        items.map((item, index) => (
-          <FadeIn delay={index * 0.08}>
-            <FoodCard item={item} tone={tone} showCta={false} />
-          </FadeIn>
-        ))
-      }
-    </div>
+    {
+      groups.map((group) => (
+        <>
+          {group.label && (
+            <FadeIn>
+              <h3
+                class:list={[
+                  "mt-14 font-serif text-xl font-semibold",
+                  isDark ? "text-white" : "text-[#14100D]",
+                ]}
+              >
+                {group.label}
+              </h3>
+            </FadeIn>
+          )}
+          <div
+            class:list={[
+              "grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4",
+              group.label ? "mt-8" : "mt-14",
+            ]}
+          >
+            {group.items.map((item, index) => (
+              <FadeIn delay={index * 0.08}>
+                <FoodCard item={item} imageSrc={imageSrcById.get(item.id)} tone={tone} showCta={false} />
+              </FadeIn>
+            ))}
+          </div>
+        </>
+      ))
+    }
   </div>
 </section>

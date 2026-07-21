@@ -12,19 +12,21 @@ export const LOCATIONS_CONTENT = {
   seo: {
     title: "Locations",
     description:
-      "Find your nearest YPA Mbuzi Choma branch — Rubaga, Ntinda, or Mbarara. Hours, directions, and how to reach us.",
+      "Find your nearest YPA Mbuzi Choma branch — Rubaga, Ntinda, Mbarara, or Maddu. Hours, directions, and how to reach us.",
   } satisfies SEOContent,
 
   hero: {
     eyebrow: "Find Us",
     headline: ["Find Your", "Nearest YPA."],
-    description: "Three branches, one farm, the same fire at every table.",
+    description: "One farm, the same fire, at every table — with new branches on the way.",
+    image: "/images/hero/hero-locations.webp",
+    imageAlt: "The warm, welcoming exterior of a YPA Mbuzi Choma branch",
   } satisfies HeroContent,
 
   branchOverview: {
     eyebrow: "Our Branches",
     heading: "Choose Your Nearest Table",
-    description: "Every branch is stocked from the same farm and grills the same way.",
+    description: "Every branch is stocked from the same farm and grills the same way — with more on the way.",
   } satisfies SectionContent,
 
   map: {
@@ -45,6 +47,13 @@ export const LOCATIONS_CONTENT = {
       takeaway: "Takeaway",
     } satisfies Record<BranchService, string>,
   },
+
+  futureExpansion: {
+    eyebrow: "Growing Across Uganda",
+    heading: "Our Journey Continues",
+    description:
+      "Rubaga, Ntinda, Mbarara, and Maddu are open today, with Nansana under construction. Beyond that, we're planning our next branches — carrying the same farm and the same fire further across the country.",
+  } satisfies SectionContent,
 
   whyVisit: {
     eyebrow: "Why Visit YPA",
@@ -71,11 +80,12 @@ export const LOCATIONS_CONTENT = {
       {
         question: "Do you offer parking?",
         answer:
-          "Rubaga and Mbarara have on-site parking. Ntinda does not — see each branch's details above.",
+          "Rubaga, Mbarara, and Maddu have on-site parking. Ntinda does not — see each branch's details above.",
       },
       {
         question: "Are all locations family friendly?",
-        answer: "Yes, every branch welcomes families, with high chairs and kid-friendly seating available.",
+        answer:
+          "Yes, every open branch welcomes families, with high chairs and kid-friendly seating available.",
       },
     ] satisfies FAQItem[],
   },

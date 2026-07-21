@@ -7,6 +7,7 @@
 // layout implementation, not two copy-pasted grids.
 import FadeIn from "../animations/FadeIn.astro";
 import Button from "../ui/Button.astro";
+import OptimizedImage from "../ui/OptimizedImage.astro";
 
 interface GridItem {
   label: string;
@@ -72,11 +73,10 @@ const colsClass = columns === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-col
             delay={index * 0.1}
             className="group relative aspect-[4/3] overflow-hidden rounded-2xl"
           >
-            <img
+            <OptimizedImage
               src={item.image}
               alt={item.label}
               loading="lazy"
-              decoding="async"
               class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
             <div class="absolute inset-0 bg-gradient-to-t from-[#14100D]/70 via-[#14100D]/10 to-transparent" />

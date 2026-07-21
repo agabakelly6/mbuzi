@@ -10,8 +10,17 @@ import { FoodCard } from "../cards/FoodCard";
 import FadeIn from "../animations/FadeIn.astro";
 import Button from "../ui/Button.astro";
 import { HOME_CONTENT } from "../../content/homepage";
+import { resolveImageSrc } from "../../lib/images";
 
 const { eyebrow, heading, description, cta } = HOME_CONTENT.signatureDishes;
+
+// FoodCard is a plain React component and can't call astro:assets itself,
+// so every item's image is resolved to a final optimized URL here first.
+const imageSrcById = new Map(
+  await Promise.all(
+    FEATURED_MENU_ITEMS.map(async (item) => [item.id, await resolveImageSrc(item.image)] as const)
+  )
+);
 ---
 
 <section
@@ -39,7 +48,7 @@ const { eyebrow, heading, description, cta } = HOME_CONTENT.signatureDishes;
       {
         FEATURED_MENU_ITEMS.map((item, index) => (
           <FadeIn delay={index * 0.1}>
-            <FoodCard item={item} />
+            <FoodCard item={item} imageSrc={imageSrcById.get(item.id)} />
           </FadeIn>
         ))
       }

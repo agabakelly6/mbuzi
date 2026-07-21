@@ -5,6 +5,7 @@ import { NAV_CTAS } from "../../data/navigation";
 import { MENU_CONTENT } from "../../content/menu";
 import FadeIn from "../animations/FadeIn.astro";
 import Button from "../ui/Button.astro";
+import OptimizedImage from "../ui/OptimizedImage.astro";
 
 const reserveCta = NAV_CTAS.find((cta) => cta.label === "Reserve Table");
 const { eyebrow } = MENU_CONTENT.chefRecommendation;
@@ -19,11 +20,10 @@ const { eyebrow } = MENU_CONTENT.chefRecommendation;
     >
       <div class="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16 lg:px-12">
         <FadeIn y={32} className="overflow-hidden rounded-2xl">
-          <img
+          <OptimizedImage
             src={CHEF_PICK.image}
             alt={CHEF_PICK.name}
             loading="lazy"
-            decoding="async"
             class="aspect-[4/3] w-full object-cover"
           />
         </FadeIn>
@@ -42,6 +42,18 @@ const { eyebrow } = MENU_CONTENT.chefRecommendation;
             {CHEF_PICK.description}
           </p>
           <p class="mt-6 font-serif text-2xl font-semibold text-[#C89A4B]">{CHEF_PICK.price}</p>
+          {CHEF_PICK.variations && CHEF_PICK.variations.length > 0 && (
+            <ul class="mt-3 max-w-lg space-y-1 border-t border-[#14100D]/10 pt-3">
+              {CHEF_PICK.variations.map((variation) => (
+                <li class="flex items-center justify-between gap-4 text-sm text-[#14100D]/65">
+                  <span>{variation.label}</span>
+                  <span class="whitespace-nowrap font-semibold text-[#C89A4B]">
+                    {variation.price}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
           {reserveCta && (
             <div class="mt-8">
               <Button href={reserveCta.href} variant="solid" size="md">

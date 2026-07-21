@@ -23,15 +23,19 @@ export function GalleryCard({ image, onOpen }: GalleryCardProps) {
       aria-label={`Open ${image.title} in the lightbox`}
       className="group relative aspect-[4/3] w-full overflow-hidden rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C89A4B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F5EFE4]"
     >
-      <img
-        src={image.src}
-        alt={image.alt}
-        loading="lazy"
-        decoding="async"
-        width={image.width}
-        height={image.height}
-        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-      />
+      {image.src ? (
+        <img
+          src={image.src}
+          alt={image.alt}
+          loading="lazy"
+          decoding="async"
+          width={image.width}
+          height={image.height}
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        />
+      ) : (
+        <div className="h-full w-full bg-[#C89A4B]/10" role="img" aria-label={image.alt} />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-[#14100D]/70 via-[#14100D]/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <span className="absolute bottom-4 left-4 font-serif text-base font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         {image.title}

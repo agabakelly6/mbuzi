@@ -7,6 +7,7 @@
 // place instead of being copy-pasted between two files.
 import FadeIn from "../animations/FadeIn.astro";
 import Button from "../ui/Button.astro";
+import OptimizedImage from "../ui/OptimizedImage.astro";
 
 interface Props {
   id: string;
@@ -51,11 +52,10 @@ const textOrderClass = imagePosition === "left" ? "order-1 lg:order-2" : "order-
 >
   <div class="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16 lg:px-12">
     <FadeIn y={32} className={`overflow-hidden rounded-2xl ${imageOrderClass}`}>
-      <img
+      <OptimizedImage
         src={imageSrc}
         alt={imageAlt}
         loading="lazy"
-        decoding="async"
         class="aspect-[4/5] w-full object-cover"
       />
     </FadeIn>

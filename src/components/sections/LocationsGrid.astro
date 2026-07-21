@@ -4,6 +4,7 @@ import { LOCATIONS } from "../../data/locations";
 import { LOCATION_IMAGES } from "../../media/restaurant";
 import { LocationCard } from "../cards/LocationCard";
 import FadeIn from "../animations/FadeIn.astro";
+import { resolveImageSrc } from "../../lib/images";
 
 interface Props {
   eyebrow: string;
@@ -35,20 +36,44 @@ const { eyebrow, heading, description, reserveLabel, directionsLabel } = Astro.p
 
     <div class="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-3">
       {
-        LOCATIONS.map((location, index) => {
-          const heroImage = LOCATION_IMAGES.find((img) => img.id === location.heroImage);
-          return (
-            <FadeIn delay={index * 0.1}>
-              <LocationCard
-                location={location}
-                heroImageSrc={heroImage?.src ?? ""}
-                heroImageAlt={heroImage?.alt ?? location.name}
-                reserveLabel={reserveLabel}
-                directionsLabel={directionsLabel}
-              />
-            </FadeIn>
-          );
-        })
+        // LocationCard is a plain React component and can't call astro:assets
+        // itself, so each branch's photos are resolved to final optimized
+        // URLs here first — undefined (no src/assets file yet) renders as a
+        // placeholder panel inside the card.
+        await Promise.all(
+          LOCATIONS.map(async (location, index) => {
+            const heroImage = LOCATION_IMAGES.find((img) => img.id === location.heroImage);
+            const heroImageSrc = heroImage ? await resolveImageSrc(heroImage.src) : undefined;
+
+            // The rest of this branch's photos — galleryImages minus the one
+            // already shown as the hero photo above — resolved for the
+            // small thumbnail strip. Unresolved photos (not added to
+            // src/assets/ yet) are skipped rather than shown as broken.
+            const otherGalleryIds = location.galleryImages.filter((id) => id !== location.heroImage);
+            const thumbnails = (
+              await Promise.all(
+                otherGalleryIds.map(async (id) => {
+                  const image = LOCATION_IMAGES.find((img) => img.id === id);
+                  const src = image ? await resolveImageSrc(image.src) : undefined;
+                  return src ? { src, alt: image!.alt } : null;
+                })
+              )
+            ).filter((thumb) => thumb !== null);
+
+            return (
+              <FadeIn delay={index * 0.1}>
+                <LocationCard
+                  location={location}
+                  heroImageSrc={heroImageSrc ?? ""}
+                  heroImageAlt={heroImage?.alt ?? location.name}
+                  thumbnails={thumbnails}
+                  reserveLabel={reserveLabel}
+                  directionsLabel={directionsLabel}
+                />
+              </FadeIn>
+            );
+          })
+        )
       }
     </div>
   </div>

@@ -1,10 +1,8 @@
 ---
 // src/components/sections/MeetTheTeam.astro
 //
-// One unified grid rather than three separate Farmers/Chefs/Restaurant
-// Team subsections — reads as "one family" rather than an HR org chart,
-// which fits the brand's warm tone better. Each card still carries its
-// group as a small label under the role.
+// Restaurant leadership — one branch manager card per open branch, not a
+// farm-staff org chart (that story now lives in FounderMessage.astro).
 //
 // Joins TEAM_ROSTER (role/group — a people/org concern, in
 // data/farm-story.ts) with TEAM_IMAGES (name/photo — a media concern, in
@@ -14,6 +12,7 @@ import { TEAM_ROSTER } from "../../data/farm-story";
 import { FARM_STORY_CONTENT } from "../../content/farm-story";
 import { TEAM_IMAGES } from "../../media/team";
 import FadeIn from "../animations/FadeIn.astro";
+import OptimizedImage from "../ui/OptimizedImage.astro";
 
 const { eyebrow, heading } = FARM_STORY_CONTENT.meetTheTeam;
 
@@ -47,16 +46,15 @@ const team = TEAM_ROSTER.map((entry) => {
       </h2>
     </FadeIn>
 
-    <div class="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-3">
       {
         team.map((member, index) => (
           <FadeIn delay={index * 0.06} className="text-center">
             <div class="mx-auto aspect-square w-full max-w-[140px] overflow-hidden rounded-full">
-              <img
+              <OptimizedImage
                 src={member.photo}
                 alt={member.alt}
                 loading="lazy"
-                decoding="async"
                 class="h-full w-full object-cover"
               />
             </div>

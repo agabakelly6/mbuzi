@@ -10,7 +10,16 @@ import FoodQualityStory from "../../components/sections/FoodQualityStory.astro";
 import CTASection from "../../components/sections/CTASection.astro";
 import Footer from "../../components/layout/Footer.astro";
 import { MENU_SECTIONS } from "../../data/menu-sections";
-import { SIGNATURE_ITEMS, PLATTER_ITEMS, SIDE_ITEMS, DRINK_ITEMS } from "../../data/menu";
+import {
+  BREAKFAST_ITEMS,
+  MAIN_COURSE_ITEMS,
+  BURGER_ITEMS,
+  SANDWICH_ITEMS,
+  PIZZA_ITEMS,
+  LUSANIYA_ITEMS,
+  SMOOTHIE_ITEMS,
+  DRINK_ITEMS,
+} from "../../data/menu";
 import { MENU_CONTENT } from "../../content/menu";
 import { getPageStructuredData } from "../../config/seo";
 
@@ -37,33 +46,63 @@ const { hero, categorySections, cta } = MENU_CONTENT;
       eyebrow={hero.eyebrow}
       mottoLines={hero.headline}
       supportingText={hero.description}
+      posterSrc={hero.image}
+      posterAlt={hero.imageAlt}
       heightClass="h-[60vh]"
-      exploreHref="#signature-specials"
+      exploreHref="#breakfast"
       exploreLabel={hero.secondaryCta?.label}
-      nextSectionId="signature-specials"
+      nextSectionId="breakfast"
     />
 
     <MenuCategories client:load sections={MENU_SECTIONS} />
 
     <MenuGrid
-      id="signature-specials"
-      eyebrow={categorySections["signature-specials"].eyebrow}
-      heading={categorySections["signature-specials"].heading}
-      items={SIGNATURE_ITEMS}
+      id="breakfast"
+      eyebrow={categorySections.breakfast.eyebrow}
+      heading={categorySections.breakfast.heading}
+      items={BREAKFAST_ITEMS}
       tone="light"
     />
     <MenuGrid
-      id="platters"
-      eyebrow={categorySections.platters.eyebrow}
-      heading={categorySections.platters.heading}
-      items={PLATTER_ITEMS}
+      id="main-course"
+      eyebrow={categorySections["main-course"].eyebrow}
+      heading={categorySections["main-course"].heading}
+      items={MAIN_COURSE_ITEMS}
       tone="dark"
     />
     <MenuGrid
-      id="sides"
-      eyebrow={categorySections.sides.eyebrow}
-      heading={categorySections.sides.heading}
-      items={SIDE_ITEMS}
+      id="burgers"
+      eyebrow={categorySections.burgers.eyebrow}
+      heading={categorySections.burgers.heading}
+      items={BURGER_ITEMS}
+      tone="light"
+    />
+    <MenuGrid
+      id="sandwiches"
+      eyebrow={categorySections.sandwiches.eyebrow}
+      heading={categorySections.sandwiches.heading}
+      items={SANDWICH_ITEMS}
+      tone="dark"
+    />
+    <MenuGrid
+      id="pizza"
+      eyebrow={categorySections.pizza.eyebrow}
+      heading={categorySections.pizza.heading}
+      items={PIZZA_ITEMS}
+      tone="light"
+    />
+    <MenuGrid
+      id="lusaniya"
+      eyebrow={categorySections.lusaniya.eyebrow}
+      heading={categorySections.lusaniya.heading}
+      items={LUSANIYA_ITEMS}
+      tone="dark"
+    />
+    <MenuGrid
+      id="smoothies"
+      eyebrow={categorySections.smoothies.eyebrow}
+      heading={categorySections.smoothies.heading}
+      items={SMOOTHIE_ITEMS}
       tone="light"
     />
     <MenuGrid

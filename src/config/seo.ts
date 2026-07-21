@@ -7,7 +7,7 @@
 // data/locations.ts, data/menu.ts) instead of hand-rolling schema objects
 // or fabricating data that doesn't exist (reviews, ratings, addresses).
 import { SITE } from "./site";
-import { LOCATIONS, FEATURED_LOCATION } from "../data/locations";
+import { ACTIVE_LOCATIONS, FEATURED_LOCATION } from "../data/locations";
 import { MENU_SECTIONS } from "../data/menu-sections";
 import { MENU_ITEMS } from "../data/menu";
 import type { Location, OpeningHoursEntry } from "../types/location";
@@ -144,8 +144,12 @@ function branchToLocalBusiness(location: Location, origin: string) {
 /**
  * The site's primary Restaurant node — anchored on the flagship branch's
  * real address/coordinates/hours (FEATURED_LOCATION), with every other
- * branch listed under `department`. One node, reused by every page via
- * getPageStructuredData() rather than each page re-deriving it.
+ * *open* branch listed under `department`. A coming-soon branch (not yet
+ * open, no live hours/contact) is deliberately excluded from this
+ * operational listing — it still appears on the Locations page itself,
+ * just not as a bookable schema.org Restaurant. One node, reused by
+ * every page via getPageStructuredData() rather than each page
+ * re-deriving it.
  */
 function getRestaurantNode(origin: string) {
   return {
@@ -182,7 +186,7 @@ function getRestaurantNode(origin: string) {
       email: SITE.email,
       areaServed: "UG",
     },
-    department: LOCATIONS.map((location) => branchToLocalBusiness(location, origin)),
+    department: ACTIVE_LOCATIONS.map((location) => branchToLocalBusiness(location, origin)),
     potentialAction: {
       "@type": "ReserveAction",
       target: {
@@ -244,24 +248,18 @@ function getFAQNode(items: FAQItem[]) {
 
 /** Full Menu -> MenuSection -> MenuItem graph node for the /menu page, built from data/menu.ts + data/menu-sections.ts. */
 function getMenuNode(origin: string) {
-  const sectionIdToCategory: Record<string, string> = {
-    "signature-specials": "signature",
-    platters: "platters",
-    sides: "sides",
-    drinks: "drinks",
-  };
-
   return {
     "@type": "Menu",
     "@id": `${origin}${SITE.menuUrl}#menu`,
     name: `${SITE.name} Menu`,
     url: toAbsolute(SITE.menuUrl, origin),
+    // MenuSection ids in data/menu-sections.ts match MenuItem["category"]
+    // values in data/menu.ts one-to-one, so no separate id-to-category
+    // mapping table is needed here.
     hasMenuSection: MENU_SECTIONS.map((section) => ({
       "@type": "MenuSection",
       name: section.label,
-      hasMenuItem: MENU_ITEMS.filter(
-        (item) => item.category === sectionIdToCategory[section.id]
-      ).map((item) => ({
+      hasMenuItem: MENU_ITEMS.filter((item) => item.category === section.id).map((item) => ({
         "@type": "MenuItem",
         name: item.name,
         description: item.description,

@@ -58,6 +58,11 @@ const SERVICES = Object.keys(serviceLabels) as BranchService[];
               LOCATIONS.map((location) => (
                 <th class="px-4 py-4 text-center font-serif text-base font-semibold text-white">
                   {location.city}
+                  {location.status === "coming-soon" && (
+                    <span class="mt-1 block text-[10px] font-sans font-normal uppercase tracking-wide text-[#C89A4B]">
+                      Opening Soon
+                    </span>
+                  )}
                 </th>
               ))
             }

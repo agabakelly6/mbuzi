@@ -11,7 +11,7 @@
 //      a person.
 import type { FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { LOCATIONS } from "../../data/locations";
+import { ACTIVE_LOCATIONS } from "../../data/locations";
 import { TIME_SLOTS, PARTY_SIZES, OCCASION_TYPES } from "../../data/booking";
 import { getWhatsAppUrl, getTelUrl, SITE } from "../../config/site";
 import { getButtonClasses } from "../../lib/button-variants";
@@ -126,13 +126,13 @@ export function BookingForm({
       return;
     }
 
-    const branch = LOCATIONS.find((location) => location.id === form.branchId);
+    const branch = ACTIVE_LOCATIONS.find((location) => location.id === form.branchId);
     const message = buildWhatsAppMessage(form, branch?.name ?? form.branchId);
     const url = getWhatsAppUrl(message, branch?.whatsapp);
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  const selectedBranch = LOCATIONS.find((location) => location.id === form.branchId);
+  const selectedBranch = ACTIVE_LOCATIONS.find((location) => location.id === form.branchId);
   const selectedTimeLabel = TIME_SLOTS.find((slot) => slot.value === form.time)?.label;
   const selectedGuestsLabel = PARTY_SIZES.find((size) => String(size.value) === form.guests)?.label;
   const selectedOccasionLabel = OCCASION_TYPES.find((o) => o.value === form.occasion)?.label;
@@ -235,7 +235,7 @@ export function BookingForm({
             className={`${FORM_INPUT_CLASSES} ${errors.branchId ? FORM_ERROR_INPUT_CLASSES : ""}`}
           >
             <option value="">{fields.branch.placeholder}</option>
-            {LOCATIONS.map((location) => (
+            {ACTIVE_LOCATIONS.map((location) => (
               <option key={location.id} value={location.id}>
                 {location.city}
               </option>

@@ -17,6 +17,8 @@ export const MENU_CONTENT = {
     eyebrow: "The Full Menu",
     headline: ["Every Cut.", "Every Flavour."],
     description: "From the charcoal grill to your table — explore everything we serve.",
+    image: "/images/hero/hero-menu.webp",
+    imageAlt: "Beautifully plated YPA signature dishes",
     secondaryCta: { label: "See The Menu" },
   } satisfies HeroContent,
 
@@ -25,17 +27,33 @@ export const MENU_CONTENT = {
   // this together with data/menu-sections.ts's category ids without a
   // second, parallel list of section keys.
   categorySections: {
-    "signature-specials": {
+    breakfast: {
+      eyebrow: "To Start The Day",
+      heading: "Breakfast",
+    } satisfies SectionContent,
+    "main-course": {
       eyebrow: "From The Grill",
-      heading: "Signature Goat Specials",
+      heading: "Main Course",
     } satisfies SectionContent,
-    platters: {
-      eyebrow: "Built For The Table",
-      heading: "Family & Sharing Platters",
+    burgers: {
+      eyebrow: "Between The Buns",
+      heading: "Burgers",
     } satisfies SectionContent,
-    sides: {
-      eyebrow: "On The Side",
-      heading: "Local Sides",
+    sandwiches: {
+      eyebrow: "Quick Bites",
+      heading: "Sandwiches",
+    } satisfies SectionContent,
+    pizza: {
+      eyebrow: "Goat Meets Pizza",
+      heading: "Pizza",
+    } satisfies SectionContent,
+    lusaniya: {
+      eyebrow: "Built For Sharing",
+      heading: "Lusaniya",
+    } satisfies SectionContent,
+    smoothies: {
+      eyebrow: "Fresh & Blended",
+      heading: "Smoothies",
     } satisfies SectionContent,
     drinks: {
       eyebrow: "To Drink",

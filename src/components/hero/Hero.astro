@@ -1,14 +1,23 @@
 ---
 // src/components/hero/Hero.astro
 //
-// Reusable, full-bleed page hero. Every prop has a sensible default
-// sourced from data/navigation.ts so the *homepage* can call <Hero />
-// with zero props and get Section 1 exactly as specified — but Menu,
-// Farm Story, Gallery, etc. can reuse this same component for their own
-// hero banners by overriding eyebrow/mottoLines/media/height.
+// Reusable, full-bleed page hero. Every page passes its own posterSrc
+// (and posterAlt) — Home, Menu, Farm Story, Gallery, Locations, Booking,
+// Catering, and Contact each have their own cinematic image sourced from
+// their content/*.ts hero object. The defaults below exist only as a
+// safety fallback for a page that forgets to pass one — they are never
+// the intended image for any real page.
+//
+// videoSrc is optional and has no default: only the homepage layers a
+// video over its poster image today. When present, the video is only
+// ever shown at `lg` and above — small screens always get the static
+// poster image, both for data cost and because a full hero video rarely
+// reads well on a phone-sized viewport.
 import { HeroContent } from "./HeroContent";
+import OptimizedImage from "../ui/OptimizedImage.astro";
 import { NAV_CTAS, PRIMARY_NAV } from "../../data/navigation";
 import { SITE } from "../../config/site";
+import { resolveImageSrc } from "../../lib/images";
 
 interface Props {
   eyebrow?: string;
@@ -16,6 +25,7 @@ interface Props {
   mottoLines?: string[];
   supportingText?: string;
   posterSrc?: string;
+  posterAlt?: string;
   videoSrc?: string;
   reserveHref?: string;
   reserveLabel?: string;
@@ -43,8 +53,10 @@ const {
   eyebrow = "Authentic Ugandan Goat Choma",
   mottoLines = defaultMottoLines,
   supportingText = "Farm fresh goat meat prepared with authentic Ugandan flavour.",
-  posterSrc = "/images/hero/hero-poster.jpg",
-  videoSrc = "/videos/hero.mp4",
+  // Safety fallback only — every real page passes its own posterSrc/posterAlt.
+  posterSrc = "/images/hero/hero-main.webp",
+  posterAlt = "",
+  videoSrc,
   reserveHref = defaultReserve?.href ?? "/booking",
   reserveLabel = defaultReserve?.label ?? "Reserve Table",
   exploreHref = defaultMenuLink?.href ?? "/menu",
@@ -52,6 +64,12 @@ const {
   nextSectionId = "hero-next",
   heightClass = "h-screen",
 } = Astro.props;
+
+// The <video> element's `poster` attribute needs a plain URL (it can't
+// render an Astro component), so it's resolved separately here — the
+// <img> below handles its own resolution/placeholder fallback via
+// OptimizedImage.
+const resolvedPosterSrc = await resolveImageSrc(posterSrc);
 ---
 
 <section
@@ -63,25 +81,30 @@ const {
       both the slow Ken Burns scale and the reduced-motion fallback, so
       none of it costs a byte of JS. */}
   <div class="hero-media absolute inset-0 h-full w-full">
-    <img
+    <OptimizedImage
       src={posterSrc}
-      alt=""
+      alt={posterAlt}
       class="absolute inset-0 h-full w-full object-cover"
       loading="eager"
       fetchpriority="high"
-      decoding="async"
     />
-    <video
-      class="hero-video absolute inset-0 h-full w-full object-cover"
-      src={videoSrc}
-      poster={posterSrc}
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="metadata"
-      aria-hidden="true"
-    ></video>
+    {
+      videoSrc && (
+        // Desktop/large-screen only — phones always see the static poster
+        // image above, never the video.
+        <video
+          class="hero-video absolute inset-0 hidden h-full w-full object-cover lg:block"
+          src={videoSrc}
+          poster={resolvedPosterSrc}
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          aria-hidden="true"
+        />
+      )
+    }
   </div>
 
   <div

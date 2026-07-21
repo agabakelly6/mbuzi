@@ -12,6 +12,8 @@ export const GALLERY_CONTENT = {
     eyebrow: "Gallery",
     headline: ["Moments Worth", "Sharing."],
     description: "A glimpse into the farm, the fire, and everything in between.",
+    image: "/images/hero/hero-gallery.webp",
+    imageAlt: "A full restaurant of happy guests enjoying their meals at YPA",
   } satisfies HeroContent,
 
   behindTheScenes: {

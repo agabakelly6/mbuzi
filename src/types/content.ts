@@ -28,6 +28,13 @@ export interface HeroContent {
    */
   headline?: string[];
   description: string;
+  /**
+   * Page-specific hero background image, matching Hero.astro's
+   * `posterSrc` prop. Optional: Hero.astro falls back to its own default
+   * image if a page ever omits this, but every real page should set one.
+   */
+  image?: string;
+  imageAlt?: string;
   primaryCta?: CTAContent;
   secondaryCta?: CTAContent;
 }

@@ -13,9 +13,20 @@ import { GALLERY_IMAGES, GALLERY_FILTERS } from "../../media/gallery";
 import { SITE } from "../../config/site";
 import { GALLERY_CONTENT } from "../../content/gallery";
 import { getPageStructuredData } from "../../config/seo";
+import { resolveImageSrc } from "../../lib/images";
 
 const instagramHandle = SITE.social.instagram.replace("https://instagram.com/", "@");
 const { hero, behindTheScenes, instagramCta, cta } = GALLERY_CONTENT;
+
+// GalleryFilters is a client:visible island (filtering/lightbox happen
+// in the browser, after the static build is long done), so every image
+// has to arrive already resolved to its final optimized URL — there's no
+// server left at that point to resolve astro:assets on demand. A photo
+// that hasn't been added to src/assets/ yet resolves to an empty `src`,
+// which GalleryCard/GalleryLightbox render as a placeholder panel.
+const resolvedGalleryImages = await Promise.all(
+  GALLERY_IMAGES.map(async (image) => ({ ...image, src: (await resolveImageSrc(image.src)) ?? "" }))
+);
 ---
 
 <Layout
@@ -37,11 +48,13 @@ const { hero, behindTheScenes, instagramCta, cta } = GALLERY_CONTENT;
       eyebrow={hero.eyebrow}
       mottoLines={hero.headline}
       supportingText={hero.description}
+      posterSrc={hero.image}
+      posterAlt={hero.imageAlt}
       heightClass="h-[65vh]"
       nextSectionId="gallery-grid"
     />
 
-    <GalleryFilters client:visible images={GALLERY_IMAGES} filters={GALLERY_FILTERS} />
+    <GalleryFilters client:visible images={resolvedGalleryImages} filters={GALLERY_FILTERS} />
 
     <StorySplit
       id="behind-the-scenes"

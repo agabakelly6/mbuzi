@@ -13,6 +13,19 @@ export interface FarmPillarContent {
   description: string;
 }
 
+export interface FounderSignatureContent {
+  name: string;
+  title: string;
+  organizations: string[];
+}
+
+export interface FounderMessageContent {
+  eyebrow: string;
+  heading: string;
+  paragraphs: string[];
+  signature: FounderSignatureContent;
+}
+
 export const FARM_STORY_CONTENT = {
   seo: {
     title: "Our Farm Story",
@@ -25,6 +38,8 @@ export const FARM_STORY_CONTENT = {
     headline: ["Our Farm.", "Our Pride."],
     description:
       "Every dish starts long before the grill — on the land where we raise our goats with care.",
+    image: "/images/hero/hero-farm-story.webp",
+    imageAlt: "Healthy goats grazing across open pasture in the morning light",
   } satisfies HeroContent,
 
   brandStory: {
@@ -33,6 +48,31 @@ export const FARM_STORY_CONTENT = {
     description:
       "YPA began on a small plot outside Kampala, raising goats the way our grandparents did — slowly, patiently, without shortcuts. When friends kept asking to buy a plate straight off our fire, the restaurant followed. The farm came first, and it still comes first today.",
     cta: { label: "See What We Grill" },
+  } satisfies SectionContent,
+
+  founderMessage: {
+    eyebrow: "A Word From The Founder",
+    heading: "A Letter From Obed Ben",
+    paragraphs: [
+      "I didn't set out to build a restaurant. I set out to raise good goats, and to do the work honestly enough that it would still be standing years later.",
+      "YPA Farms began small — young people, a plot of land, and the belief that discipline and patience could turn into something real. There were no shortcuts we could afford, so we learned to do things properly: caring for the herd, respecting the land, and showing up every day whether it was easy or not.",
+      "What we were really building was opportunity — for the young people working alongside me, for the families who depend on the farm today, and for a country I wanted to serve in a way that felt useful, not symbolic.",
+      "YPA Mbuzi Choma came later, almost naturally. People who tasted what we raised kept asking where they could buy a plate of it. Opening a restaurant meant we could finally close the distance between the farm and the table — the same goat we raised ourselves, grilled the way we always have.",
+      "Every branch we open carries the same standard as the first herd did: raised with care, prepared with discipline, and served the way we'd want to be served ourselves. That's still the whole idea.",
+    ],
+    signature: {
+      name: "Obed Ben",
+      title: "Founder",
+      organizations: ["YPA Farms", "YPA Mbuzi Choma"],
+    },
+  } satisfies FounderMessageContent,
+
+  ypaConnection: {
+    eyebrow: "Part Of Something Bigger",
+    heading: "YPA Mbuzi Choma Is Part Of Youth Platform Africa",
+    description:
+      "YPA Mbuzi Choma grew out of Youth Platform Africa (YPA) — a Ugandan youth empowerment organisation founded in Gomba district that grew a small livestock project into agribusiness and entrepreneurship opportunities for young people across the country. The restaurant is one expression of that wider work: the same farm-raised goat behind YPA's agribusiness projects, served the way it always has been.",
+    cta: { label: "Visit Youth Platform Africa", href: "https://youthplatformafrica.com/" },
   } satisfies SectionContent,
 
   timeline: {
@@ -100,8 +140,8 @@ export const FARM_STORY_CONTENT = {
   },
 
   meetTheTeam: {
-    eyebrow: "The People Behind It",
-    heading: "Meet The Team",
+    eyebrow: "The People Behind Every Branch",
+    heading: "Meet Our Branch Leadership",
   } satisfies SectionContent,
 
   sustainability: {

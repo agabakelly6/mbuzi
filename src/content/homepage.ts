@@ -19,6 +19,8 @@ export const HOME_CONTENT = {
     // config/site.ts's SITE.motto when not overridden, so the brand
     // tagline isn't typed a third time.
     description: "Farm fresh goat meat prepared with authentic Ugandan flavour.",
+    image: "/images/hero/hero-home.webp",
+    imageAlt: "A whole goat grilling over glowing charcoal flames",
     primaryCta: { label: "Reserve Table" },
     secondaryCta: { label: "Explore Menu" },
   } satisfies HeroContent,

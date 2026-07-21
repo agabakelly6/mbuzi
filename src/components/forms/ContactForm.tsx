@@ -7,7 +7,7 @@
 import type { FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { DEPARTMENTS } from "../../data/contact";
-import { LOCATIONS } from "../../data/locations";
+import { ACTIVE_LOCATIONS } from "../../data/locations";
 import { getWhatsAppUrl, getMailtoUrl } from "../../config/site";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_ERROR_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
@@ -83,7 +83,7 @@ export function ContactForm({ fields, whatsappCtaLabel, emailCtaLabel }: Contact
       return null;
     }
     const department = DEPARTMENTS.find((d) => d.id === form.subjectId);
-    const branch = LOCATIONS.find((l) => l.id === form.branchId);
+    const branch = ACTIVE_LOCATIONS.find((l) => l.id === form.branchId);
     return { subjectLabel: department?.name ?? form.subjectId, branchName: branch?.name };
   }
 
@@ -92,7 +92,7 @@ export function ContactForm({ fields, whatsappCtaLabel, emailCtaLabel }: Contact
     const context = getValidatedContext();
     if (!context) return;
 
-    const branch = LOCATIONS.find((l) => l.id === form.branchId);
+    const branch = ACTIVE_LOCATIONS.find((l) => l.id === form.branchId);
     const message = buildMessageBody(form, context.subjectLabel, context.branchName);
     const url = getWhatsAppUrl(message, branch?.whatsapp);
     window.open(url, "_blank", "noopener,noreferrer");
@@ -228,7 +228,7 @@ export function ContactForm({ fields, whatsappCtaLabel, emailCtaLabel }: Contact
             className={FORM_INPUT_CLASSES}
           >
             <option value="">{fields.branch.placeholder}</option>
-            {LOCATIONS.map((location) => (
+            {ACTIVE_LOCATIONS.map((location) => (
               <option key={location.id} value={location.id}>
                 {location.city}
               </option>

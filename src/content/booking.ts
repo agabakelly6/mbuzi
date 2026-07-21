@@ -16,6 +16,8 @@ export const BOOKING_CONTENT = {
     eyebrow: "Booking",
     headline: ["Reserve Your", "Table."],
     description: "Tell us when you're coming, and we'll have the grill going.",
+    image: "/images/hero/hero-booking.webp",
+    imageAlt: "An elegant table set and ready before guests arrive",
   } satisfies HeroContent,
 
   form: {
