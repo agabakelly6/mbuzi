@@ -4,5 +4,6 @@ export * from "./ReservationModel";
 export * from "./KitchenModel";
 export * from "./DeliveryModel";
 export * from "./PaymentModel";
+export * from "./PromotionModel";
 export * from "./LoyaltyModel";
 export * from "./AuthModel";

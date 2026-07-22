@@ -12,6 +12,8 @@ export interface Customer extends Entity {
   fullName: string;
   phone: string;
   email?: string;
+  /** auth.users['id'] once this customer has a real account — undefined for an anonymous/guest customer (e.g. a WhatsApp order captured by name/phone only). Lets RLS express "is this my order/reservation/loyalty account" for an authenticated customer. */
+  userId?: string;
   defaultDeliveryAddress?: string;
   /** Branch['id'] of the branch this customer orders from most, used to personalize menu/promotions defaults. */
   preferredBranchId?: string;

@@ -7,6 +7,7 @@ export * from "./ReservationService";
 export * from "./KitchenService";
 export * from "./DeliveryService";
 export * from "./PaymentService";
+export * from "./PromotionService";
 export * from "./NotificationService";
 export * from "./LoyaltyService";
 export * from "./AnalyticsService";

@@ -68,6 +68,10 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     ...perm("menu_item", "read", "list"),
     ...perm("loyalty_member", "read"),
     ...perm("notification", "read"),
+    // Added once customers.userId (types/customer.ts) linked a customer to
+    // their own auth account — before that, "read/update your own profile"
+    // had nothing to scope against.
+    ...perm("customer", "read", "update"),
   ],
 
   waiter: [
@@ -104,6 +108,11 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
   ],
 
   branch_manager: [
+    // Read-only on their own branch record — originally omitted entirely
+    // (only owner had any `branch` grant), which made a branch_manager
+    // unable to even read their own branch's row. Added deliberately, not
+    // a redesign of scope: still branch-scoped like everything else here.
+    ...perm("branch", "read"),
     ...perm("order", "create", "read", "list", "update", "cancel", "export"),
     ...perm("payment", "create", "read", "list", "update", "refund"),
     ...perm("table", "create", "read", "list", "update", "delete"),
