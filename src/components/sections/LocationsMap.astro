@@ -31,6 +31,52 @@ function toPosition(lat: number, lng: number) {
   const y = 100 - ((lat - BOUNDS.minLat) / (BOUNDS.maxLat - BOUNDS.minLat)) * 100;
   return { x: Math.min(94, Math.max(6, x)), y: Math.min(88, Math.max(12, y)) };
 }
+
+/**
+ * Real, geographically-close branches (e.g. several Kampala-area
+ * locations) can land within a pin's width of each other once projected
+ * onto this small placeholder panel, making them visually overlap or
+ * stack unreadably. This spreads any such cluster into a small horizontal
+ * line around its shared center — display-only, never touches the real
+ * coordinates above, which is what a future real map SDK would consume
+ * directly instead of this normalization.
+ */
+function declusterPositions(positions: { x: number; y: number }[]): { x: number; y: number }[] {
+  const CLUSTER_THRESHOLD = 4; // percentage-space distance under which pins are considered overlapping
+  // Percentage-space spacing between clustered pins. Sized for the
+  // narrowest supported viewport (~272px usable map width at 320px),
+  // where anything much smaller still visually overlaps a 36px pin —
+  // verified against real branch data that this stays clear of Maddu's
+  // unclustered position (~15 points further away).
+  const SPREAD = 7;
+  const result = positions.map((p) => ({ ...p }));
+  const visited = new Set<number>();
+
+  for (let i = 0; i < result.length; i++) {
+    if (visited.has(i)) continue;
+    const cluster = [i];
+    for (let j = i + 1; j < result.length; j++) {
+      if (visited.has(j)) continue;
+      const dx = result[i].x - result[j].x;
+      const dy = result[i].y - result[j].y;
+      if (Math.sqrt(dx * dx + dy * dy) < CLUSTER_THRESHOLD) cluster.push(j);
+    }
+    if (cluster.length > 1) {
+      cluster.forEach((idx) => visited.add(idx));
+      const centerX = cluster.reduce((sum, idx) => sum + result[idx].x, 0) / cluster.length;
+      cluster.forEach((idx, order) => {
+        const offset = (order - (cluster.length - 1) / 2) * SPREAD;
+        result[idx].x = Math.min(94, Math.max(6, centerX + offset));
+      });
+    }
+  }
+
+  return result;
+}
+
+const pinPositions = declusterPositions(
+  locations.map((location) => toPosition(location.coordinates.lat, location.coordinates.lng))
+);
 ---
 
 <section id="map" aria-labelledby="map-heading" class="scroll-mt-36 bg-white py-20 sm:py-28 lg:scroll-mt-40">
@@ -64,8 +110,8 @@ function toPosition(lat: number, lng: number) {
       </div>
 
       {
-        locations.map((location) => {
-          const { x, y } = toPosition(location.coordinates.lat, location.coordinates.lng);
+        locations.map((location, index) => {
+          const { x, y } = pinPositions[index];
           const isComingSoon = location.status === "coming-soon";
           return (
             <a
@@ -86,7 +132,7 @@ function toPosition(lat: number, lng: number) {
               >
                 <MapPin className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
               </span>
-              <span class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#14100D] px-3 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100">
+              <span class="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#14100D] px-3 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 group-hover:z-20 group-focus-visible:opacity-100 group-focus-visible:z-20">
                 {location.city}
                 {isComingSoon && " · Opening Soon"}
               </span>

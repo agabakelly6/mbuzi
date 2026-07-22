@@ -67,7 +67,7 @@ export function MenuCategories({ sections }: MenuCategoriesProps) {
       aria-label="Menu categories"
       className="sticky top-20 z-30 border-b border-[#14100D]/10 bg-[#F5EFE4]/95 backdrop-blur-md lg:top-24"
     >
-      <div className="mx-auto flex max-w-[1280px] gap-2 overflow-x-auto px-6 py-4 [scrollbar-width:none] lg:justify-center lg:px-12 [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto flex max-w-[1280px] flex-wrap justify-center gap-2 px-6 py-4 lg:px-12">
         {sections.map((section) => {
           const isActive = section.id === activeId;
           return (
@@ -76,7 +76,7 @@ export function MenuCategories({ sections }: MenuCategoriesProps) {
               href={`#${section.id}`}
               onClick={handleClick(section.id)}
               aria-current={isActive ? "true" : undefined}
-              className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.08em] transition-colors duration-300 ${
+              className={`rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.08em] transition-colors duration-300 ${
                 isActive
                   ? "bg-[#14100D] text-white"
                   : "text-[#14100D]/60 hover:bg-[#14100D]/5 hover:text-[#14100D]"

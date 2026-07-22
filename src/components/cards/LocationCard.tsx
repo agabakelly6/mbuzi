@@ -47,16 +47,10 @@ export function LocationCard({
         ) : (
           <div className="h-full w-full bg-[#C89A4B]/10" role="img" aria-label={heroImageAlt} />
         )}
-        {isComingSoon ? (
+        {isComingSoon && (
           <span className="absolute left-4 top-4 rounded-full bg-[#14100D] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
             Coming Soon
           </span>
-        ) : (
-          location.featured && (
-            <span className="absolute left-4 top-4 rounded-full bg-[#C89A4B] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#14100D]">
-              Main Branch
-            </span>
-          )
         )}
       </div>
 
