@@ -92,7 +92,14 @@ const groups = items.reduce<{ label: string | null; items: typeof items }[]>((ac
           >
             {group.items.map((item, index) => (
               <FadeIn delay={index * 0.08}>
-                <FoodCard item={item} imageSrc={imageSrcById.get(item.id)} tone={tone} showCta={false} />
+                <FoodCard
+                  client:visible
+                  item={item}
+                  imageSrc={imageSrcById.get(item.id)}
+                  tone={tone}
+                  showCta={false}
+                  orderable
+                />
               </FadeIn>
             ))}
           </div>

@@ -12,6 +12,8 @@
 import "../styles/global.css";
 import { DEFAULT_SEO } from "../config/seo";
 import { COLORS } from "../config/theme";
+import { CartWidget } from "../components/cart/CartWidget";
+import { AssistantWidget } from "../components/assistant/AssistantWidget";
 
 interface Props {
   title: string;
@@ -97,6 +99,15 @@ const absoluteOgImage = new URL(ogImage, Astro.site ?? Astro.url.origin).toStrin
   </head>
   <body class="bg-[#14100D] font-sans antialiased">
     <slot />
+
+    <!--
+      Mounted here (not per-page like Navbar/Footer) so both floating
+      widgets appear on every route with one change — the assistant in
+      particular must be openable from any page, so it answers entirely
+      from imported data rather than page-specific props.
+    -->
+    <CartWidget client:load />
+    <AssistantWidget client:load />
 
     <script>
       // Drives every FadeIn.astro instance (`.fade-in` elements) sitewide
