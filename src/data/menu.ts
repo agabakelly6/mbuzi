@@ -125,6 +125,14 @@ export const MENU_ITEMS: MenuItem[] = [
     image: "/images/food/goat-stew.jpg",
     category: "main-course",
   },
+  {
+    id: "flaming-skewers",
+    name: "Flaming Skewers",
+    description: "Tender, marinated goat meat grilled on skewers until smoky, juicy, and flavorful.",
+    price: "UGX 38,000",
+    image: "/images/food/flaming-skewers.jpg",
+    category: "main-course",
+  },
 
   // Burgers
   {

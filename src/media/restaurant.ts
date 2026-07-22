@@ -170,6 +170,17 @@ export const BRANCH_IMAGES: RestaurantImage[] = [
     height: 900,
   },
   {
+    id: "restaurant-maddu-entrance",
+    title: "Maddu Entrance",
+    description: "The entrance to our newest branch, out in Gomba District.",
+    src: "/images/gallery/locations/maddu-entrance.jpg",
+    alt: "The entrance to YPA Mbuzi Choma's Maddu branch",
+    category: "restaurant",
+    featured: false,
+    width: 1200,
+    height: 900,
+  },
+  {
     id: "restaurant-nansana",
     title: "Nansana",
     description: "YPA's next branch, taking shape in Nansana, Wakiso District.",
@@ -184,3 +195,22 @@ export const BRANCH_IMAGES: RestaurantImage[] = [
 
 /** Convenience merge for Locations components doing an id lookup across both collections above — RestaurantExperience.astro should keep importing RESTAURANT_IMAGES directly, not this. */
 export const LOCATION_IMAGES: RestaurantImage[] = [...BRANCH_IMAGES, ...RESTAURANT_IMAGES];
+
+// Extra "restaurant" category shots that don't belong on the homepage's
+// capped 4-item grid (see the note above RESTAURANT_IMAGES) and aren't
+// tied to one branch, so BRANCH_IMAGES isn't the right home either.
+// Gallery-only — media/gallery.ts pulls these in individually, the same
+// way it cherry-picks the Ntinda pool photo out of BRANCH_IMAGES.
+export const FEATURE_IMAGES: RestaurantImage[] = [
+  {
+    id: "restaurant-smart-waitress",
+    title: "Smart Waitress",
+    description: "Our AI-assisted table service in action.",
+    src: "/images/gallery/smart-waitress.jpg",
+    alt: "YPA Mbuzi Choma's smart waitress assisting guests at the table",
+    category: "restaurant",
+    featured: false,
+    width: 1200,
+    height: 900,
+  },
+];

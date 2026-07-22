@@ -75,4 +75,15 @@ export const FOOD_IMAGES: FoodImage[] = [
     width: 1200,
     height: 900,
   },
+  {
+    id: "food-lusaniya-platter",
+    title: "Lusaniya Platter",
+    description: "A sharing platter of grilled goat cuts, built for the table.",
+    src: "/images/gallery/food/lusaniya-platter.jpg",
+    alt: "A Lusaniya sharing platter of grilled goat cuts at YPA Mbuzi Choma",
+    category: "food",
+    featured: false,
+    width: 1200,
+    height: 900,
+  },
 ];
