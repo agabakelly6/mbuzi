@@ -45,16 +45,16 @@ export const SITE = {
     "Premium Ugandan farm-to-table goat choma — raised on our own farm outside Kampala and grilled over charcoal, the same way for three generations.",
 
   /** Human-readable, for display (tel: links should use phoneDigits). */
-  phone: "+256 700 000 000",
+  phone: "+256 702 587 863",
   /** Digits only, no spaces or leading +, for tel:/wa.me URL construction. */
-  phoneDigits: "256700000000",
+  phoneDigits: "256702587863",
   /**
    * WhatsApp business number, digits only. Kept as a distinct field from
    * phoneDigits even though the value is currently identical — the two
    * numbers are conceptually different (voice line vs. WhatsApp business
    * line) and may diverge later.
    */
-  whatsappNumber: "256700000000",
+  whatsappNumber: "256702587863",
   email: "hello@ypambuzichoma.com",
 
   address: "Kampala, Uganda",
