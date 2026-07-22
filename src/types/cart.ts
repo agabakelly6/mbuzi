@@ -54,3 +54,31 @@ export interface OrderDetails {
   deliveryFee: number;
   total: number;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 platform domain cart — a backend-persisted, multi-device cart tied
+// to a Customer once auth exists, letting someone start an order on their
+// phone and finish it in-branch. Deliberately separate from CartState/
+// CartLine above: those back today's local-storage WhatsApp checkout (see
+// hooks/useCart.ts, lib/cart/CartStore.ts) and keep working completely
+// unchanged — this is what replaces them once Supabase-backed order
+// placement (services/OrderService.ts) exists.
+
+export interface CartItem {
+  id: string;
+  menuItemId: string;
+  variationLabel?: string;
+  quantity: number;
+  specialInstructions?: string;
+}
+
+export interface Cart {
+  id: string;
+  /** Null for a not-yet-authenticated guest cart, keyed instead by a device/session id at the storage layer. */
+  customerId: string | null;
+  branchId: string;
+  channel: "dine_in" | "pickup" | "delivery";
+  items: CartItem[];
+  createdAt: string;
+  updatedAt: string;
+}
