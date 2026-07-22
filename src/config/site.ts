@@ -29,7 +29,7 @@ export const BUSINESS_HOURS: BusinessHours[] = [
 ];
 
 export const SOCIAL_LINKS: SocialLinks = {
-  instagram: "https://instagram.com/ypambuzichoma",
+  instagram: "https://www.instagram.com/ypambuzichomarestaurant",
   facebook: "https://facebook.com/ypambuzichoma",
   tiktok: "https://tiktok.com/@ypambuzichoma",
   youtube: "https://youtube.com/@ypambuzichoma",

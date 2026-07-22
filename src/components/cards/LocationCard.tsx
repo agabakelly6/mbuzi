@@ -1,8 +1,8 @@
 // src/components/cards/LocationCard.tsx
-import { MapPin, Phone, Clock } from "lucide-react";
+import { MapPin, Phone, Clock, Camera, Music2 } from "lucide-react";
 import type { Location } from "../../types/location";
 import { WhatsAppButton } from "../ui/WhatsAppButton";
-import { getWhatsAppUrl, getTelUrl } from "../../config/site";
+import { getWhatsAppUrl, getTelUrl, SITE } from "../../config/site";
 import { getButtonClasses } from "../../lib/button-variants";
 import { getDeliveryInfo } from "../../data/delivery";
 import { DeliveryDetails } from "./DeliveryDetails";
@@ -101,6 +101,32 @@ export function LocationCard({
                 className="transition-colors duration-300 hover:text-[#14100D]"
               >
                 {location.phone}
+              </a>
+            </div>
+          )}
+          {!isComingSoon && (
+            <div className="flex items-center gap-2.5">
+              <Camera className="h-4 w-4 shrink-0 text-[#C89A4B]" aria-hidden="true" />
+              <a
+                href={SITE.social.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors duration-300 hover:text-[#14100D]"
+              >
+                Instagram
+              </a>
+            </div>
+          )}
+          {location.tiktok && (
+            <div className="flex items-center gap-2.5">
+              <Music2 className="h-4 w-4 shrink-0 text-[#C89A4B]" aria-hidden="true" />
+              <a
+                href={location.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors duration-300 hover:text-[#14100D]"
+              >
+                TikTok
               </a>
             </div>
           )}

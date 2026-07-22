@@ -42,6 +42,8 @@ export interface Location {
   whatsapp: string;
   /** Empty string when not yet available. */
   email: string;
+  /** Branch-specific TikTok profile URL. Empty string when not yet available (e.g. a coming-soon branch) — unlike phone/whatsapp/email, Instagram is one shared account across all branches, so it isn't duplicated here (see SITE.social.instagram). */
+  tiktok: string;
   /** Empty array when there are no hours to show yet (e.g. a coming-soon branch). */
   openingHours: OpeningHoursEntry[];
   description: string;
