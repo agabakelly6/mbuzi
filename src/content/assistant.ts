@@ -1,12 +1,13 @@
 // src/content/assistant.ts
 //
-// Copy only — greetings, conversation starters, FAQ, fallback responses,
-// intent intros. Structured knowledge (recommendation rules, intent
-// keywords) lives in data/assistant.ts instead, matching this project's
-// content/data split. Typed via types/content.ts's FAQItem, same as
-// every other page's FAQ array.
+// Copy only — greetings, conversation starters, FAQ, fallback responses.
+// Recommendation defaults live in data/assistant.ts instead, matching
+// this project's content/data split. Typed via types/content.ts's
+// FAQItem, same as every other page's FAQ array. These FAQ_ITEMS are
+// also indexed into the retrieval engine's knowledge base
+// (lib/assistant/knowledgeBase.ts) alongside every other page's FAQ.
 import type { FAQItem } from "../types/content";
-import type { AssistantIntent, RecommendationContext } from "../types/assistant";
+import type { RecommendationContext } from "../types/assistant";
 
 export const GREETING =
   "Hi, I'm the YPA assistant 👋 Ask me about locations, hours, delivery, or let me recommend a dish.";
@@ -41,26 +42,9 @@ export const CONVERSATION_STARTERS: ConversationStarter[] = [
   },
 ];
 
-export const INTENT_INTROS: Record<AssistantIntent, string> = {
-  greeting: GREETING,
-  hours: "Here are our opening hours:",
-  locations: "Here's where you can find us:",
-  reservation: "Happy to help you reserve a table:",
-  delivery: "Here's our delivery info:",
-  menu: "Here's what's on the menu:",
-  recommendation: "Here's what I'd suggest:",
-  payment: "Here's how you can pay:",
-  events: "Here's what we can do for your event:",
-  catering: "Here's how our catering works:",
-  farmStory: "Here's a bit about our farm:",
-  founderStory: "Here's the story behind YPA:",
-  faq: "Here's what I know:",
-  fallback: "",
-};
-
 export const FALLBACK_RESPONSES: string[] = [
-  "I'm not sure about that one — but I can help with locations, hours, delivery, reservations, or a dish recommendation. Or continue on WhatsApp and ask our team directly.",
-  "I don't have an answer for that yet. Try asking about our menu, branches, or delivery — or hand this off to our team on WhatsApp.",
+  "I couldn't find information about that in YPA's current information. I can help with locations, hours, delivery, reservations, the menu, or catering — or continue on WhatsApp and ask our team directly.",
+  "I couldn't find that in what I currently know about YPA. Try asking about our menu, branches, delivery, or catering — or hand this off to our team on WhatsApp.",
 ];
 
 export const FAQ_ITEMS: FAQItem[] = [

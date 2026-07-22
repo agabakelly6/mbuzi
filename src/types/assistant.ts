@@ -56,3 +56,42 @@ export interface AssistantResponse {
   recommendedItemId?: string;
   branchId?: string;
 }
+
+// --- Retrieval knowledge base -----------------------------------------
+// Added when the assistant moved from keyword-intent matching to a
+// retrieval engine (lib/assistant/retrieval.ts) over a knowledge base
+// built from the project's real content/data (lib/assistant/knowledgeBase.ts).
+
+export type KnowledgeCategory =
+  | "menu"
+  | "location"
+  | "delivery"
+  | "booking"
+  | "payment"
+  | "catering"
+  | "contact"
+  | "farm"
+  | "founder"
+  | "faq"
+  | "hours"
+  | "expansion"
+  | "general";
+
+/** One retrievable, natural-language fact — always derived from an existing content/data source, never authored standalone. */
+export interface KnowledgeChunk {
+  id: string;
+  category: KnowledgeCategory;
+  /** Short label, also searched — a question, a dish name, a branch name, etc. */
+  title: string;
+  /** The actual sentence(s) a synthesized answer can quote or include verbatim. */
+  text: string;
+  /** Extra searchable terms not necessarily present verbatim in text/title. */
+  keywords?: string[];
+  /** MenuItem id (category "menu") or Location id (category "location") — lets a matched chunk drive AssistantResponse.recommendedItemId/branchId. */
+  sourceRef?: string;
+}
+
+export interface ScoredChunk {
+  chunk: KnowledgeChunk;
+  score: number;
+}

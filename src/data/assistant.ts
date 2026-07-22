@@ -1,32 +1,20 @@
 // src/data/assistant.ts
 //
-// Structured assistant knowledge — intent keywords and recommendation
-// rules. Copy (greetings, FAQ text, fallback strings) lives in
-// content/assistant.ts instead, matching this project's content/data
-// split. Nothing here is hardcoded into a component; lib/assistant/
-// assistantEngine.ts is the only consumer.
-import { MENU_ITEMS, type MenuCategory, type MenuItem } from "./menu";
-import type { AssistantIntent, RecommendationContext, RecommendationRule } from "../types/assistant";
-
-export const INTENT_KEYWORDS: Record<Exclude<AssistantIntent, "greeting" | "fallback">, string[]> = {
-  hours: ["hour", "open", "close", "time", "when are you"],
-  locations: ["location", "branch", "where", "address", "directions"],
-  reservation: ["book", "reserve", "reservation", "table"],
-  delivery: ["deliver", "delivery", "zone", "fee"],
-  menu: ["menu", "category", "categories", "dish", "dishes", "food"],
-  recommendation: ["recommend", "suggestion", "suggest", "what should i", "popular", "favourite", "favorite"],
-  payment: ["pay", "payment", "mobile money", "mtn", "airtel", "cash", "visa"],
-  events: ["event", "party", "birthday", "wedding", "corporate"],
-  catering: ["cater", "catering"],
-  farmStory: ["farm", "raise", "raised", "source", "sourced"],
-  founderStory: ["founder", "obed", "who started", "who founded"],
-  faq: ["faq", "question"],
-};
+// Curated recommendation defaults for the assistant's 6 fixed
+// conversation-starter buttons (content/assistant.ts's
+// CONVERSATION_STARTERS) — a deliberate, small set of default
+// suggestions per button, not a database of hardcoded question/answer
+// pairs. Free-text questions are answered by the retrieval engine
+// instead (lib/assistant/knowledgeBase.ts + retrieval.ts + skills/),
+// which reasons over the project's real content/data rather than
+// matching keywords — see lib/assistant/assistantEngine.ts.
+import { MENU_ITEMS, type MenuItem } from "./menu";
+import type { RecommendationContext, RecommendationRule } from "../types/assistant";
 
 /**
  * ids verified against data/menu.ts. One rule per conversation-starter
- * recommendation context, plus a keyword list so the same rule can also
- * be reached from free-text ("what's good for breakfast?").
+ * recommendation context (except "favourites", handled separately via
+ * getPopularDishes() since it isn't a single fixed dish).
  */
 export const RECOMMENDATION_RULES: RecommendationRule[] = [
   {
@@ -72,44 +60,11 @@ export function getRecommendationForContext(
   return RECOMMENDATION_RULES.find((rule) => rule.context === context);
 }
 
-export function findRecommendationByKeyword(question: string): RecommendationRule | undefined {
-  const lower = question.toLowerCase();
-  return RECOMMENDATION_RULES.find((rule) => rule.triggers.some((trigger) => lower.includes(trigger)));
-}
-
 export function getMenuItemById(itemId: string): MenuItem | undefined {
   return MENU_ITEMS.find((item) => item.id === itemId);
 }
 
-/** Today's favourites — chef picks and featured dishes, for the "🔥 Today's Favourites" starter. */
+/** Today's favourites — chef picks and featured dishes, for the "🔥 Today's Favourites" starter and as the recommendation skill's fallback when a free-text question doesn't name anything specific. */
 export function getPopularDishes(): MenuItem[] {
   return MENU_ITEMS.filter((item) => item.chefPick || item.featured);
-}
-
-export function getMenuCategorySummary(): { category: MenuCategory; count: number; sampleNames: string[] }[] {
-  const categories = Array.from(new Set(MENU_ITEMS.map((item) => item.category)));
-  return categories.map((category) => {
-    const items = MENU_ITEMS.filter((item) => item.category === category);
-    return {
-      category,
-      count: items.length,
-      sampleNames: items.slice(0, 3).map((item) => item.name),
-    };
-  });
-}
-
-/** Detects the most likely intent from free text via simple keyword matching — the v1 rule-based "understanding" layer. */
-export function detectIntent(question: string): AssistantIntent {
-  const lower = question.toLowerCase();
-
-  if (findRecommendationByKeyword(question)) return "recommendation";
-
-  for (const [intent, keywords] of Object.entries(INTENT_KEYWORDS) as [
-    Exclude<AssistantIntent, "greeting" | "fallback">,
-    string[]
-  ][]) {
-    if (keywords.some((keyword) => lower.includes(keyword))) return intent;
-  }
-
-  return "fallback";
 }
