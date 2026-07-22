@@ -74,6 +74,17 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     [pushAssistantReply]
   );
 
+  // Memoized so AssistantPanel's focus-trap effect (deps: [isOpen, closePanel])
+  // only re-runs on an actual open/close transition, not on every message —
+  // an unmemoized closePanel here previously gave that effect a fresh
+  // reference on every render, re-running it mid-interaction and stealing
+  // focus to the close button while a user was still pressing Enter to
+  // send a message, which the browser then interpreted as activating the
+  // now-focused close button.
+  const openPanel = useCallback(() => setIsOpen(true), []);
+  const closePanel = useCallback(() => setIsOpen(false), []);
+  const togglePanel = useCallback(() => setIsOpen((prev) => !prev), []);
+
   const value: AssistantContextValue = {
     messages,
     isOpen,
@@ -81,9 +92,9 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     lastRecommendedItemId,
     lastQuestion,
     lastSummary,
-    openPanel: () => setIsOpen(true),
-    closePanel: () => setIsOpen(false),
-    togglePanel: () => setIsOpen((prev) => !prev),
+    openPanel,
+    closePanel,
+    togglePanel,
     sendQuestion,
     sendRecommendation,
   };

@@ -75,7 +75,7 @@ const absoluteOgImage = new URL(ogImage, Astro.site ?? Astro.url.origin).toStrin
 
     {
       structuredData && (
-        <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+        <script type="application/ld+json" set:html={JSON.stringify(structuredData)} is:inline />
       )
     }
 
@@ -98,6 +98,12 @@ const absoluteOgImage = new URL(ogImage, Astro.site ?? Astro.url.origin).toStrin
     </style>
   </head>
   <body class="bg-[#14100D] font-sans antialiased">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-[#C89A4B] focus:px-6 focus:py-3 focus:text-[13px] focus:font-semibold focus:uppercase focus:tracking-[0.1em] focus:text-[#14100D] focus:outline-none focus:ring-2 focus:ring-white"
+    >
+      Skip to content
+    </a>
     <slot />
 
     <!--

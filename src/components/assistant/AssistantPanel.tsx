@@ -7,7 +7,7 @@
 // surface treatment. Focus-trap/Escape/role="dialog" recipe matches
 // MobileMenu.tsx; this is a corner popover (scale+fade) rather than a
 // full edge-slide drawer since it's a small chat panel, not primary nav.
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Send } from "lucide-react";
 import { useAssistant } from "../../context/AssistantContext";
@@ -19,6 +19,8 @@ import { buildAssistantWhatsAppMessage } from "../../lib/assistant/assistantMess
 import { getWhatsAppUrl } from "../../config/site";
 import { getButtonClasses } from "../../lib/button-variants";
 import { GREETING, INPUT_PLACEHOLDER, PANEL_TITLE, WHATSAPP_HANDOFF_LABEL } from "../../content/assistant";
+import { setOpenOverlay, clearOverlayIfCurrent } from "../../lib/overlayCoordination";
+import { ASSISTANT_PANEL_DIALOG_ID } from "./AssistantFAB";
 
 export function AssistantPanel() {
   const { messages, isOpen, isTyping, lastQuestion, lastSummary, lastRecommendedItemId, closePanel, sendQuestion } =
@@ -28,12 +30,24 @@ export function AssistantPanel() {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const dialogId = useId();
+  const externalTriggerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth" });
   }, [messages.length, isTyping, prefersReducedMotion]);
+
+  // Captures whatever had focus before opening (the AssistantFAB, in
+  // practice) and restores it when the panel closes via any path.
+  useEffect(() => {
+    if (!isOpen) return;
+    externalTriggerRef.current = document.activeElement as HTMLElement | null;
+    setOpenOverlay("assistant");
+    return () => {
+      externalTriggerRef.current?.focus();
+      clearOverlayIfCurrent("assistant");
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,7 +103,7 @@ export function AssistantPanel() {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          id={dialogId}
+          id={ASSISTANT_PANEL_DIALOG_ID}
           ref={panelRef}
           role="dialog"
           aria-modal="true"
@@ -107,13 +121,18 @@ export function AssistantPanel() {
               type="button"
               aria-label="Close assistant"
               onClick={closePanel}
-              className="text-white/50 transition-colors duration-300 hover:text-[#C89A4B]"
+              className="text-white/50 transition-colors duration-300 hover:text-[#C89A4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C89A4B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#14100D]"
             >
               ✕
             </button>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+          <div
+            className="flex-1 space-y-3 overflow-y-auto px-5 py-4"
+            role="log"
+            aria-live="polite"
+            aria-label="Conversation"
+          >
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-[13px] leading-relaxed text-white/90">
                 {GREETING}

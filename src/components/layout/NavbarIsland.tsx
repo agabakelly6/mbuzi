@@ -1,5 +1,5 @@
 // src/components/layout/NavbarIsland.tsx
-import { motion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import type { CtaLink, NavLink } from "../../data/navigation";
 import { useScrollPosition } from "../../hooks/useScrollPosition";
 import { Logo } from "../ui/Logo";
@@ -11,25 +11,6 @@ interface NavbarIslandProps {
   ctas: CtaLink[];
 }
 
-const barVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
-};
-
-const fadeDown: Variants = {
-  hidden: { opacity: 0, y: -14 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
-  },
-};
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.6, ease: "easeOut" } },
-};
-
 /**
  * The interactive navbar shell. Rendered as a client island from
  * Navbar.astro so Framer Motion (and the scroll listener it depends on)
@@ -38,9 +19,31 @@ const fadeIn: Variants = {
  */
 export function NavbarIsland({ links, ctas }: NavbarIslandProps) {
   const isScrolled = useScrollPosition(60);
+  const prefersReducedMotion = useReducedMotion();
 
   const solidCta = ctas.find((cta) => cta.variant === "solid");
   const outlineCta = ctas.find((cta) => cta.variant === "outline");
+
+  const barVariants: Variants = {
+    hidden: {},
+    visible: {
+      transition: prefersReducedMotion ? {} : { staggerChildren: 0.08, delayChildren: 0.1 },
+    },
+  };
+
+  const fadeDown: Variants = {
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : -14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: prefersReducedMotion ? 0.01 : 0.6, ease: [0.16, 1, 0.3, 1] },
+    },
+  };
+
+  const fadeIn: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: prefersReducedMotion ? 0.01 : 0.6, ease: "easeOut" } },
+  };
 
   return (
     <motion.header

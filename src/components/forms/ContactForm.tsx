@@ -4,7 +4,7 @@
 // Validates the form, then either opens WhatsApp or the user's email
 // client with a pre-filled message — both real, working handoffs to a
 // person, not a fake "Message Sent" state backed by nothing.
-import type { FormEvent } from "react";
+import type { SyntheticEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { DEPARTMENTS } from "../../data/contact";
 import { ACTIVE_LOCATIONS } from "../../data/locations";
@@ -87,7 +87,7 @@ export function ContactForm({ fields, whatsappCtaLabel, emailCtaLabel }: Contact
     return { subjectLabel: department?.name ?? form.subjectId, branchName: branch?.name };
   }
 
-  function handleWhatsAppSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleWhatsAppSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const context = getValidatedContext();
     if (!context) return;

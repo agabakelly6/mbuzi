@@ -9,7 +9,7 @@
 //      selected branch (or the site's main number if none is chosen
 //      yet). Doesn't need the form filled in — you're just talking to
 //      a person.
-import type { FormEvent } from "react";
+import type { SyntheticEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ACTIVE_LOCATIONS } from "../../data/locations";
 import { TIME_SLOTS, PARTY_SIZES, OCCASION_TYPES } from "../../data/booking";
@@ -115,7 +115,7 @@ export function BookingForm({
     return next;
   }
 
-  function handleWhatsAppSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleWhatsAppSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validate(form);
     setErrors(nextErrors);

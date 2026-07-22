@@ -1,5 +1,5 @@
 // src/components/hero/HeroButtons.tsx
-import { motion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 
 interface HeroButtonsProps {
   reserveHref: string;
@@ -7,16 +7,6 @@ interface HeroButtonsProps {
   exploreHref: string;
   exploreLabel: string;
 }
-
-const stagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
-};
-
-const rise: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
 
 /**
  * Primary/secondary hero CTA pair, kept as its own component because
@@ -35,6 +25,24 @@ export function HeroButtons({
   exploreHref,
   exploreLabel,
 }: HeroButtonsProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  const stagger: Variants = {
+    hidden: {},
+    visible: {
+      transition: prefersReducedMotion ? {} : { staggerChildren: 0.12, delayChildren: 0.05 },
+    },
+  };
+
+  const rise: Variants = {
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: prefersReducedMotion ? 0.01 : 0.5, ease: "easeOut" },
+    },
+  };
+
   return (
     <motion.div
       variants={stagger}

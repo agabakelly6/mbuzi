@@ -1,6 +1,6 @@
 // src/components/layout/MobileMenu.tsx
 import { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion, type Variants } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import type { CtaLink, NavLink } from "../../data/navigation";
 import { Logo } from "../ui/Logo";
 import { WhatsAppButton } from "../ui/WhatsAppButton";
@@ -10,21 +10,6 @@ interface MobileMenuProps {
   links: NavLink[];
   ctas: CtaLink[];
 }
-
-const panelVariants: Variants = {
-  closed: { x: "100%", transition: { duration: 0.45, ease: [0.76, 0, 0.24, 1] } },
-  open: { x: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
-};
-
-const listVariants: Variants = {
-  closed: {},
-  open: { transition: { staggerChildren: 0.06, delayChildren: 0.15 } },
-};
-
-const itemVariants: Variants = {
-  closed: { opacity: 0, y: 16 },
-  open: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
-};
 
 /**
  * Self-contained mobile navigation: the hamburger trigger (visible only
@@ -38,6 +23,31 @@ export function MobileMenu({ links, ctas }: MobileMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
   const dialogId = useId();
+  const prefersReducedMotion = useReducedMotion();
+
+  const panelVariants: Variants = {
+    closed: { x: "100%", transition: { duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.76, 0, 0.24, 1] } },
+    open: { x: 0, transition: { duration: prefersReducedMotion ? 0.01 : 0.55, ease: [0.16, 1, 0.3, 1] } },
+  };
+
+  const listVariants: Variants = {
+    closed: {},
+    open: { transition: prefersReducedMotion ? {} : { staggerChildren: 0.06, delayChildren: 0.15 } },
+  };
+
+  const itemVariants: Variants = {
+    closed: { opacity: 0, y: prefersReducedMotion ? 0 : 16 },
+    open: { opacity: 1, y: 0, transition: { duration: prefersReducedMotion ? 0.01 : 0.4, ease: "easeOut" } },
+  };
+
+  // Closes the drawer and always returns focus to the hamburger trigger —
+  // used by every close path (Escape, scrim click, nav link click, CTA
+  // click) so focus never gets dropped to <body> regardless of how the
+  // drawer was dismissed.
+  function closeMenu() {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }
 
   // Lock page scroll while the drawer is open.
   useBodyScrollLock(isOpen);
@@ -51,8 +61,7 @@ export function MobileMenu({ links, ctas }: MobileMenuProps) {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsOpen(false);
-        triggerRef.current?.focus();
+        closeMenu();
         return;
       }
 
@@ -119,7 +128,7 @@ export function MobileMenu({ links, ctas }: MobileMenuProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              onClick={() => setIsOpen(false)}
+              onClick={closeMenu}
               aria-hidden="true"
             />
 
@@ -152,7 +161,7 @@ export function MobileMenu({ links, ctas }: MobileMenuProps) {
                       <a
                         ref={index === 0 ? firstLinkRef : undefined}
                         href={link.href}
-                        onClick={() => setIsOpen(false)}
+                        onClick={closeMenu}
                         className="block border-b border-white/10 py-4 text-center font-serif text-2xl text-white/90 transition-colors duration-300 hover:text-[#C89A4B] focus-visible:text-[#C89A4B] focus-visible:outline-none"
                       >
                         {link.label}
@@ -170,7 +179,7 @@ export function MobileMenu({ links, ctas }: MobileMenuProps) {
               >
                 {ctas.map((cta) =>
                   cta.icon === "whatsapp" ? (
-                    <motion.div key={cta.href} variants={itemVariants} onClick={() => setIsOpen(false)}>
+                    <motion.div key={cta.href} variants={itemVariants} onClick={closeMenu}>
                       <WhatsAppButton
                         href={cta.href}
                         label={cta.label}
@@ -183,7 +192,7 @@ export function MobileMenu({ links, ctas }: MobileMenuProps) {
                       key={cta.href}
                       variants={itemVariants}
                       href={cta.href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={closeMenu}
                       className="flex items-center justify-center rounded-full bg-[#C89A4B] px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-[#14100D] transition-transform duration-300 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C89A4B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#14100D]"
                     >
                       {cta.label}

@@ -6,7 +6,7 @@
 // step — it builds OrderDetails (types/cart.ts) via useCart().buildOrderDetails()
 // and hands off to WhatsApp through the site's one getWhatsAppUrl() helper,
 // exactly like BookingForm/ContactForm already do.
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { X, Trash2, Truck, Store } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
@@ -18,6 +18,8 @@ import { FORM_INPUT_CLASSES, FORM_ERROR_INPUT_CLASSES, FORM_LABEL_CLASSES } from
 import { isValidName, isValidPhone } from "../../lib/helpers";
 import { getButtonClasses } from "../../lib/button-variants";
 import { getWhatsAppUrl } from "../../config/site";
+import { setOpenOverlay, clearOverlayIfCurrent } from "../../lib/overlayCoordination";
+import { CART_DRAWER_DIALOG_ID } from "./CartFAB";
 
 const panelVariants: Variants = {
   closed: { x: "100%", transition: { duration: 0.45, ease: [0.76, 0, 0.24, 1] } },
@@ -60,12 +62,26 @@ export function OrderDrawer() {
   const [errors, setErrors] = useState<FormErrors>({});
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerFocusRef = useRef<HTMLButtonElement>(null);
-  const dialogId = useId();
+  const externalTriggerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   const deliveryZones = branch ? getDeliveryInfo(branch)?.zones ?? [] : [];
 
   useBodyScrollLock(isDrawerOpen);
+
+  // Captures whatever had focus before opening (the CartFAB, in
+  // practice) and restores it when the drawer closes via any path — X
+  // button, scrim, or Escape — not just the internal close button focus
+  // handled by the effect below.
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    externalTriggerRef.current = document.activeElement as HTMLElement | null;
+    setOpenOverlay("cart");
+    return () => {
+      externalTriggerRef.current?.focus();
+      clearOverlayIfCurrent("cart");
+    };
+  }, [isDrawerOpen]);
 
   useEffect(() => {
     if (!isDrawerOpen) return;
@@ -136,7 +152,7 @@ export function OrderDrawer() {
 
           <motion.div
             key="order-panel"
-            id={dialogId}
+            id={CART_DRAWER_DIALOG_ID}
             ref={panelRef}
             role="dialog"
             aria-modal="true"

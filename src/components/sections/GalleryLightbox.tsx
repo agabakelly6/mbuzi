@@ -29,10 +29,25 @@ export function GalleryLightbox({
   const shouldReduceMotion = useReducedMotion();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerElementRef = useRef<HTMLElement | null>(null);
   const isOpen = activeIndex !== null;
   const image = isOpen ? images[activeIndex] : null;
 
   useBodyScrollLock(isOpen);
+
+  // Captures whatever had focus before opening and restores it when the
+  // lightbox actually closes. Kept in its own effect, keyed only on
+  // `isOpen`, so it isn't disrupted by onNext/onPrev/onClose changing
+  // identity on every navigation (the keydown effect below intentionally
+  // re-subscribes on every prop change, which would otherwise steal focus
+  // back to the opening gallery card mid-browse).
+  useEffect(() => {
+    if (!isOpen) return;
+    triggerElementRef.current = document.activeElement as HTMLElement | null;
+    return () => {
+      triggerElementRef.current?.focus();
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;

@@ -36,8 +36,8 @@ export function GalleryCard({ image, onOpen }: GalleryCardProps) {
       ) : (
         <div className="h-full w-full bg-[#C89A4B]/10" role="img" aria-label={image.alt} />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#14100D]/70 via-[#14100D]/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      <span className="absolute bottom-4 left-4 font-serif text-base font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="absolute inset-0 bg-gradient-to-t from-[#14100D]/70 via-[#14100D]/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" />
+      <span className="absolute bottom-4 left-4 font-serif text-base font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
         {image.title}
       </span>
     </motion.button>

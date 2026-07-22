@@ -1,5 +1,5 @@
 // src/components/hero/HeroContent.tsx
-import { motion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { HeroButtons } from "./HeroButtons";
 import { ScrollIndicator } from "./ScrollIndicator";
 
@@ -14,16 +14,6 @@ interface HeroContentProps {
   exploreLabel: string;
   nextSectionId: string;
 }
-
-const stagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
-};
-
-const rise: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-};
 
 /**
  * Text/CTA stack centered over the hero media. Mounted with client:load
@@ -41,6 +31,26 @@ export function HeroContent({
   exploreLabel,
   nextSectionId,
 }: HeroContentProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  const stagger: Variants = {
+    hidden: {},
+    visible: {
+      transition: prefersReducedMotion
+        ? {}
+        : { staggerChildren: 0.12, delayChildren: 0.15 },
+    },
+  };
+
+  const rise: Variants = {
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: prefersReducedMotion ? 0.01 : 0.6, ease: "easeOut" },
+    },
+  };
+
   return (
     <>
       <motion.div
