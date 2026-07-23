@@ -30,6 +30,8 @@ import { calculateOrderTotal, canRoleTransitionOrder, isOrderCancellable } from 
 import { supabaseOrderRepository } from "../../repositories/supabase/SupabaseOrderRepository";
 import { supabaseMenuRepository } from "../../repositories/supabase/SupabaseMenuRepository";
 import { supabaseDeliveryRepository } from "../../repositories/supabase/SupabaseDeliveryRepository";
+import { supabasePromotionRepository } from "../../repositories/supabase/SupabasePromotionRepository";
+import { supabasePromotionService } from "./SupabasePromotionService";
 import { DELIVERY_ZONES } from "../../data/delivery";
 
 export const supabaseOrderService: OrderService = {
@@ -71,8 +73,6 @@ export const supabaseOrderService: OrderService = {
 
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-    // Promo-code discount calculation belongs to the Promotions feature,
-    // out of scope for order processing itself — 0 for now.
     let deliveryFee = 0;
     if (parsed.data.channel === "delivery") {
       const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
@@ -80,7 +80,20 @@ export const supabaseOrderService: OrderService = {
       deliveryFee = zone.fee;
     }
 
-    const total = calculateOrderTotal({ subtotal, deliveryFee, discountTotal: 0, taxTotal: 0 });
+    let discountTotal = 0;
+    let appliedPromotionId: string | undefined;
+    if (parsed.data.promoCode) {
+      const applied = await supabasePromotionService.applyToOrder(parsed.data.promoCode, parsed.data.branchId, subtotal);
+      if (applied.error || !applied.data) return { data: null, error: applied.error ?? dbError("validation_error") };
+      discountTotal = applied.data.discountAmount;
+      appliedPromotionId = applied.data.promotion.id;
+      // free_delivery's effect is zeroing the delivery fee, not a
+      // subtotal discount — models/PromotionModel.ts's calculateDiscount
+      // deliberately returns 0 for it, this is where it actually applies.
+      if (applied.data.promotion.type === "free_delivery") deliveryFee = 0;
+    }
+
+    const total = calculateOrderTotal({ subtotal, deliveryFee, discountTotal, taxTotal: 0 });
 
     const orderResult = await supabaseOrderRepository.create({
       branchId: parsed.data.branchId,
@@ -91,13 +104,21 @@ export const supabaseOrderService: OrderService = {
       tableId: parsed.data.tableId,
       subtotal,
       deliveryFee,
-      discountTotal: 0,
+      discountTotal,
       taxTotal: 0,
       total,
+      appliedPromotionId,
       notes: parsed.data.notes,
     });
 
     if (orderResult.error || !orderResult.data) return orderResult;
+
+    if (appliedPromotionId) {
+      const incrementResult = await supabasePromotionRepository.incrementUsage(appliedPromotionId);
+      if (incrementResult.error) {
+        console.error("[SupabaseOrderService.placeOrder] order created but promotion usage increment failed", incrementResult.error);
+      }
+    }
 
     if (parsed.data.channel === "delivery") {
       const deliveryResult = await supabaseDeliveryRepository.create({

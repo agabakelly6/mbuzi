@@ -15,6 +15,8 @@ export type AuthErrorCode =
   | "missing_profile"
   | "network_error"
   | "not_implemented"
+  | "email_in_use"
+  | "confirmation_required"
   | "unknown";
 
 const MESSAGES: Record<AuthErrorCode, string> = {
@@ -24,6 +26,8 @@ const MESSAGES: Record<AuthErrorCode, string> = {
   missing_profile: "Your account is missing required profile information. Contact an administrator.",
   network_error: "Couldn't reach the server. Check your connection and try again.",
   not_implemented: "This isn't available yet.",
+  email_in_use: "An account with that email already exists. Try signing in instead.",
+  confirmation_required: "Check your email to confirm your account before signing in.",
   unknown: "Something went wrong. Please try again.",
 };
 
@@ -46,6 +50,7 @@ export function mapAuthError(error: unknown): RepositoryError {
 
   if (/invalid login credentials/i.test(message)) return authError("invalid_credentials");
   if (/expired|invalid refresh token|refresh_token_not_found/i.test(message)) return authError("session_expired");
+  if (/already registered|user already exists/i.test(message)) return authError("email_in_use");
   if (status === 401 || status === 403) return authError("unauthorized");
 
   return authError("unknown");

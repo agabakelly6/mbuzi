@@ -1,0 +1,35 @@
+---
+// src/pages/order/index.astro
+//
+// The customer-facing, Supabase-backed ordering flow — entirely separate
+// from the existing WhatsApp cart (components/cart/*, hooks/useCart.ts),
+// which stays exactly as it is on the /menu page. This page requires a
+// signed-in customer account (see components/ordering/AuthGate.tsx) since
+// placing a real order needs one; the WhatsApp flow never did and still
+// doesn't.
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/layout/Navbar.astro";
+import Footer from "../../components/layout/Footer.astro";
+import { OrderingApp } from "../../components/ordering/OrderingApp";
+
+const title = "Order Online";
+const description = "Order pickup or delivery from your nearest YPA Mbuzi Choma branch.";
+---
+
+<Layout title={title} description={description} robots="noindex, follow">
+  <Navbar />
+  <main id="main-content">
+    <section class="bg-[#F5EFE4] py-20 sm:py-28">
+      <div class="mx-auto max-w-[1000px] px-6 lg:px-12">
+        <div class="mx-auto mb-12 max-w-2xl text-center">
+          <p class="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#C89A4B]">Order Online</p>
+          <h1 class="mt-4 font-serif text-3xl font-semibold text-[#14100D] sm:text-4xl lg:text-[42px]">
+            Pickup Or Delivery, Straight From The Branch.
+          </h1>
+        </div>
+        <OrderingApp client:load />
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

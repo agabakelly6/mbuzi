@@ -6,12 +6,18 @@
 -- per role.
 --
 -- IMPORTANT: the auth.users/auth.identities insert below targets the
--- schema used by the Supabase CLI's local Postgres image. That schema is
--- managed by Supabase and can change between CLI versions. If `supabase db
--- reset` fails on this section, check `supabase --version` against the
--- columns used here, or create these six accounts via the Auth Admin API
--- (`supabase.auth.admin.createUser`) instead — the public.branches inserts
--- below have no such dependency and are safe regardless.
+-- schema used by Supabase's managed Postgres. That schema is managed by
+-- Supabase and can change between versions. If this section ever fails,
+-- check the columns used here against the current auth schema, or create
+-- these six accounts via the Auth Admin API (`supabase.auth.admin.createUser`)
+-- instead — the public.branches inserts below have no such dependency and
+-- are safe regardless.
+--
+-- crypt()/gen_salt() are schema-qualified as extensions.crypt/gen_salt —
+-- on Supabase-hosted projects pgcrypto installs into the `extensions`
+-- schema, not `public` or the default search_path, so the unqualified
+-- names fail with "function does not exist" (confirmed against a live
+-- project while writing this).
 --
 -- Every seeded password is the literal string below, for local development
 -- only. Never reuse it anywhere real.
@@ -77,7 +83,7 @@ begin
     )
     values (
       '00000000-0000-0000-0000-000000000000', v_staff.id, 'authenticated', 'authenticated',
-      v_staff.email, crypt(v_password, gen_salt('bf')),
+      v_staff.email, extensions.crypt(v_password, extensions.gen_salt('bf')),
       now(),
       jsonb_build_object('provider', 'email', 'providers', array['email']),
       jsonb_build_object('full_name', v_staff.full_name, 'role', v_staff.role, 'branch_id', v_staff.branch_id),
