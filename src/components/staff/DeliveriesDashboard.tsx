@@ -8,6 +8,7 @@
 // automatically by SupabaseOrderService.placeOrder when a delivery order
 // is placed — nothing here creates one.
 import { useEffect, useState } from "react";
+import { Truck, MapPin, Phone } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import type { Branch } from "../../types/branch";
 import type { Delivery, DeliveryStatus } from "../../types/delivery";
@@ -21,6 +22,7 @@ import { DELIVERY_STATUS_TRANSITIONS } from "../../lib/state-machines";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
 import { formatUgx } from "../../lib/helpers";
+import { StatusPill, type PillTone } from "./StatusPill";
 
 const STATUS_LABELS: Record<DeliveryStatus, string> = {
   unassigned: "Unassigned",
@@ -30,6 +32,16 @@ const STATUS_LABELS: Record<DeliveryStatus, string> = {
   delivered: "Delivered",
   failed: "Failed",
   cancelled: "Cancelled",
+};
+
+const STATUS_TONE: Record<DeliveryStatus, PillTone> = {
+  unassigned: "amber",
+  assigned: "blue",
+  picked_up: "blue",
+  en_route: "blue",
+  delivered: "emerald",
+  failed: "red",
+  cancelled: "red",
 };
 
 export function DeliveriesDashboard() {
@@ -105,23 +117,35 @@ export function DeliveriesDashboard() {
 
   return (
     <div>
-      <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">
-        {isRider ? "My Deliveries" : "Deliveries"}
-      </h2>
+      <div className="mb-5 flex items-center justify-between">
+        <p className="text-sm text-[#14100D]/50">
+          <span className="font-semibold text-[#14100D]">{deliveries.length}</span> {isRider ? "of your deliveries" : "delivery order(s)"}
+        </p>
+      </div>
       {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
-      {deliveries.length === 0 && <p className="text-sm text-[#14100D]/50">Nothing here right now.</p>}
 
-      <div className="flex flex-col gap-3">
+      {deliveries.length === 0 && (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#14100D]/15 bg-white py-16 text-center">
+          <Truck size={26} className="text-[#14100D]/25" />
+          <p className="text-sm text-[#14100D]/50">Nothing here right now.</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {deliveries.map((delivery) => (
-          <div key={delivery.id} className="rounded-2xl border border-[#14100D]/10 bg-white p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="rounded-full bg-[#C89A4B]/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#14100D]">
-                {STATUS_LABELS[delivery.status]}
-              </span>
-              <span className="text-sm font-medium text-[#14100D]">{formatUgx(delivery.fee)}</span>
+          <div key={delivery.id} className="rounded-2xl border border-[#14100D]/10 bg-white p-5 shadow-[0_10px_30px_-24px_rgba(20,16,13,0.4)]">
+            <div className="mb-3 flex items-center justify-between">
+              <StatusPill label={STATUS_LABELS[delivery.status]} tone={STATUS_TONE[delivery.status]} />
+              <span className="text-sm font-semibold text-[#14100D]">{formatUgx(delivery.fee)}</span>
             </div>
-            <p className="text-sm text-[#14100D]/80">{delivery.address}</p>
-            <p className="text-xs text-[#14100D]/50">{delivery.customerPhone}</p>
+            <p className="flex items-start gap-1.5 text-sm text-[#14100D]/80">
+              <MapPin size={14} className="mt-0.5 shrink-0 text-[#C89A4B]" />
+              {delivery.address}
+            </p>
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-[#14100D]/50">
+              <Phone size={12} className="text-[#14100D]/40" />
+              {delivery.customerPhone}
+            </p>
 
             {!isRider && canReassignRider(delivery) && (
               <div className="mt-3 flex items-center gap-2">

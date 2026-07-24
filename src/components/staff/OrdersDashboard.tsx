@@ -6,6 +6,7 @@
 // SupabaseOrderService/SupabasePaymentService already built and tested
 // against the live project, not new logic.
 import { useEffect, useState } from "react";
+import { ClipboardList, Store, Truck, UtensilsCrossed, Wallet, Receipt, Ban } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import type { Branch } from "../../types/branch";
 import type { Order, OrderStatus } from "../../types/order";
@@ -21,6 +22,8 @@ import { getAllowedPaymentMethods } from "../../models/PaymentModel";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
 import { formatUgx } from "../../lib/helpers";
+import { DashboardCard } from "./DashboardCard";
+import { StatusPill, type PillTone } from "./StatusPill";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pending",
@@ -35,17 +38,24 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   rejected: "Rejected",
 };
 
-const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-blue-100 text-blue-800",
-  preparing: "bg-blue-100 text-blue-800",
-  ready: "bg-emerald-100 text-emerald-800",
-  served: "bg-emerald-100 text-emerald-800",
-  out_for_delivery: "bg-emerald-100 text-emerald-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  completed: "bg-[#14100D]/10 text-[#14100D]/70",
-  cancelled: "bg-red-100 text-red-700",
-  rejected: "bg-red-100 text-red-700",
+const STATUS_TONE: Record<OrderStatus, PillTone> = {
+  pending: "amber",
+  accepted: "blue",
+  preparing: "blue",
+  ready: "emerald",
+  served: "emerald",
+  out_for_delivery: "emerald",
+  delivered: "emerald",
+  completed: "neutral",
+  cancelled: "red",
+  rejected: "red",
+};
+
+const CHANNEL_ICON: Record<Order["channel"], typeof Store> = {
+  pickup: Store,
+  delivery: Truck,
+  dine_in: UtensilsCrossed,
+  whatsapp: ClipboardList,
 };
 
 export function OrdersDashboard() {
@@ -187,46 +197,60 @@ export function OrdersDashboard() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
-      <div className="flex flex-col gap-3">
-        <h2 className="font-serif text-lg font-semibold text-[#14100D]">
-          Orders {role === "owner" && branches.find((b) => b.id === branchId)?.name}
-        </h2>
-        {orders.length === 0 && <p className="text-sm text-[#14100D]/50">No orders yet.</p>}
-        {orders.map((order) => (
-          <button
-            key={order.id}
-            type="button"
-            onClick={() => setSelectedOrderId(order.id)}
-            className={`flex items-center justify-between rounded-xl border p-4 text-left transition-colors ${
-              selectedOrderId === order.id ? "border-[#C89A4B] bg-[#C89A4B]/5" : "border-[#14100D]/10 bg-white"
-            }`}
-          >
-            <div>
-              <p className="text-sm font-semibold text-[#14100D]">{order.orderNumber}</p>
-              <p className="text-xs text-[#14100D]/50">
-                {order.channel} · {order.items.length} item{order.items.length === 1 ? "" : "s"} · {formatUgx(order.total)}
-              </p>
+      <DashboardCard
+        title={`Orders${role === "owner" ? ` — ${branches.find((b) => b.id === branchId)?.name ?? ""}` : ""}`}
+        icon={ClipboardList}
+        className="lg:self-start"
+      >
+        <div className="flex flex-col gap-2.5">
+          {orders.length === 0 && (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-[#14100D]/15 py-10 text-center">
+              <ClipboardList size={24} className="text-[#14100D]/25" />
+              <p className="text-sm text-[#14100D]/50">No orders yet.</p>
             </div>
-            <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] ${STATUS_TONE[order.status]}`}>
-              {STATUS_LABELS[order.status]}
-            </span>
-          </button>
-        ))}
-      </div>
+          )}
+          {orders.map((order) => {
+            const ChannelIcon = CHANNEL_ICON[order.channel];
+            const isSelected = selectedOrderId === order.id;
+            return (
+              <button
+                key={order.id}
+                type="button"
+                onClick={() => setSelectedOrderId(order.id)}
+                className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
+                  isSelected
+                    ? "border-[#C89A4B] bg-[#C89A4B]/6 shadow-[0_8px_20px_-14px_rgba(200,154,75,0.6)]"
+                    : "border-[#14100D]/10 bg-white hover:border-[#14100D]/20"
+                }`}
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                    isSelected ? "bg-[#C89A4B] text-white" : "bg-[#14100D]/5 text-[#14100D]/60"
+                  }`}
+                >
+                  <ChannelIcon size={16} strokeWidth={2} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[#14100D]">{order.orderNumber}</p>
+                  <p className="truncate text-xs text-[#14100D]/50">
+                    {order.channel} · {order.items.length} item{order.items.length === 1 ? "" : "s"} · {formatUgx(order.total)}
+                  </p>
+                </div>
+                <StatusPill label={STATUS_LABELS[order.status]} tone={STATUS_TONE[order.status]} />
+              </button>
+            );
+          })}
+        </div>
+      </DashboardCard>
 
-      <div className="rounded-2xl border border-[#14100D]/10 bg-white p-6">
+      <DashboardCard title={selectedOrder ? selectedOrder.orderNumber : "Order Details"} icon={Receipt}>
         {!selectedOrder && <p className="text-sm text-[#14100D]/50">Select an order to view details.</p>}
 
         {selectedOrder && (
           <div className="flex flex-col gap-5">
-            <div>
-              <h3 className="font-serif text-lg font-semibold text-[#14100D]">{selectedOrder.orderNumber}</h3>
-              <p className="text-sm text-[#14100D]/50">
-                {selectedOrder.channel} · {STATUS_LABELS[selectedOrder.status]}
-              </p>
-            </div>
+            <StatusPill label={STATUS_LABELS[selectedOrder.status]} tone={STATUS_TONE[selectedOrder.status]} className="w-fit" />
 
-            <div>
+            <div className="rounded-xl bg-[#F5EFE4]/60 p-4">
               {selectedOrder.items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between py-1 text-sm">
                   <span className="text-[#14100D]/80">
@@ -236,7 +260,7 @@ export function OrdersDashboard() {
                   <span className="text-[#14100D]">{formatUgx(item.subtotal)}</span>
                 </div>
               ))}
-              <div className="mt-2 flex items-center justify-between border-t border-[#14100D]/10 pt-2 text-sm font-semibold">
+              <div className="mt-2 flex items-center justify-between border-t border-[#14100D]/10 pt-2 text-sm font-semibold text-[#14100D]">
                 <span>Total</span>
                 <span>{formatUgx(selectedOrder.total)}</span>
               </div>
@@ -262,23 +286,27 @@ export function OrdersDashboard() {
                 <button
                   type="button"
                   onClick={() => handleCancel(selectedOrder)}
-                  className="rounded-full border border-red-200 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-red-600 transition-colors hover:border-red-400"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-red-600 transition-colors hover:border-red-400 hover:bg-red-50"
                 >
+                  <Ban size={13} strokeWidth={2.25} />
                   Cancel
                 </button>
               )}
             </div>
 
             <div className="border-t border-[#14100D]/10 pt-4">
-              <h4 className="text-sm font-semibold text-[#14100D]">Payments</h4>
+              <h4 className="flex items-center gap-1.5 text-sm font-semibold text-[#14100D]">
+                <Wallet size={15} className="text-[#C89A4B]" />
+                Payments
+              </h4>
               {payments.length === 0 && <p className="mt-1 text-xs text-[#14100D]/50">No payments recorded yet.</p>}
               {payments.map((payment) => (
-                <div key={payment.id} className="mt-2 flex items-center justify-between text-sm">
+                <div key={payment.id} className="mt-2 flex items-center justify-between rounded-lg bg-[#F5EFE4]/60 px-3 py-2 text-sm">
                   <span className="text-[#14100D]/70">
-                    {payment.method} · {payment.status}
+                    {payment.method === "mobile_money" ? "Mobile Money" : "Cash"} · {payment.status}
                   </span>
                   <div className="flex items-center gap-3">
-                    <span className="text-[#14100D]">{formatUgx(payment.amount)}</span>
+                    <span className="font-medium text-[#14100D]">{formatUgx(payment.amount)}</span>
                     {payment.method === "mobile_money" && payment.status === "pending" && (
                       <button
                         type="button"
@@ -316,7 +344,7 @@ export function OrdersDashboard() {
             </div>
           </div>
         )}
-      </div>
+      </DashboardCard>
     </div>
   );
 }

@@ -20,7 +20,10 @@
 // and the inventory_items table are untouched, just unused; trivial to
 // bring back if that changes.
 import { useEffect, useState, type SyntheticEvent } from "react";
+import { TrendingUp, Tag, Users, UtensilsCrossed, Trophy } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { DashboardCard } from "./DashboardCard";
+import { StatusPill } from "./StatusPill";
 import type { Branch } from "../../types/branch";
 import type { Promotion, PromotionType } from "../../types/promotion";
 import type { User } from "../../types/user";
@@ -359,42 +362,48 @@ export function BranchManagementDashboard() {
                 ["Last 30 Days", stats.last30Days],
               ] as const
             ).map(([label, snapshot]) => (
-              <div key={label} className="rounded-2xl border border-[#14100D]/10 bg-white p-4">
-                <p className="text-xs font-semibold text-[#14100D]/50">{label}</p>
+              <div key={label} className="rounded-2xl border border-[#14100D]/10 bg-white p-5 shadow-[0_10px_30px_-24px_rgba(20,16,13,0.4)]">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#14100D]/50">{label}</p>
+                  <TrendingUp size={14} className="text-[#C89A4B]" />
+                </div>
                 <div className="mt-2 flex items-baseline justify-between">
                   <p className="text-2xl font-semibold text-[#14100D]">{snapshot.orderCount}</p>
                   <p className="text-xs text-[#14100D]/50">orders</p>
                 </div>
-                <p className="mt-1 text-sm text-[#14100D]">{formatUgx(snapshot.revenue)} revenue</p>
+                <p className="mt-1 text-sm font-medium text-[#14100D]">{formatUgx(snapshot.revenue)} revenue</p>
                 <p className="text-xs text-[#14100D]/50">Avg order {formatUgx(snapshot.averageOrderValue)}</p>
               </div>
             ))}
           </div>
 
           {stats.topSellingItems.length > 0 && (
-            <div className="mt-4 rounded-2xl border border-[#14100D]/10 bg-white p-4">
-              <p className="mb-2 text-xs font-semibold text-[#14100D]/50">Top Sellers (30 Days)</p>
+            <DashboardCard title="Top Sellers (30 Days)" icon={Trophy} className="mt-4">
               <div className="flex flex-wrap gap-2">
-                {stats.topSellingItems.map((item) => (
-                  <span key={item.menuItemId} className="rounded-full bg-[#F5EFE4] px-3 py-1 text-xs text-[#14100D]">
+                {stats.topSellingItems.map((item, i) => (
+                  <span
+                    key={item.menuItemId}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                      i === 0 ? "bg-[#C89A4B] text-white" : "bg-[#F5EFE4] text-[#14100D]"
+                    }`}
+                  >
                     {item.name} · {item.unitsSold}
                   </span>
                 ))}
               </div>
-            </div>
+            </DashboardCard>
           )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-      <div>
-        <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Promotions</h2>
-        {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
 
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <DashboardCard title="Promotions" icon={Tag}>
         <div className="mb-6 flex flex-col gap-3">
           {promotions.length === 0 && <p className="text-sm text-[#14100D]/50">No promotions yet.</p>}
           {promotions.map((promo) => (
-            <div key={promo.id} className="flex items-center justify-between rounded-xl border border-[#14100D]/10 bg-white p-4">
+            <div key={promo.id} className="flex items-center justify-between rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-4">
               <div>
                 <p className="text-sm font-semibold text-[#14100D]">{promo.code}</p>
                 <p className="text-xs text-[#14100D]/50">
@@ -413,7 +422,7 @@ export function BranchManagementDashboard() {
           ))}
         </div>
 
-        <form onSubmit={handleCreatePromotion} className="flex flex-col gap-3 rounded-2xl border border-[#14100D]/10 bg-white p-5">
+        <form onSubmit={handleCreatePromotion} className="flex flex-col gap-3 rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-5">
           <p className="text-sm font-semibold text-[#14100D]">New Promotion</p>
           <div className="grid grid-cols-2 gap-3">
             <input placeholder="CODE" value={form.code} onChange={(e) => updateField("code", e.target.value)} className={FORM_INPUT_CLASSES} />
@@ -441,10 +450,9 @@ export function BranchManagementDashboard() {
             {isSubmitting ? "Creating…" : "Create Promotion"}
           </button>
         </form>
-      </div>
+      </DashboardCard>
 
-      <div>
-        <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Staff</h2>
+      <DashboardCard title="Staff" icon={Users}>
         {hireMessage && <p className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">{hireMessage}</p>}
 
         <div className="mb-6 flex flex-col gap-2">
@@ -452,12 +460,13 @@ export function BranchManagementDashboard() {
             const isSelf = member.id === currentUser?.id;
             const canManage = role === "owner" ? !isSelf : SUBORDINATE_ROLES.includes(member.role) && !isSelf;
             return (
-              <div key={member.id} className="rounded-xl border border-[#14100D]/10 bg-white p-4 text-sm">
+              <div key={member.id} className="rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#14100D]">{member.fullName}</span>
-                  <span className="text-[#14100D]/50">
-                    {member.role} · {member.status}
-                  </span>
+                  <span className="font-medium text-[#14100D]">{member.fullName}</span>
+                  <StatusPill
+                    label={`${member.role.replace("_", " ")} · ${member.status}`}
+                    tone={member.status === "deactivated" ? "red" : member.status === "invited" ? "amber" : "emerald"}
+                  />
                 </div>
                 {canManage && (
                   <div className="mt-2">
@@ -477,7 +486,7 @@ export function BranchManagementDashboard() {
           })}
         </div>
 
-        <form onSubmit={handleHireStaff} className="flex flex-col gap-3 rounded-2xl border border-[#14100D]/10 bg-white p-5">
+        <form onSubmit={handleHireStaff} className="flex flex-col gap-3 rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-5">
           <p className="text-sm font-semibold text-[#14100D]">Hire Staff</p>
           <input placeholder="Full name" value={hireForm.fullName} onChange={(e) => updateHireField("fullName", e.target.value)} className={FORM_INPUT_CLASSES} />
           <input type="email" placeholder="Email" value={hireForm.email} onChange={(e) => updateHireField("email", e.target.value)} className={FORM_INPUT_CLASSES} />
@@ -495,12 +504,10 @@ export function BranchManagementDashboard() {
             {isHiring ? "Sending Invite…" : "Send Invite"}
           </button>
         </form>
-      </div>
+      </DashboardCard>
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Menu</h2>
-
+      <DashboardCard title="Menu" icon={UtensilsCrossed} className="mt-8">
         <div className="mb-6 flex flex-wrap items-center gap-2">
           {menuCategories.map((category) => (
             <span key={category.id} className="rounded-full bg-[#F5EFE4] px-3 py-1 text-xs font-semibold text-[#14100D]">
@@ -531,10 +538,10 @@ export function BranchManagementDashboard() {
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#14100D]/40">{category.name}</p>
                   <div className="flex flex-col gap-2">
                     {itemsInCategory.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-[#14100D]/10 bg-white p-4 text-sm">
+                      <div key={item.id} className="rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-4 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-[#14100D]">{item.name}</span>
-                          <span className="text-[#14100D]/50">{formatUgx(item.basePrice)}</span>
+                          <span className="font-medium text-[#14100D]/60">{formatUgx(item.basePrice)}</span>
                         </div>
                         {item.description && <p className="mt-1 text-xs text-[#14100D]/50">{item.description}</p>}
                         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -543,10 +550,10 @@ export function BranchManagementDashboard() {
                               key={status}
                               type="button"
                               onClick={() => handleSetMenuItemAvailability(item, status)}
-                              className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                              className={`rounded-lg border px-2.5 py-1 text-xs font-semibold capitalize transition-colors ${
                                 item.availability === status
                                   ? "border-[#C89A4B] bg-[#C89A4B]/10 text-[#C89A4B]"
-                                  : "border-[#14100D]/15 text-[#14100D]/60"
+                                  : "border-[#14100D]/15 bg-white text-[#14100D]/60 hover:border-[#14100D]/30"
                               }`}
                             >
                               {status.replace("_", " ")}
@@ -561,7 +568,7 @@ export function BranchManagementDashboard() {
             })}
           </div>
 
-          <form onSubmit={handleCreateMenuItem} className="flex h-fit flex-col gap-3 rounded-2xl border border-[#14100D]/10 bg-white p-5">
+          <form onSubmit={handleCreateMenuItem} className="flex h-fit flex-col gap-3 rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-5">
             <p className="text-sm font-semibold text-[#14100D]">New Dish</p>
             <input placeholder="Name" value={menuItemForm.name} onChange={(e) => updateMenuItemField("name", e.target.value)} className={FORM_INPUT_CLASSES} />
             <textarea
@@ -612,7 +619,7 @@ export function BranchManagementDashboard() {
             </button>
           </form>
         </div>
-      </div>
+      </DashboardCard>
     </div>
   );
 }

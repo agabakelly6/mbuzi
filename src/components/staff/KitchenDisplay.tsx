@@ -5,6 +5,7 @@
 // on_order_accepted DB trigger, tested live in the order-processing
 // milestone). This only progresses what already exists.
 import { useEffect, useState } from "react";
+import { ChefHat, Clock, Hand } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import type { Branch } from "../../types/branch";
 import type { KitchenTicket, KitchenTicketStatus } from "../../types/kitchen";
@@ -15,6 +16,7 @@ import { elapsedMinutes } from "../../models/KitchenModel";
 import { KITCHEN_TICKET_STATUS_TRANSITIONS } from "../../lib/state-machines";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
+import { StatusPill, type PillTone } from "./StatusPill";
 
 const STATUS_LABELS: Record<KitchenTicketStatus, string> = {
   queued: "Queued",
@@ -22,6 +24,14 @@ const STATUS_LABELS: Record<KitchenTicketStatus, string> = {
   ready: "Ready",
   served: "Served",
   cancelled: "Cancelled",
+};
+
+const STATUS_TONE: Record<KitchenTicketStatus, PillTone> = {
+  queued: "amber",
+  in_progress: "blue",
+  ready: "emerald",
+  served: "neutral",
+  cancelled: "red",
 };
 
 const NEXT_ACTION_LABEL: Partial<Record<KitchenTicketStatus, string>> = {
@@ -32,6 +42,13 @@ const NEXT_ACTION_LABEL: Partial<Record<KitchenTicketStatus, string>> = {
 
 function nextItemStatus(status: KitchenTicketStatus): KitchenTicketStatus | null {
   return KITCHEN_TICKET_STATUS_TRANSITIONS[status].find((s) => s !== "cancelled") ?? null;
+}
+
+/** Urgency accent — a ticket sitting for a while should visually stand out without staff having to read the timer. */
+function urgencyBorder(minutes: number): string {
+  if (minutes >= 20) return "border-red-300";
+  if (minutes >= 10) return "border-amber-300";
+  return "border-[#14100D]/10";
 }
 
 export function KitchenDisplay() {
@@ -117,52 +134,70 @@ export function KitchenDisplay() {
 
   return (
     <div>
-      <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Kitchen Queue</h2>
+      <div className="mb-5 flex items-center justify-between">
+        <p className="text-sm text-[#14100D]/50">
+          <span className="font-semibold text-[#14100D]">{tickets.length}</span> active ticket{tickets.length === 1 ? "" : "s"}
+        </p>
+      </div>
       {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
-      {tickets.length === 0 && <p className="text-sm text-[#14100D]/50">No active tickets.</p>}
+
+      {tickets.length === 0 && (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[#14100D]/15 bg-white py-16 text-center">
+          <ChefHat size={26} className="text-[#14100D]/25" />
+          <p className="text-sm text-[#14100D]/50">No active tickets — the queue is clear.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tickets.map((ticket) => (
-          <div key={ticket.id} className="rounded-2xl border border-[#14100D]/10 bg-white p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="rounded-full bg-[#C89A4B]/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#14100D]">
-                {STATUS_LABELS[ticket.status]}
-              </span>
-              <span className="text-xs text-[#14100D]/50">{elapsedMinutes(ticket)} min</span>
-            </div>
-
-            {ticket.items.map((item) => (
-              <div key={item.orderItemId} className="flex items-center justify-between border-b border-[#14100D]/5 py-2 text-sm last:border-0">
-                <div>
-                  <p className="text-[#14100D]">
-                    {item.quantity}× {item.nameSnapshot}
-                  </p>
-                  {item.specialInstructions && <p className="text-xs text-[#14100D]/50">{item.specialInstructions}</p>}
-                  <p className="text-xs text-[#14100D]/40">{STATUS_LABELS[item.status]}</p>
-                </div>
-                {NEXT_ACTION_LABEL[item.status] && (
-                  <button
-                    type="button"
-                    onClick={() => handleItemAdvance(ticket, item.orderItemId, item.status)}
-                    className={getButtonClasses({ variant: "outline", tone: "light", size: "sm" })}
-                  >
-                    {NEXT_ACTION_LABEL[item.status]}
-                  </button>
-                )}
+        {tickets.map((ticket) => {
+          const minutes = elapsedMinutes(ticket);
+          return (
+            <div
+              key={ticket.id}
+              className={`rounded-2xl border-2 bg-white p-5 shadow-[0_10px_30px_-24px_rgba(20,16,13,0.4)] ${urgencyBorder(minutes)}`}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <StatusPill label={STATUS_LABELS[ticket.status]} tone={STATUS_TONE[ticket.status]} />
+                <span className={`flex items-center gap-1 text-xs font-medium ${minutes >= 20 ? "text-red-600" : minutes >= 10 ? "text-amber-700" : "text-[#14100D]/50"}`}>
+                  <Clock size={12} strokeWidth={2.25} />
+                  {minutes} min
+                </span>
               </div>
-            ))}
 
-            {!ticket.assignedChefId && (
-              <button
-                type="button"
-                onClick={() => handleClaim(ticket)}
-                className={getButtonClasses({ variant: "solid", size: "sm", className: "mt-3 w-full" })}
-              >
-                Claim Ticket
-              </button>
-            )}
-          </div>
-        ))}
+              {ticket.items.map((item) => (
+                <div key={item.orderItemId} className="flex items-center justify-between border-b border-[#14100D]/5 py-2 text-sm last:border-0">
+                  <div>
+                    <p className="text-[#14100D]">
+                      {item.quantity}× {item.nameSnapshot}
+                    </p>
+                    {item.specialInstructions && <p className="text-xs text-[#14100D]/50">{item.specialInstructions}</p>}
+                    <p className="text-xs text-[#14100D]/40">{STATUS_LABELS[item.status]}</p>
+                  </div>
+                  {NEXT_ACTION_LABEL[item.status] && (
+                    <button
+                      type="button"
+                      onClick={() => handleItemAdvance(ticket, item.orderItemId, item.status)}
+                      className={getButtonClasses({ variant: "outline", tone: "light", size: "sm" })}
+                    >
+                      {NEXT_ACTION_LABEL[item.status]}
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {!ticket.assignedChefId && (
+                <button
+                  type="button"
+                  onClick={() => handleClaim(ticket)}
+                  className={getButtonClasses({ variant: "solid", size: "sm", className: "mt-3 flex w-full items-center justify-center gap-1.5" })}
+                >
+                  <Hand size={14} strokeWidth={2.25} />
+                  Claim Ticket
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

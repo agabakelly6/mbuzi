@@ -7,7 +7,10 @@
 // seat, cancel) but not create one — that's not an oversight, it's
 // lib/rbac.ts's `reservation` grants exactly.
 import { useEffect, useState, type SyntheticEvent } from "react";
+import { CalendarCheck, Table2, Users, Clock, Phone } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { DashboardCard } from "./DashboardCard";
+import { StatusPill, type PillTone } from "./StatusPill";
 import type { Branch } from "../../types/branch";
 import type { Table } from "../../types/table";
 import type { Reservation, ReservationStatus } from "../../types/reservation";
@@ -28,6 +31,15 @@ const STATUS_LABELS: Record<ReservationStatus, string> = {
   completed: "Completed",
   no_show: "No Show",
   cancelled: "Cancelled",
+};
+
+const STATUS_TONE: Record<ReservationStatus, PillTone> = {
+  requested: "amber",
+  confirmed: "blue",
+  seated: "emerald",
+  completed: "neutral",
+  no_show: "red",
+  cancelled: "red",
 };
 
 interface NewReservationForm {
@@ -160,23 +172,22 @@ export function ReservationsDashboard() {
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.3fr_1fr]">
-      <div>
-        <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Reservations</h2>
+      <DashboardCard title="Reservations" icon={CalendarCheck}>
         {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
 
         <div className="flex flex-col gap-3">
           {reservations.length === 0 && <p className="text-sm text-[#14100D]/50">No upcoming reservations.</p>}
           {reservations.map((reservation) => (
-            <div key={reservation.id} className="rounded-2xl border border-[#14100D]/10 bg-white p-4">
+            <div key={reservation.id} className="rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-[#14100D]">{reservation.guestName}</p>
-                <span className="rounded-full bg-[#C89A4B]/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#14100D]">
-                  {STATUS_LABELS[reservation.status]}
-                </span>
+                <StatusPill label={STATUS_LABELS[reservation.status]} tone={STATUS_TONE[reservation.status]} />
               </div>
-              <p className="text-xs text-[#14100D]/50">
-                {reservation.partySize} guests · {new Date(reservation.reservedFor).toLocaleString()} · {reservation.guestPhone}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#14100D]/50">
+                <span className="flex items-center gap-1"><Users size={12} /> {reservation.partySize} guests</span>
+                <span className="flex items-center gap-1"><Clock size={12} /> {new Date(reservation.reservedFor).toLocaleString()}</span>
+                <span className="flex items-center gap-1"><Phone size={12} /> {reservation.guestPhone}</span>
+              </div>
 
               {reservation.status === "requested" && (
                 <select
@@ -212,7 +223,7 @@ export function ReservationsDashboard() {
         </div>
 
         {canCreate && (
-          <form onSubmit={handleCreateReservation} className="mt-6 flex flex-col gap-3 rounded-2xl border border-[#14100D]/10 bg-white p-5">
+          <form onSubmit={handleCreateReservation} className="mt-6 flex flex-col gap-3 rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-5">
             <p className="text-sm font-semibold text-[#14100D]">New Reservation</p>
             <div className="grid grid-cols-2 gap-3">
               <input placeholder="Guest name" value={form.guestName} onChange={(e) => updateField("guestName", e.target.value)} className={FORM_INPUT_CLASSES} />
@@ -227,17 +238,16 @@ export function ReservationsDashboard() {
             </button>
           </form>
         )}
-      </div>
+      </DashboardCard>
 
-      <div>
-        <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Tables</h2>
+      <DashboardCard title="Tables" icon={Table2}>
         <div className="flex flex-col gap-2">
           {tables.map((table) => (
-            <div key={table.id} className="flex items-center justify-between rounded-xl border border-[#14100D]/10 bg-white p-4 text-sm">
-              <span className="text-[#14100D]">
+            <div key={table.id} className="flex items-center justify-between rounded-xl border border-[#14100D]/10 bg-[#F5EFE4]/40 p-4 text-sm">
+              <span className="font-medium text-[#14100D]">
                 {table.label} ({table.seats} seats)
               </span>
-              <span className="text-[#14100D]/50">{table.status}</span>
+              <StatusPill label={table.status} tone={table.status === "available" ? "emerald" : table.status === "occupied" ? "amber" : "neutral"} />
             </div>
           ))}
         </div>
@@ -251,7 +261,7 @@ export function ReservationsDashboard() {
             </button>
           </form>
         )}
-      </div>
+      </DashboardCard>
     </div>
   );
 }
