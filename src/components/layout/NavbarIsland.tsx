@@ -50,14 +50,32 @@ export function NavbarIsland({ links, ctas }: NavbarIslandProps) {
       variants={barVariants}
       initial="hidden"
       animate="visible"
-      className={[
-        "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-500 ease-out",
-        isScrolled
-          ? "bg-[#14100D]/90 shadow-[0_4px_24px_rgba(0,0,0,0.25)] backdrop-blur-md"
-          : "bg-transparent",
-      ].join(" ")}
+      className="fixed inset-x-0 top-0 z-50"
     >
-      <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-6 lg:h-24 lg:px-12">
+      {/*
+        The scroll-triggered blur lives on this decorative layer, not on
+        the header itself — backdrop-filter on a `position: fixed`
+        ancestor changes the containing block for ITS OWN fixed
+        descendants (per the CSS spec, same list as transform/filter),
+        so MobileMenu's fixed-position drawer was being sized against
+        this ~80px header instead of the viewport the moment the page
+        scrolled and this class turned on, squashing the drawer into a
+        thin strip and leaving the real page visible underneath — read
+        as "transparent" but actually a broken height. Keeping the
+        header itself filter-free and isolating the blur to a sibling
+        `<div>` means MobileMenu (still nested inside the header for
+        layout) is never a descendant of anything with backdrop-filter.
+      */}
+      <div
+        aria-hidden="true"
+        className={[
+          "absolute inset-0 transition-[background-color,box-shadow,backdrop-filter] duration-500 ease-out",
+          isScrolled
+            ? "bg-[#14100D]/90 shadow-[0_4px_24px_rgba(0,0,0,0.25)] backdrop-blur-md"
+            : "bg-transparent",
+        ].join(" ")}
+      />
+      <div className="relative mx-auto flex h-20 max-w-[1440px] items-center justify-between px-6 lg:h-24 lg:px-12">
         <motion.div variants={fadeDown}>
           <Logo tone="light" />
         </motion.div>
