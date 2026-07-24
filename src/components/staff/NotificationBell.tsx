@@ -6,6 +6,7 @@
 // until the first postgres_changes event arrives.
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { usePushNotifications } from "../../hooks/usePushNotifications";
 import type { Notification } from "../../types/notification";
 import { supabaseNotificationRepository } from "../../repositories/supabase/SupabaseNotificationRepository";
 
@@ -13,6 +14,7 @@ export function NotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const push = usePushNotifications(user?.id);
 
   useEffect(() => {
     if (!user) return;
@@ -70,6 +72,24 @@ export function NotificationBell() {
               <p className="text-xs">{notification.body}</p>
             </button>
           ))}
+
+          {push.state !== "unsupported" && push.state !== "granted" && (
+            <div className="mt-2 border-t border-[#14100D]/10 pt-3">
+              <button
+                type="button"
+                onClick={push.enable}
+                disabled={push.isEnabling || push.state === "denied"}
+                className="w-full rounded-xl bg-[#C89A4B]/10 p-3 text-left text-xs font-semibold text-[#C89A4B] disabled:opacity-60"
+              >
+                {push.state === "denied"
+                  ? "Push notifications blocked — enable them in your browser settings."
+                  : push.isEnabling
+                    ? "Enabling…"
+                    : "Enable push notifications on this device"}
+              </button>
+              {push.error && <p className="mt-1 px-1 text-xs text-red-600">{push.error}</p>}
+            </div>
+          )}
         </div>
       )}
     </div>
