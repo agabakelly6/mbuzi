@@ -2,10 +2,11 @@
 //
 // Pickup and delivery only — dine-in is deliberately out of this first
 // slice (it needs a restaurant_table selection, a separate feature this
-// page doesn't build). Ends at "order placed"; payment collection is a
-// staff/cashier action once the order is accepted, not part of checkout —
-// there's no payment gateway integration to collect a merchant-code
-// payment from a customer directly yet.
+// page doesn't build). Collects guest details and the cart contents,
+// then hands off to PaymentStep — the order itself isn't placed until
+// payment is confirmed there (see place_guest_order's p_payment_method
+// param and the enforce_payment_before_accept trigger, which blocks
+// kitchen prep until a cashier confirms payment).
 //
 // Guest checkout only — no customer account. Collects name + phone here
 // directly (no email — matches the original pre-Supabase WhatsApp cart's
@@ -13,22 +14,25 @@
 // checkout ever asked for.
 import { useState, type SyntheticEvent } from "react";
 import type { Branch } from "../../types/branch";
-import type { Order, OrderChannel } from "../../types/order";
+import type { OrderChannel } from "../../types/order";
 import type { UseOrderCartResult } from "../../hooks/useOrderCart";
-import { supabaseOrderService } from "../../services/supabase/SupabaseOrderService";
+import type { CreateGuestOrderInput } from "../../validators/order.schema";
 import { DELIVERY_ZONES } from "../../data/delivery";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
 import { formatUgx } from "../../lib/helpers";
 
+/** Everything CheckoutPanel collects before payment method is chosen on the next step. */
+export type GuestOrderDraft = Omit<CreateGuestOrderInput, "paymentMethod">;
+
 interface CheckoutPanelProps {
   branch: Branch;
   cart: UseOrderCartResult;
-  onOrderPlaced: (order: Order) => void;
+  onDetailsConfirmed: (details: GuestOrderDraft, total: number) => void;
   onBack: () => void;
 }
 
-export function CheckoutPanel({ branch, cart, onOrderPlaced, onBack }: CheckoutPanelProps) {
+export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: CheckoutPanelProps) {
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [channel, setChannel] = useState<Extract<OrderChannel, "pickup" | "delivery">>("pickup");
@@ -36,13 +40,12 @@ export function CheckoutPanel({ branch, cart, onOrderPlaced, onBack }: CheckoutP
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [notes, setNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const deliveryFee = channel === "delivery" ? DELIVERY_ZONES.find((z) => z.id === deliveryZoneId)?.fee ?? 0 : 0;
   const total = cart.subtotal + deliveryFee;
 
-  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
+  function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
@@ -55,32 +58,25 @@ export function CheckoutPanel({ branch, cart, onOrderPlaced, onBack }: CheckoutP
       return;
     }
 
-    setIsSubmitting(true);
-    const result = await supabaseOrderService.placeGuestOrder({
-      branchId: branch.id,
-      guestName: guestName.trim(),
-      guestPhone: guestPhone.trim(),
-      channel,
-      items: cart.lines.map((line) => ({
-        menuItemId: line.menuItem.id,
-        variationLabel: line.variationLabel,
-        quantity: line.quantity,
-        specialInstructions: line.specialInstructions,
-      })),
-      deliveryZoneId: channel === "delivery" ? deliveryZoneId : undefined,
-      deliveryAddress: channel === "delivery" ? deliveryAddress : undefined,
-      promoCode: promoCode.trim() || undefined,
-      notes: notes.trim() || undefined,
-    });
-    setIsSubmitting(false);
-
-    if (result.error || !result.data) {
-      setError(result.error?.message ?? "Couldn't place your order. Please try again.");
-      return;
-    }
-
-    cart.clear();
-    onOrderPlaced(result.data);
+    onDetailsConfirmed(
+      {
+        branchId: branch.id,
+        guestName: guestName.trim(),
+        guestPhone: guestPhone.trim(),
+        channel,
+        items: cart.lines.map((line) => ({
+          menuItemId: line.menuItem.id,
+          variationLabel: line.variationLabel,
+          quantity: line.quantity,
+          specialInstructions: line.specialInstructions,
+        })),
+        deliveryZoneId: channel === "delivery" ? deliveryZoneId : undefined,
+        deliveryAddress: channel === "delivery" ? deliveryAddress : undefined,
+        promoCode: promoCode.trim() || undefined,
+        notes: notes.trim() || undefined,
+      },
+      total
+    );
   }
 
   return (
@@ -231,8 +227,7 @@ export function CheckoutPanel({ branch, cart, onOrderPlaced, onBack }: CheckoutP
       </div>
 
       <p className="text-xs text-[#14100D]/50">
-        Pay by mobile money merchant code{channel === "pickup" ? " or cash" : ""} when your order{" "}
-        {channel === "pickup" ? "is ready" : "arrives"} — nothing is charged now.
+        Next, you'll choose a mobile money merchant code and confirm payment before your order is sent to the kitchen.
       </p>
 
       {error && (
@@ -251,10 +246,10 @@ export function CheckoutPanel({ branch, cart, onOrderPlaced, onBack }: CheckoutP
         </button>
         <button
           type="submit"
-          disabled={isSubmitting || cart.lines.length === 0}
+          disabled={cart.lines.length === 0}
           className={getButtonClasses({ variant: "solid", size: "md", className: "flex-1 disabled:opacity-60" })}
         >
-          {isSubmitting ? "Placing Order…" : `Place Order — ${formatUgx(total)}`}
+          {`Continue To Payment — ${formatUgx(total)}`}
         </button>
       </div>
     </form>

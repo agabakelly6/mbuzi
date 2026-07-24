@@ -13,10 +13,11 @@ import type { Branch } from "../../types/branch";
 import type { Order } from "../../types/order";
 import { supabaseBranchRepository } from "../../repositories/supabase/SupabaseBranchRepository";
 import { MenuBrowser } from "./MenuBrowser";
-import { CheckoutPanel } from "./CheckoutPanel";
+import { CheckoutPanel, type GuestOrderDraft } from "./CheckoutPanel";
+import { PaymentStep } from "./PaymentStep";
 import { OrderStatusTracker } from "./OrderStatusTracker";
 
-type Step = "browsing" | "checkout" | "confirmed";
+type Step = "browsing" | "checkout" | "payment" | "confirmed";
 
 export function OrderingApp() {
   const cart = useOrderCart();
@@ -24,6 +25,8 @@ export function OrderingApp() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [step, setStep] = useState<Step>("browsing");
+  const [pendingOrderDetails, setPendingOrderDetails] = useState<GuestOrderDraft | null>(null);
+  const [pendingOrderTotal, setPendingOrderTotal] = useState(0);
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -78,11 +81,26 @@ export function OrderingApp() {
         <CheckoutPanel
           branch={selectedBranch}
           cart={cart}
-          onOrderPlaced={(order) => {
+          onDetailsConfirmed={(details, total) => {
+            setPendingOrderDetails(details);
+            setPendingOrderTotal(total);
+            setStep("payment");
+          }}
+          onBack={() => setStep("browsing")}
+        />
+      )}
+
+      {step === "payment" && selectedBranch && pendingOrderDetails && (
+        <PaymentStep
+          branch={selectedBranch}
+          details={pendingOrderDetails}
+          total={pendingOrderTotal}
+          onConfirmed={(order) => {
+            cart.clear();
             setConfirmedOrder(order);
             setStep("confirmed");
           }}
-          onBack={() => setStep("browsing")}
+          onBack={() => setStep("checkout")}
         />
       )}
 

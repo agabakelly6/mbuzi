@@ -18,7 +18,7 @@ import { supabasePaymentRepository } from "../../repositories/supabase/SupabaseP
 import { supabasePaymentService } from "../../services/supabase/SupabasePaymentService";
 import { ORDER_STATUS_TRANSITIONS } from "../../lib/state-machines";
 import { canRoleTransitionOrder, isOrderCancellable } from "../../models/OrderModel";
-import { getAllowedPaymentMethods } from "../../models/PaymentModel";
+import { getAllowedPaymentMethods, hasConfirmedPayment } from "../../models/PaymentModel";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
 import { formatUgx } from "../../lib/helpers";
@@ -58,6 +58,17 @@ const CHANNEL_ICON: Record<Order["channel"], typeof Store> = {
   whatsapp: ClipboardList,
 };
 
+// Cash is gone from the payment options offered today, but existing rows
+// (seed/demo data, or history from before the pay-first change) can
+// still hold "cash"/"bank_transfer" — cover every enum value so those
+// still render sensibly instead of being mislabeled.
+const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  mobile_money: "Merchant Code (Mobile Money)",
+  card: "Card",
+  cash: "Cash",
+  bank_transfer: "Bank Transfer",
+};
+
 export function OrdersDashboard() {
   const { role, branchId: ownBranchId } = useAuth();
 
@@ -67,7 +78,7 @@ export function OrdersDashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mobile_money");
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   // Owner has no branchId of their own — needs a branch picker. Everyone
@@ -282,10 +293,24 @@ export function OrdersDashboard() {
 
             {actionError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{actionError}</p>}
 
+            {selectedOrder.status === "pending" &&
+              (selectedOrder.channel === "pickup" || selectedOrder.channel === "delivery") &&
+              !hasConfirmedPayment(payments) && (
+                <p className="rounded-lg bg-amber-50 p-3 text-xs font-medium text-amber-700">
+                  Waiting for payment confirmation — this order can't be accepted until a payment below is marked paid.
+                </p>
+              )}
+
             <div className="flex flex-wrap gap-2">
               {role &&
                 ORDER_STATUS_TRANSITIONS[selectedOrder.status]
-                  .filter((to) => to !== "cancelled" && role && canRoleTransitionOrder(role, selectedOrder, to))
+                  .filter(
+                    (to) =>
+                      to !== "cancelled" &&
+                      role &&
+                      canRoleTransitionOrder(role, selectedOrder, to) &&
+                      (to !== "accepted" || hasConfirmedPayment(payments))
+                  )
                   .map((to) => (
                     <button
                       key={to}
@@ -317,11 +342,11 @@ export function OrdersDashboard() {
               {payments.map((payment) => (
                 <div key={payment.id} className="mt-2 flex items-center justify-between rounded-lg bg-[#F5EFE4]/60 px-3 py-2 text-sm">
                   <span className="text-[#14100D]/70">
-                    {payment.method === "mobile_money" ? "Mobile Money" : "Cash"} · {payment.status}
+                    {PAYMENT_METHOD_LABELS[payment.method]} · {payment.status}
                   </span>
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-[#14100D]">{formatUgx(payment.amount)}</span>
-                    {payment.method === "mobile_money" && payment.status === "pending" && (
+                    {(payment.method === "mobile_money" || payment.method === "card") && payment.status === "pending" && (
                       <button
                         type="button"
                         onClick={() => handleMarkPaymentPaid(payment)}
@@ -342,7 +367,7 @@ export function OrdersDashboard() {
                 >
                   {getAllowedPaymentMethods(selectedOrder.channel).map((method) => (
                     <option key={method} value={method}>
-                      {method === "mobile_money" ? "Merchant Code (Mobile Money)" : "Cash"}
+                      {PAYMENT_METHOD_LABELS[method]}
                     </option>
                   ))}
                 </select>

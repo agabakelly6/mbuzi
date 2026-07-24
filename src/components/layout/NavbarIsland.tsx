@@ -84,7 +84,16 @@ export function NavbarIsland({ links, ctas }: NavbarIslandProps) {
         <div className="flex items-center gap-3">
           <motion.div variants={fadeIn} className="hidden items-center gap-3 lg:flex">
             {outlineCta && (
-              <WhatsAppButton href={outlineCta.href} label={outlineCta.label} variant="outline" />
+              outlineCta.icon === "whatsapp" ? (
+                <WhatsAppButton href={outlineCta.href} label={outlineCta.label} variant="outline" />
+              ) : (
+                <a
+                  href={outlineCta.href}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-white transition-all duration-300 hover:border-[#C89A4B] hover:text-[#C89A4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C89A4B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#14100D]"
+                >
+                  {outlineCta.label}
+                </a>
+              )
             )}
             {solidCta && (
               <a

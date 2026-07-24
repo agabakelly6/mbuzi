@@ -27,10 +27,12 @@ import type { RoleName } from "../../types/role";
 import { createOrderInputSchema, createGuestOrderInputSchema } from "../../validators/order.schema";
 import { dbError, mapDbError } from "../../lib/supabase/dbErrors";
 import { calculateOrderTotal, canRoleTransitionOrder, isOrderCancellable } from "../../models/OrderModel";
+import { hasConfirmedPayment } from "../../models/PaymentModel";
 import { supabaseOrderRepository } from "../../repositories/supabase/SupabaseOrderRepository";
 import { supabaseMenuRepository } from "../../repositories/supabase/SupabaseMenuRepository";
 import { supabaseDeliveryRepository } from "../../repositories/supabase/SupabaseDeliveryRepository";
 import { supabasePromotionRepository } from "../../repositories/supabase/SupabasePromotionRepository";
+import { supabasePaymentRepository } from "../../repositories/supabase/SupabasePaymentRepository";
 import { supabasePromotionService } from "./SupabasePromotionService";
 import { supabase } from "../../lib/supabase/client";
 import { DELIVERY_ZONES } from "../../data/delivery";
@@ -218,6 +220,7 @@ export const supabaseOrderService: OrderService = {
         specialInstructions: item.specialInstructions,
         subtotal: item.subtotal,
       })),
+      p_payment_method: parsed.data.paymentMethod,
     });
     if (error) return { data: null, error: mapDbError(error) };
 
@@ -290,6 +293,13 @@ export const supabaseOrderService: OrderService = {
 
     if (!canRoleTransitionOrder(actingRole, order, to)) {
       return { data: null, error: dbError("forbidden") };
+    }
+
+    if (to === "accepted" && (order.channel === "pickup" || order.channel === "delivery")) {
+      const { data: payments } = await supabasePaymentRepository.list({ orderId: id });
+      if (!hasConfirmedPayment(payments?.items ?? [])) {
+        return { data: null, error: dbError("validation_error") };
+      }
     }
 
     return supabaseOrderRepository.updateStatus(id, to);

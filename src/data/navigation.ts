@@ -5,7 +5,7 @@
 // number, the booking/menu URLs, the brand name/motto) now come from
 // config/site.ts instead of being retyped.
 
-import { SITE, getWhatsAppUrl } from "../config/site";
+import { SITE } from "../config/site";
 
 export interface NavLink {
   /** Visible label shown to the user */
@@ -36,11 +36,5 @@ export const PRIMARY_NAV: NavLink[] = [
 
 export const NAV_CTAS: CtaLink[] = [
   { label: "Reserve Table", href: SITE.reservationUrl, variant: "solid" },
-  {
-    label: "WhatsApp",
-    href: getWhatsAppUrl(),
-    variant: "outline",
-    icon: "whatsapp",
-    external: true,
-  },
+  { label: "Order Now", href: "/order", variant: "outline" },
 ];

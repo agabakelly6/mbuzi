@@ -62,6 +62,7 @@ export const createGuestOrderInputSchema = z.object({
   deliveryZoneId: nonEmptyStringSchema.optional(),
   promoCode: nonEmptyStringSchema.optional(),
   notes: z.string().max(500).optional(),
+  paymentMethod: z.enum(["mobile_money", "card"]),
 }).refine((value) => value.channel !== "delivery" || value.deliveryAddress !== undefined, {
   message: "deliveryAddress is required for delivery orders",
   path: ["deliveryAddress"],
