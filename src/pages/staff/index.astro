@@ -1,0 +1,20 @@
+---
+// src/pages/staff/index.astro
+//
+// Single staff login entry point — sign in here and land on the right
+// dashboard for your role automatically, instead of needing to know the
+// specific URL for cashier/chef/rider/branch manager separately.
+import Layout from "../../layouts/Layout.astro";
+import { StaffHub } from "../../components/staff/StaffHub";
+
+const title = "Staff Sign In";
+const description = "Staff login for YPA Mbuzi Choma.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <main id="main-content" class="min-h-screen bg-[#F5EFE4] px-6 py-10 lg:px-12">
+    <div class="mx-auto max-w-[1200px]">
+      <StaffHub client:load />
+    </div>
+  </main>
+</Layout>
