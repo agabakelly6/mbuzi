@@ -1,0 +1,16 @@
+---
+// src/pages/staff/deliveries/index.astro
+import Layout from "../../../layouts/Layout.astro";
+import { DeliveriesApp } from "../../../components/staff/DeliveriesApp";
+
+const title = "Deliveries";
+const description = "Staff delivery management dashboard.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <main id="main-content" class="min-h-screen bg-[#F5EFE4] px-6 py-10 lg:px-12">
+    <div class="mx-auto max-w-[1200px]">
+      <DeliveriesApp client:load />
+    </div>
+  </main>
+</Layout>

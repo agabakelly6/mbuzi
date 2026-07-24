@@ -20,6 +20,7 @@ import { supabaseCustomerRepository } from "../../repositories/supabase/Supabase
 import { AuthGate } from "./AuthGate";
 import { MenuBrowser } from "./MenuBrowser";
 import { CheckoutPanel } from "./CheckoutPanel";
+import { NotificationBell } from "../staff/NotificationBell";
 
 type Step = "browsing" | "checkout" | "confirmed";
 
@@ -84,54 +85,61 @@ function OrderingFlow() {
     return <p className="text-center text-sm text-[#14100D]/60">Loading your account…</p>;
   }
 
-  if (step === "confirmed" && confirmedOrder) {
-    return (
-      <div className="mx-auto max-w-md rounded-2xl border border-[#14100D]/10 bg-white p-8 text-center">
-        <h2 className="font-serif text-2xl font-semibold text-[#14100D]">Order Placed!</h2>
-        <p className="mt-2 text-sm text-[#14100D]/60">
-          Order <span className="font-semibold text-[#14100D]">{confirmedOrder.orderNumber}</span> has been sent to the
-          branch.
-        </p>
-        <p className="mt-4 text-lg font-semibold text-[#14100D]">
-          UGX {confirmedOrder.total.toLocaleString("en-UG")}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setConfirmedOrder(null);
-            setStep("browsing");
-          }}
-          className="mt-6 text-sm font-semibold text-[#C89A4B] underline underline-offset-4"
-        >
-          Place Another Order
-        </button>
-      </div>
-    );
-  }
-
-  if (step === "checkout" && selectedBranch) {
-    return (
-      <CheckoutPanel
-        branch={selectedBranch}
-        customer={customer}
-        cart={cart}
-        onOrderPlaced={(order) => {
-          setConfirmedOrder(order);
-          setStep("confirmed");
-        }}
-        onBack={() => setStep("browsing")}
-      />
-    );
-  }
-
   return (
-    <MenuBrowser
-      branches={branches}
-      selectedBranch={selectedBranch}
-      onSelectBranch={setSelectedBranch}
-      cart={cart}
-      onProceedToCheckout={() => setStep("checkout")}
-    />
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-sm text-[#14100D]/60">
+          Hi, <span className="font-semibold text-[#14100D]">{customer.fullName}</span>
+        </p>
+        <NotificationBell />
+      </div>
+
+      {step === "confirmed" && confirmedOrder && (
+        <div className="mx-auto max-w-md rounded-2xl border border-[#14100D]/10 bg-white p-8 text-center">
+          <h2 className="font-serif text-2xl font-semibold text-[#14100D]">Order Placed!</h2>
+          <p className="mt-2 text-sm text-[#14100D]/60">
+            Order <span className="font-semibold text-[#14100D]">{confirmedOrder.orderNumber}</span> has been sent to
+            the branch.
+          </p>
+          <p className="mt-4 text-lg font-semibold text-[#14100D]">
+            UGX {confirmedOrder.total.toLocaleString("en-UG")}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmedOrder(null);
+              setStep("browsing");
+            }}
+            className="mt-6 text-sm font-semibold text-[#C89A4B] underline underline-offset-4"
+          >
+            Place Another Order
+          </button>
+        </div>
+      )}
+
+      {step === "checkout" && selectedBranch && (
+        <CheckoutPanel
+          branch={selectedBranch}
+          customer={customer}
+          cart={cart}
+          onOrderPlaced={(order) => {
+            setConfirmedOrder(order);
+            setStep("confirmed");
+          }}
+          onBack={() => setStep("browsing")}
+        />
+      )}
+
+      {step === "browsing" && (
+        <MenuBrowser
+          branches={branches}
+          selectedBranch={selectedBranch}
+          onSelectBranch={setSelectedBranch}
+          cart={cart}
+          onProceedToCheckout={() => setStep("checkout")}
+        />
+      )}
+    </div>
   );
 }
 

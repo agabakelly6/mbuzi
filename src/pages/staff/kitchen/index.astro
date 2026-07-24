@@ -1,0 +1,16 @@
+---
+// src/pages/staff/kitchen/index.astro
+import Layout from "../../../layouts/Layout.astro";
+import { KitchenApp } from "../../../components/staff/KitchenApp";
+
+const title = "Kitchen Display";
+const description = "Staff kitchen ticket queue.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <main id="main-content" class="min-h-screen bg-[#F5EFE4] px-6 py-10 lg:px-12">
+    <div class="mx-auto max-w-[1200px]">
+      <KitchenApp client:load />
+    </div>
+  </main>
+</Layout>

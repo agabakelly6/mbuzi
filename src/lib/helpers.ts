@@ -16,3 +16,8 @@ export function isValidPhone(value: string): boolean {
 export function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
+
+/** Shared by the ordering page and staff dashboard — found duplicated in both once the second one needed it. */
+export function formatUgx(amount: number): string {
+  return `UGX ${amount.toLocaleString("en-UG")}`;
+}

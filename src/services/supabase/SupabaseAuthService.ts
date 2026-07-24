@@ -71,12 +71,46 @@ export const supabaseAuthService: AuthService = {
     return toAuthSessionResult(data.session);
   },
 
-  async inviteStaff(_input: SignUpStaffInput): Promise<RepositoryResult<User>> {
-    // Requires Supabase's admin API (auth.admin.inviteUserByEmail), which
-    // needs the service-role key — that key must never reach a browser
-    // bundle, and this project has no server runtime yet (static output,
-    // no adapter) to hold it safely.
-    return { data: null, error: authError("not_implemented") };
+  async inviteStaff(input: SignUpStaffInput): Promise<RepositoryResult<User>> {
+    // The privileged half (auth.admin.inviteUserByEmail, which needs the
+    // service-role key) runs in the invite-staff Edge Function — the one
+    // place on this project that key can safely live. This just calls it
+    // over HTTPS with the caller's own session token; the function itself
+    // re-checks role/branch authorization server-side.
+    const { data, error } = await supabase.functions.invoke<{
+      data?: { id: string; email: string; fullName: string; phone: string; role: User["role"]; branchId: string | null; status: User["status"] };
+      error?: string;
+      message?: string;
+    }>("invite-staff", {
+      body: {
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.phone,
+        role: input.role,
+        branchId: input.branchId,
+      },
+    });
+
+    if (error || !data?.data) {
+      const code = data?.error === "conflict" ? "email_in_use" : data?.error === "forbidden_role" || data?.error === "forbidden" ? "unauthorized" : "unknown";
+      return { data: null, error: authError(code) };
+    }
+
+    const invited = data.data;
+    return {
+      data: {
+        id: invited.id,
+        fullName: invited.fullName,
+        email: invited.email,
+        phone: invited.phone,
+        role: invited.role,
+        branchId: invited.branchId,
+        status: invited.status,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      error: null,
+    };
   },
 
   async signOut(): Promise<void> {

@@ -127,6 +127,14 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     ...perm("inventory_item", "create", "read", "list", "update", "delete"),
     ...perm("analytics", "read", "export"),
     ...perm("notification", "read", "list"),
+    // "create" added for staff hiring (invite-staff Edge Function) — "read/
+    // list/update" already covered viewing the roster and firing (status ->
+    // 'deactivated'). Scoped to subordinate roles only (waiter, cashier,
+    // chef, rider) by the Edge Function itself, not by this flag — a
+    // branch_manager must never create another branch_manager or owner
+    // account, so that check has to live server-side where it can't be
+    // bypassed by calling the API directly.
+    ...perm("user", "create"),
   ],
 
   // Owner / Super Admin — every action on every resource, every branch.

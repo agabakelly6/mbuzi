@@ -10,11 +10,8 @@ import type { MenuCategoryRecord, MenuItem } from "../../types/menu-item";
 import { supabaseMenuRepository } from "../../repositories/supabase/SupabaseMenuRepository";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
+import { formatUgx } from "../../lib/helpers";
 import type { UseOrderCartResult } from "../../hooks/useOrderCart";
-
-function formatUgx(amount: number): string {
-  return `UGX ${amount.toLocaleString("en-UG")}`;
-}
 
 interface MenuBrowserProps {
   branches: Branch[];

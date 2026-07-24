@@ -1,0 +1,16 @@
+---
+// src/pages/staff/branch/index.astro
+import Layout from "../../../layouts/Layout.astro";
+import { BranchManagementApp } from "../../../components/staff/BranchManagementApp";
+
+const title = "Branch Management";
+const description = "Promotions and staff for one branch.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <main id="main-content" class="min-h-screen bg-[#F5EFE4] px-6 py-10 lg:px-12">
+    <div class="mx-auto max-w-[1200px]">
+      <BranchManagementApp client:load />
+    </div>
+  </main>
+</Layout>

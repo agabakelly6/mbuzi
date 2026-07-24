@@ -1,12 +1,11 @@
 // src/repositories/supabase/SupabaseMenuRepository.ts
 //
-// Read methods are fully implemented — needed for order processing to
-// resolve a menu item's name/price when placing an order, and for future
-// menu-browsing work to reuse as-is. Write methods (create/update/delete)
-// are menu-management, a separate feature from order processing; they're
-// stubbed as not_implemented rather than half-built, matching the same
-// scoping already applied to SupabaseUserRepository/SupabaseAuthService's
-// invite() in earlier milestones.
+// Write methods now back the branch-manager menu management panel
+// (components/staff/BranchManagementDashboard.tsx). RLS (menu_items_insert/
+// update/delete, menu_categories_write) already matched rbac.ts exactly
+// from Milestone 2 — branch_manager/owner full CRUD, chef update-only
+// (availability toggling) — so no migration was needed here, only these
+// method bodies.
 import type { MenuRepository, MenuItemListFilters } from "../MenuRepository";
 import type { MenuItem, MenuCategoryRecord } from "../../types/menu-item";
 import type { Paginated, RepositoryResult } from "../shared";
@@ -52,20 +51,58 @@ export const supabaseMenuRepository: MenuRepository = {
     };
   },
 
-  async createItem(): Promise<RepositoryResult<MenuItem>> {
-    return { data: null, error: dbError("not_implemented") };
+  async createItem(item): Promise<RepositoryResult<MenuItem>> {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .insert({
+        branch_id: item.branchId,
+        name: item.name,
+        description: item.description,
+        category_id: item.categoryId,
+        base_price: item.basePrice,
+        variations: item.variations,
+        image_url: item.imageUrl,
+        availability: item.availability,
+        is_featured: item.isFeatured,
+        is_chef_pick: item.isChefPick,
+        linked_inventory_item_id: item.linkedInventoryItemId ?? null,
+      })
+      .select("*")
+      .single();
+    if (error) return { data: null, error: mapDbError(error) };
+    return { data: mapMenuItemRow(data as MenuItemRow), error: null };
   },
 
-  async updateItem(): Promise<RepositoryResult<MenuItem>> {
-    return { data: null, error: dbError("not_implemented") };
+  async updateItem(id: string, changes): Promise<RepositoryResult<MenuItem>> {
+    const patch: Record<string, unknown> = {};
+    if (changes.name !== undefined) patch.name = changes.name;
+    if (changes.description !== undefined) patch.description = changes.description;
+    if (changes.categoryId !== undefined) patch.category_id = changes.categoryId;
+    if (changes.basePrice !== undefined) patch.base_price = changes.basePrice;
+    if (changes.variations !== undefined) patch.variations = changes.variations;
+    if (changes.imageUrl !== undefined) patch.image_url = changes.imageUrl;
+    if (changes.availability !== undefined) patch.availability = changes.availability;
+    if (changes.isFeatured !== undefined) patch.is_featured = changes.isFeatured;
+    if (changes.isChefPick !== undefined) patch.is_chef_pick = changes.isChefPick;
+    if (changes.linkedInventoryItemId !== undefined) patch.linked_inventory_item_id = changes.linkedInventoryItemId ?? null;
+
+    const { data, error } = await supabase.from("menu_items").update(patch).eq("id", id).select("*").maybeSingle();
+    if (error) return { data: null, error: mapDbError(error) };
+    if (!data) return { data: null, error: dbError("not_found") };
+    return { data: mapMenuItemRow(data as MenuItemRow), error: null };
   },
 
-  async setAvailability(): Promise<RepositoryResult<MenuItem>> {
-    return { data: null, error: dbError("not_implemented") };
+  async setAvailability(id: string, availability): Promise<RepositoryResult<MenuItem>> {
+    const { data, error } = await supabase.from("menu_items").update({ availability }).eq("id", id).select("*").maybeSingle();
+    if (error) return { data: null, error: mapDbError(error) };
+    if (!data) return { data: null, error: dbError("not_found") };
+    return { data: mapMenuItemRow(data as MenuItemRow), error: null };
   },
 
-  async deleteItem(): Promise<RepositoryResult<void>> {
-    return { data: null, error: dbError("not_implemented") };
+  async deleteItem(id: string): Promise<RepositoryResult<void>> {
+    const { error } = await supabase.from("menu_items").delete().eq("id", id);
+    if (error) return { data: null, error: mapDbError(error) };
+    return { data: null, error: null };
   },
 
   async listCategories(branchId?: string): Promise<RepositoryResult<MenuCategoryRecord[]>> {
@@ -76,7 +113,17 @@ export const supabaseMenuRepository: MenuRepository = {
     return { data: ((data ?? []) as MenuCategoryRow[]).map(mapMenuCategoryRow), error: null };
   },
 
-  async createCategory(): Promise<RepositoryResult<MenuCategoryRecord>> {
-    return { data: null, error: dbError("not_implemented") };
+  async createCategory(category): Promise<RepositoryResult<MenuCategoryRecord>> {
+    const { data, error } = await supabase
+      .from("menu_categories")
+      .insert({
+        branch_id: category.branchId,
+        name: category.name,
+        sort_order: category.sortOrder,
+      })
+      .select("*")
+      .single();
+    if (error) return { data: null, error: mapDbError(error) };
+    return { data: mapMenuCategoryRow(data as MenuCategoryRow), error: null };
   },
 };

@@ -1,0 +1,21 @@
+---
+// src/pages/staff/orders/index.astro
+//
+// Internal tool — the cashier/front-desk order dashboard. Separate from
+// every marketing-site page and from /order (the customer flow); its own
+// auth gate accepts staff roles only. noindex since this has no reason to
+// appear in search results.
+import Layout from "../../../layouts/Layout.astro";
+import { StaffOrdersApp } from "../../../components/staff/StaffOrdersApp";
+
+const title = "Order Dashboard";
+const description = "Staff order management dashboard.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <main id="main-content" class="min-h-screen bg-[#F5EFE4] px-6 py-10 lg:px-12">
+    <div class="mx-auto max-w-[1200px]">
+      <StaffOrdersApp client:load />
+    </div>
+  </main>
+</Layout>

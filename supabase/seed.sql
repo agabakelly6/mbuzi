@@ -19,9 +19,15 @@
 -- names fail with "function does not exist" (confirmed against a live
 -- project while writing this).
 --
--- Every seeded password is the literal string below, for local development
--- only. Never reuse it anywhere real.
---   Password: DevPassword123!
+-- Every seeded account uses `<role>1234` as its password — simple on
+-- purpose for testing, per explicit request. Replace with real credentials
+-- before this is ever used for real:
+--   owner@ypambuzichoma.com           owner1234
+--   manager.rubaga@ypambuzichoma.com  manager1234
+--   cashier.rubaga@ypambuzichoma.com  cashier1234
+--   chef.rubaga@ypambuzichoma.com     chef1234
+--   waiter.rubaga@ypambuzichoma.com   waiter1234
+--   rider.rubaga@ypambuzichoma.com    rider1234
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -61,19 +67,18 @@ values
 -- ----------------------------------------------------------------------------
 do $$
 declare
-  v_password text := 'DevPassword123!';
   v_rubaga uuid := '00000000-0000-0000-0000-000000000001';
   v_staff record;
 begin
   for v_staff in
     select * from (values
-      ('10000000-0000-0000-0000-000000000001'::uuid, 'owner@ypambuzichoma.com', 'Owner Account', 'owner'::public.role_name, null::uuid),
-      ('10000000-0000-0000-0000-000000000002'::uuid, 'manager.rubaga@ypambuzichoma.com', 'Rubaga Branch Manager', 'branch_manager'::public.role_name, v_rubaga),
-      ('10000000-0000-0000-0000-000000000003'::uuid, 'cashier.rubaga@ypambuzichoma.com', 'Rubaga Cashier', 'cashier'::public.role_name, v_rubaga),
-      ('10000000-0000-0000-0000-000000000004'::uuid, 'chef.rubaga@ypambuzichoma.com', 'Rubaga Chef', 'chef'::public.role_name, v_rubaga),
-      ('10000000-0000-0000-0000-000000000005'::uuid, 'waiter.rubaga@ypambuzichoma.com', 'Rubaga Waiter', 'waiter'::public.role_name, v_rubaga),
-      ('10000000-0000-0000-0000-000000000006'::uuid, 'rider.rubaga@ypambuzichoma.com', 'Rubaga Rider', 'rider'::public.role_name, v_rubaga)
-    ) as t(id, email, full_name, role, branch_id)
+      ('10000000-0000-0000-0000-000000000001'::uuid, 'owner@ypambuzichoma.com', 'David Kato', 'owner'::public.role_name, null::uuid, 'owner1234'),
+      ('10000000-0000-0000-0000-000000000002'::uuid, 'manager.rubaga@ypambuzichoma.com', 'Grace Nakato', 'branch_manager'::public.role_name, v_rubaga, 'manager1234'),
+      ('10000000-0000-0000-0000-000000000003'::uuid, 'cashier.rubaga@ypambuzichoma.com', 'Peter Ssemwogerere', 'cashier'::public.role_name, v_rubaga, 'cashier1234'),
+      ('10000000-0000-0000-0000-000000000004'::uuid, 'chef.rubaga@ypambuzichoma.com', 'Moses Okello', 'chef'::public.role_name, v_rubaga, 'chef1234'),
+      ('10000000-0000-0000-0000-000000000005'::uuid, 'waiter.rubaga@ypambuzichoma.com', 'Sarah Namutebi', 'waiter'::public.role_name, v_rubaga, 'waiter1234'),
+      ('10000000-0000-0000-0000-000000000006'::uuid, 'rider.rubaga@ypambuzichoma.com', 'Ronald Mugisha', 'rider'::public.role_name, v_rubaga, 'rider1234')
+    ) as t(id, email, full_name, role, branch_id, password)
   loop
     insert into auth.users (
       instance_id, id, aud, role, email, encrypted_password,
@@ -83,7 +88,7 @@ begin
     )
     values (
       '00000000-0000-0000-0000-000000000000', v_staff.id, 'authenticated', 'authenticated',
-      v_staff.email, extensions.crypt(v_password, extensions.gen_salt('bf')),
+      v_staff.email, extensions.crypt(v_staff.password, extensions.gen_salt('bf')),
       now(),
       jsonb_build_object('provider', 'email', 'providers', array['email']),
       jsonb_build_object('full_name', v_staff.full_name, 'role', v_staff.role, 'branch_id', v_staff.branch_id),

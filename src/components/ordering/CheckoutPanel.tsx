@@ -15,10 +15,7 @@ import { supabaseOrderService } from "../../services/supabase/SupabaseOrderServi
 import { DELIVERY_ZONES } from "../../data/delivery";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
-
-function formatUgx(amount: number): string {
-  return `UGX ${amount.toLocaleString("en-UG")}`;
-}
+import { formatUgx } from "../../lib/helpers";
 
 interface CheckoutPanelProps {
   branch: Branch;
