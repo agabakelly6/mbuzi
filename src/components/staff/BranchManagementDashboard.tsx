@@ -1,7 +1,7 @@
 // src/components/staff/BranchManagementDashboard.tsx
 //
 // Branch manager / owner control panel: analytics, promotions, staff
-// (including hire/fire), and inventory. Promotion and inventory writes go
+// (including hire/fire), and menu management. Promotion and menu writes go
 // straight to their repositories, not through a service layer — those
 // services' interfaces are scoped to other things (PromotionService to
 // *applying* a code to an order, not admin management), so there's no
@@ -9,6 +9,16 @@
 // exception that does go through a service (SupabaseAuthService.inviteStaff)
 // because creating a login account needs the invite-staff Edge Function,
 // not a direct table write.
+//
+// No hard-delete for menu items on purpose — "Hidden" availability already
+// removes a dish from customer view (browsing and ordering both) without a
+// destructive, irreversible action; per explicit user decision, that's the
+// only way to retire a dish here, not a Delete button.
+//
+// Inventory intentionally has no UI here — deliberately removed at the
+// user's request (not needed for this business). SupabaseInventoryRepository
+// and the inventory_items table are untouched, just unused; trivial to
+// bring back if that changes.
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import type { Branch } from "../../types/branch";
@@ -17,11 +27,9 @@ import type { User } from "../../types/user";
 import { supabaseBranchRepository } from "../../repositories/supabase/SupabaseBranchRepository";
 import { supabasePromotionRepository } from "../../repositories/supabase/SupabasePromotionRepository";
 import { supabaseUserRepository } from "../../repositories/supabase/SupabaseUserRepository";
-import { supabaseInventoryRepository } from "../../repositories/supabase/SupabaseInventoryRepository";
 import { supabaseAnalyticsRepository } from "../../repositories/supabase/SupabaseAnalyticsRepository";
 import { supabaseMenuRepository } from "../../repositories/supabase/SupabaseMenuRepository";
 import { supabaseAuthService } from "../../services/supabase/SupabaseAuthService";
-import type { InventoryItem, InventoryUnit } from "../../types/inventory";
 import type { BranchAnalyticsSummary } from "../../types/analytics";
 import type { RoleName } from "../../types/role";
 import type { MenuItem, MenuItemAvailabilityStatus, MenuCategoryRecord } from "../../types/menu-item";
@@ -95,15 +103,10 @@ export function BranchManagementDashboard() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
   const [stats, setStats] = useState<BranchAnalyticsSummary | null>(null);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { form, updateField, setForm } = useFormState<PromoFormState>(PROMO_INITIAL);
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemUnit, setNewItemUnit] = useState<InventoryUnit>("kg");
-  const [newItemQty, setNewItemQty] = useState("0");
-  const [newItemThreshold, setNewItemThreshold] = useState("0");
 
   const { form: hireForm, updateField: updateHireField, setForm: setHireForm } = useFormState<HireFormState>(HIRE_INITIAL);
   const [hireMessage, setHireMessage] = useState<string | null>(null);
@@ -127,7 +130,6 @@ export function BranchManagementDashboard() {
     refreshPromotions();
     refreshStaff();
     loadStats(branchId);
-    refreshInventory(branchId);
     refreshMenu(branchId);
   }, [branchId]);
 
@@ -210,55 +212,6 @@ export function BranchManagementDashboard() {
       return;
     }
     if (branchId) refreshMenu(branchId);
-  }
-
-  async function handleDeleteMenuItem(item: MenuItem) {
-    setError(null);
-    const result = await supabaseMenuRepository.deleteItem(item.id);
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
-    if (branchId) refreshMenu(branchId);
-  }
-
-  function refreshInventory(forBranchId: string) {
-    supabaseInventoryRepository.list({ branchId: forBranchId, pageSize: 50 }).then(({ data }) => setInventory(data?.items ?? []));
-  }
-
-  async function handleCreateInventoryItem(event: SyntheticEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    if (!branchId || !newItemName.trim()) return;
-
-    setIsSubmitting(true);
-    const result = await supabaseInventoryRepository.create({
-      branchId,
-      name: newItemName.trim(),
-      unit: newItemUnit,
-      quantityOnHand: Number(newItemQty) || 0,
-      reorderThreshold: Number(newItemThreshold) || 0,
-    });
-    setIsSubmitting(false);
-
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
-    setNewItemName("");
-    setNewItemQty("0");
-    setNewItemThreshold("0");
-    refreshInventory(branchId);
-  }
-
-  async function handleAdjustQuantity(item: InventoryItem, delta: number) {
-    setError(null);
-    const result = await supabaseInventoryRepository.adjustQuantity(item.id, delta);
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
-    if (branchId) refreshInventory(branchId);
   }
 
   // Real server-side aggregation via get_branch_analytics_summary (see
@@ -433,7 +386,7 @@ export function BranchManagementDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
       <div>
         <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Promotions</h2>
         {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
@@ -543,54 +496,6 @@ export function BranchManagementDashboard() {
           </button>
         </form>
       </div>
-
-      <div>
-        <h2 className="mb-4 font-serif text-lg font-semibold text-[#14100D]">Inventory</h2>
-        <div className="mb-6 flex flex-col gap-2">
-          {inventory.length === 0 && <p className="text-sm text-[#14100D]/50">No inventory items yet.</p>}
-          {inventory.map((item) => (
-            <div key={item.id} className="rounded-xl border border-[#14100D]/10 bg-white p-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span className={item.quantityOnHand <= item.reorderThreshold ? "font-semibold text-red-600" : "text-[#14100D]"}>
-                  {item.name}
-                </span>
-                <span className="text-[#14100D]/50">
-                  {item.quantityOnHand} {item.unit}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <button type="button" onClick={() => handleAdjustQuantity(item, -1)} className="rounded-lg border border-[#14100D]/15 px-3 py-1 text-xs font-semibold text-[#14100D]">
-                  −1
-                </button>
-                <button type="button" onClick={() => handleAdjustQuantity(item, 1)} className="rounded-lg border border-[#14100D]/15 px-3 py-1 text-xs font-semibold text-[#14100D]">
-                  +1
-                </button>
-                {item.quantityOnHand <= item.reorderThreshold && (
-                  <span className="text-xs text-red-600">Reorder (≤ {item.reorderThreshold})</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleCreateInventoryItem} className="flex flex-col gap-3 rounded-2xl border border-[#14100D]/10 bg-white p-5">
-          <p className="text-sm font-semibold text-[#14100D]">New Item</p>
-          <input placeholder="Name" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className={FORM_INPUT_CLASSES} />
-          <div className="grid grid-cols-2 gap-3">
-            <select value={newItemUnit} onChange={(e) => setNewItemUnit(e.target.value as InventoryUnit)} className={FORM_INPUT_CLASSES}>
-              <option value="kg">kg</option>
-              <option value="litre">litre</option>
-              <option value="piece">piece</option>
-              <option value="pack">pack</option>
-            </select>
-            <input type="number" placeholder="Qty on hand" value={newItemQty} onChange={(e) => setNewItemQty(e.target.value)} className={FORM_INPUT_CLASSES} />
-          </div>
-          <input type="number" placeholder="Reorder threshold" value={newItemThreshold} onChange={(e) => setNewItemThreshold(e.target.value)} className={FORM_INPUT_CLASSES} />
-          <button type="submit" disabled={isSubmitting} className={getButtonClasses({ variant: "solid", size: "sm", className: "disabled:opacity-60" })}>
-            {isSubmitting ? "Adding…" : "Add Item"}
-          </button>
-        </form>
-      </div>
       </div>
 
       <div className="mt-8">
@@ -647,9 +552,6 @@ export function BranchManagementDashboard() {
                               {status.replace("_", " ")}
                             </button>
                           ))}
-                          <button type="button" onClick={() => handleDeleteMenuItem(item)} className="ml-auto text-xs font-semibold text-red-600 underline underline-offset-4">
-                            Delete
-                          </button>
                         </div>
                       </div>
                     ))}
