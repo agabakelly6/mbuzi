@@ -111,6 +111,20 @@ export function OrdersDashboard() {
 
   const selectedOrder = orders.find((o) => o.id === selectedOrderId) ?? null;
 
+  // The <select> below only lists methods allowed for the order's channel
+  // (e.g. delivery orders only allow mobile_money). If the current
+  // paymentMethod state isn't one of them, the browser silently renders
+  // its first option while React's state stays on the old value — so on
+  // submit the wrong method gets sent. Keep state in sync with whatever's
+  // actually selectable.
+  useEffect(() => {
+    if (!selectedOrder) return;
+    const allowed = getAllowedPaymentMethods(selectedOrder.channel);
+    if (!allowed.includes(paymentMethod)) {
+      setPaymentMethod(allowed[0]);
+    }
+  }, [selectedOrder?.channel]);
+
   async function handleTransition(order: Order, to: OrderStatus) {
     setActionError(null);
     if (!role) return;

@@ -16,7 +16,13 @@ export const createMenuItemInputSchema = z.object({
   categoryId: uuidSchema,
   basePrice: moneySchema,
   variations: z.array(menuItemVariationInputSchema).default([]),
-  imageUrl: z.url(),
+  // Empty string allowed, not just a valid URL — matches menu_items.image_url's
+  // own "not null default ''" column (no image hosting is wired up, so a
+  // branch manager leaving this blank when adding a dish is the normal
+  // case, not an error). z.url() alone rejected "" outright, a silent
+  // validation failure caught via a real browser test, same bug class as
+  // uuidSchema's.
+  imageUrl: z.literal("").or(z.url()),
   isFeatured: z.boolean().default(false),
   isChefPick: z.boolean().default(false),
   linkedInventoryItemId: uuidSchema.optional(),
