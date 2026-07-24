@@ -22,6 +22,8 @@ export interface OrderRow {
   branch_id: string;
   order_number: string;
   customer_id: string | null;
+  guest_name?: string | null;
+  guest_phone?: string | null;
   channel: Order["channel"];
   status: Order["status"];
   table_id: string | null;
@@ -64,6 +66,8 @@ export function mapOrderRow(row: OrderRow): Order {
     branchId: row.branch_id,
     orderNumber: row.order_number,
     customerId: row.customer_id,
+    guestName: row.guest_name ?? undefined,
+    guestPhone: row.guest_phone ?? undefined,
     channel: row.channel,
     status: row.status,
     items: (row.order_items ?? []).map(mapOrderItemRow),

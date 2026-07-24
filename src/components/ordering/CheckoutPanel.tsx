@@ -6,9 +6,13 @@
 // staff/cashier action once the order is accepted, not part of checkout —
 // there's no payment gateway integration to collect a merchant-code
 // payment from a customer directly yet.
+//
+// Guest checkout only — no customer account. Collects name + phone here
+// directly (no email — matches the original pre-Supabase WhatsApp cart's
+// CustomerDetails shape exactly), same as the older WhatsApp flow's
+// checkout ever asked for.
 import { useState, type SyntheticEvent } from "react";
 import type { Branch } from "../../types/branch";
-import type { Customer } from "../../types/customer";
 import type { Order, OrderChannel } from "../../types/order";
 import type { UseOrderCartResult } from "../../hooks/useOrderCart";
 import { supabaseOrderService } from "../../services/supabase/SupabaseOrderService";
@@ -19,17 +23,17 @@ import { formatUgx } from "../../lib/helpers";
 
 interface CheckoutPanelProps {
   branch: Branch;
-  customer: Customer;
   cart: UseOrderCartResult;
   onOrderPlaced: (order: Order) => void;
   onBack: () => void;
 }
 
-export function CheckoutPanel({ branch, customer, cart, onOrderPlaced, onBack }: CheckoutPanelProps) {
+export function CheckoutPanel({ branch, cart, onOrderPlaced, onBack }: CheckoutPanelProps) {
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
   const [channel, setChannel] = useState<Extract<OrderChannel, "pickup" | "delivery">>("pickup");
   const [deliveryZoneId, setDeliveryZoneId] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState(customer.defaultDeliveryAddress ?? "");
-  const [deliveryPhone, setDeliveryPhone] = useState(customer.phone);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,15 +46,20 @@ export function CheckoutPanel({ branch, customer, cart, onOrderPlaced, onBack }:
     event.preventDefault();
     setError(null);
 
-    if (channel === "delivery" && (!deliveryZoneId || !deliveryAddress || !deliveryPhone)) {
-      setError("Fill in your delivery zone, address, and phone number.");
+    if (!guestName.trim() || !guestPhone.trim()) {
+      setError("Enter your name and phone number.");
+      return;
+    }
+    if (channel === "delivery" && (!deliveryZoneId || !deliveryAddress)) {
+      setError("Fill in your delivery zone and address.");
       return;
     }
 
     setIsSubmitting(true);
-    const result = await supabaseOrderService.placeOrder({
+    const result = await supabaseOrderService.placeGuestOrder({
       branchId: branch.id,
-      customerId: customer.id,
+      guestName: guestName.trim(),
+      guestPhone: guestPhone.trim(),
       channel,
       items: cart.lines.map((line) => ({
         menuItemId: line.menuItem.id,
@@ -60,7 +69,6 @@ export function CheckoutPanel({ branch, customer, cart, onOrderPlaced, onBack }:
       })),
       deliveryZoneId: channel === "delivery" ? deliveryZoneId : undefined,
       deliveryAddress: channel === "delivery" ? deliveryAddress : undefined,
-      deliveryPhone: channel === "delivery" ? deliveryPhone : undefined,
       promoCode: promoCode.trim() || undefined,
       notes: notes.trim() || undefined,
     });
@@ -105,6 +113,35 @@ export function CheckoutPanel({ branch, customer, cart, onOrderPlaced, onBack }:
         <div className="mt-1 flex items-center justify-between text-base font-semibold">
           <span className="text-[#14100D]">Total</span>
           <span className="text-[#14100D]">{formatUgx(total)}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="checkout-name" className={FORM_LABEL_CLASSES}>
+            Your Name
+          </label>
+          <input
+            id="checkout-name"
+            type="text"
+            autoComplete="name"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            className={FORM_INPUT_CLASSES}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="checkout-guest-phone" className={FORM_LABEL_CLASSES}>
+            Phone Number
+          </label>
+          <input
+            id="checkout-guest-phone"
+            type="tel"
+            autoComplete="tel"
+            value={guestPhone}
+            onChange={(e) => setGuestPhone(e.target.value)}
+            className={FORM_INPUT_CLASSES}
+          />
         </div>
       </div>
 
@@ -161,18 +198,6 @@ export function CheckoutPanel({ branch, customer, cart, onOrderPlaced, onBack }:
               type="text"
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-              className={FORM_INPUT_CLASSES}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="checkout-phone" className={FORM_LABEL_CLASSES}>
-              Contact Phone
-            </label>
-            <input
-              id="checkout-phone"
-              type="tel"
-              value={deliveryPhone}
-              onChange={(e) => setDeliveryPhone(e.target.value)}
               className={FORM_INPUT_CLASSES}
             />
           </div>

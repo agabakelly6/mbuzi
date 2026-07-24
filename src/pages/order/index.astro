@@ -3,10 +3,9 @@
 //
 // The customer-facing, Supabase-backed ordering flow — entirely separate
 // from the existing WhatsApp cart (components/cart/*, hooks/useCart.ts),
-// which stays exactly as it is on the /menu page. This page requires a
-// signed-in customer account (see components/ordering/AuthGate.tsx) since
-// placing a real order needs one; the WhatsApp flow never did and still
-// doesn't.
+// which stays exactly as it is on the /menu page. No login of any kind —
+// a customer just states their name and phone at checkout (see
+// CheckoutPanel.tsx); only staff dashboards have a login UI.
 import Layout from "../../layouts/Layout.astro";
 import Navbar from "../../components/layout/Navbar.astro";
 import Footer from "../../components/layout/Footer.astro";

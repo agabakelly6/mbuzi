@@ -39,8 +39,11 @@ export interface OrderItem {
 export interface Order extends BranchEntity {
   /** Human-facing, e.g. "YPA-RBG-000123" — what staff and receipts reference; `id` is only for system/API use. */
   orderNumber: string;
-  /** Customer['id'], or null for an anonymous/WhatsApp order not yet linked to an account. */
+  /** Customer['id'], or null for a guest order — the only kind /order ever creates now; no customer login exists. */
   customerId: string | null;
+  /** Set only on guest orders (customerId null) — collected directly at checkout, no account. */
+  guestName?: string;
+  guestPhone?: string;
   channel: OrderChannel;
   status: OrderStatus;
   items: OrderItem[];

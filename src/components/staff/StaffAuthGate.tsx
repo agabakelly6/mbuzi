@@ -1,9 +1,9 @@
 // src/components/staff/StaffAuthGate.tsx
 //
-// Sign-in only — unlike components/ordering/AuthGate.tsx, there's no
-// self-service sign-up tab here. Staff accounts are provisioned (seeded,
-// or eventually invited via AuthService.inviteStaff once that has a real
-// implementation), never created by the person signing in.
+// Sign-in only, no self-service sign-up tab — staff accounts are
+// provisioned (seeded, or invited via AuthService.inviteStaff), never
+// created by the person signing in. The only login UI on the whole site —
+// customers never see one; /order is a no-login guest checkout.
 import { useState, type SyntheticEvent } from "react";
 import { useAuthActions } from "../../hooks/useAuthActions";
 import { signInInputSchema } from "../../validators/user.schema";

@@ -51,6 +51,25 @@ export const createOrderInputSchema = z.object({
   path: ["deliveryPhone"],
 });
 
+/** Guest checkout — no customerId, name/phone collected directly instead. The only order-placement path /order uses now; no customer login exists. */
+export const createGuestOrderInputSchema = z.object({
+  branchId: uuidSchema,
+  guestName: nonEmptyStringSchema,
+  guestPhone: phoneSchema,
+  channel: z.enum(["pickup", "delivery"]),
+  items: z.array(createOrderItemInputSchema).min(1),
+  deliveryAddress: z.string().min(5).optional(),
+  deliveryZoneId: nonEmptyStringSchema.optional(),
+  promoCode: nonEmptyStringSchema.optional(),
+  notes: z.string().max(500).optional(),
+}).refine((value) => value.channel !== "delivery" || value.deliveryAddress !== undefined, {
+  message: "deliveryAddress is required for delivery orders",
+  path: ["deliveryAddress"],
+}).refine((value) => value.channel !== "delivery" || value.deliveryZoneId !== undefined, {
+  message: "deliveryZoneId is required for delivery orders",
+  path: ["deliveryZoneId"],
+});
+
 export const updateOrderStatusInputSchema = z.object({
   status: orderStatusSchema,
 });
@@ -60,5 +79,6 @@ export const cancelOrderInputSchema = z.object({
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderInputSchema>;
+export type CreateGuestOrderInput = z.infer<typeof createGuestOrderInputSchema>;
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusInputSchema>;
 export type CancelOrderInput = z.infer<typeof cancelOrderInputSchema>;

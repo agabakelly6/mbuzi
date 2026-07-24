@@ -22,16 +22,17 @@
 // back — that failure is logged and surfaced separately rather than
 // discarding a real order over it.
 import type { OrderService } from "../OrderService";
-import type { OrderItem, OrderStatus } from "../../types/order";
+import type { Order, OrderItem, OrderStatus } from "../../types/order";
 import type { RoleName } from "../../types/role";
-import { createOrderInputSchema } from "../../validators/order.schema";
-import { dbError } from "../../lib/supabase/dbErrors";
+import { createOrderInputSchema, createGuestOrderInputSchema } from "../../validators/order.schema";
+import { dbError, mapDbError } from "../../lib/supabase/dbErrors";
 import { calculateOrderTotal, canRoleTransitionOrder, isOrderCancellable } from "../../models/OrderModel";
 import { supabaseOrderRepository } from "../../repositories/supabase/SupabaseOrderRepository";
 import { supabaseMenuRepository } from "../../repositories/supabase/SupabaseMenuRepository";
 import { supabaseDeliveryRepository } from "../../repositories/supabase/SupabaseDeliveryRepository";
 import { supabasePromotionRepository } from "../../repositories/supabase/SupabasePromotionRepository";
 import { supabasePromotionService } from "./SupabasePromotionService";
+import { supabase } from "../../lib/supabase/client";
 import { DELIVERY_ZONES } from "../../data/delivery";
 
 export const supabaseOrderService: OrderService = {
@@ -135,6 +136,130 @@ export const supabaseOrderService: OrderService = {
     }
 
     return orderResult;
+  },
+
+  // Guest checkout — no login. Resolves prices/promo client-side (menu
+  // items and promotions are public-readable, same trust model the
+  // authenticated placeOrder above already uses), then hands the whole
+  // write off to the place_guest_order RPC in one atomic call — see that
+  // migration for why this can't just be a direct table insert the way
+  // placeOrder above does it (RLS can't safely let an anonymous caller
+  // read back an inserted order without leaking every other guest's
+  // orders too).
+  async placeGuestOrder(input) {
+    const parsed = createGuestOrderInputSchema.safeParse(input);
+    if (!parsed.success) return { data: null, error: dbError("validation_error") };
+
+    const items: OrderItem[] = [];
+    for (const line of parsed.data.items) {
+      const { data: menuItem, error } = await supabaseMenuRepository.findItemById(line.menuItemId);
+      if (error || !menuItem) return { data: null, error: error ?? dbError("not_found") };
+      if (menuItem.availability !== "available") return { data: null, error: dbError("validation_error") };
+
+      const variation = line.variationLabel
+        ? menuItem.variations.find((v) => v.label === line.variationLabel)
+        : undefined;
+      const unitPrice = variation?.price ?? menuItem.basePrice;
+
+      items.push({
+        id: "",
+        orderId: "",
+        menuItemId: line.menuItemId,
+        nameSnapshot: menuItem.name,
+        variationLabel: line.variationLabel,
+        unitPrice,
+        quantity: line.quantity,
+        specialInstructions: line.specialInstructions,
+        subtotal: unitPrice * line.quantity,
+      });
+    }
+
+    const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+
+    let deliveryFee = 0;
+    if (parsed.data.channel === "delivery") {
+      const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
+      if (!zone) return { data: null, error: dbError("validation_error") };
+      deliveryFee = zone.fee;
+    }
+
+    let discountTotal = 0;
+    let appliedPromotionId: string | undefined;
+    if (parsed.data.promoCode) {
+      const applied = await supabasePromotionService.applyToOrder(parsed.data.promoCode, parsed.data.branchId, subtotal);
+      if (applied.error || !applied.data) return { data: null, error: applied.error ?? dbError("validation_error") };
+      discountTotal = applied.data.discountAmount;
+      appliedPromotionId = applied.data.promotion.id;
+      if (applied.data.promotion.type === "free_delivery") deliveryFee = 0;
+    }
+
+    const total = calculateOrderTotal({ subtotal, deliveryFee, discountTotal, taxTotal: 0 });
+
+    const { data, error } = await supabase.rpc("place_guest_order", {
+      p_branch_id: parsed.data.branchId,
+      p_channel: parsed.data.channel,
+      p_guest_name: parsed.data.guestName,
+      p_guest_phone: parsed.data.guestPhone,
+      p_table_id: null,
+      p_subtotal: subtotal,
+      p_delivery_fee: deliveryFee,
+      p_discount_total: discountTotal,
+      p_total: total,
+      p_applied_promotion_id: appliedPromotionId ?? null,
+      p_notes: parsed.data.notes ?? null,
+      p_delivery_zone_id: parsed.data.channel === "delivery" ? parsed.data.deliveryZoneId : null,
+      p_delivery_address: parsed.data.channel === "delivery" ? parsed.data.deliveryAddress : null,
+      p_items: items.map((item) => ({
+        menuItemId: item.menuItemId,
+        nameSnapshot: item.nameSnapshot,
+        variationLabel: item.variationLabel,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        specialInstructions: item.specialInstructions,
+        subtotal: item.subtotal,
+      })),
+    });
+    if (error) return { data: null, error: mapDbError(error) };
+
+    const rpcResult = data as {
+      id: string;
+      orderNumber: string;
+      branchId: string;
+      channel: Order["channel"];
+      status: Order["status"];
+      guestName: string;
+      guestPhone: string;
+      subtotal: number;
+      deliveryFee: number;
+      discountTotal: number;
+      taxTotal: number;
+      total: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+
+    const order: Order = {
+      id: rpcResult.id,
+      branchId: rpcResult.branchId,
+      orderNumber: rpcResult.orderNumber,
+      customerId: null,
+      guestName: rpcResult.guestName,
+      guestPhone: rpcResult.guestPhone,
+      channel: rpcResult.channel,
+      status: rpcResult.status,
+      items: items.map((item) => ({ ...item, orderId: rpcResult.id })),
+      subtotal: rpcResult.subtotal,
+      deliveryFee: rpcResult.deliveryFee,
+      discountTotal: rpcResult.discountTotal,
+      taxTotal: rpcResult.taxTotal,
+      total: rpcResult.total,
+      appliedPromotionId,
+      notes: parsed.data.notes,
+      createdAt: rpcResult.createdAt,
+      updatedAt: rpcResult.updatedAt,
+    };
+
+    return { data: order, error: null };
   },
 
   async transitionStatus(id: string, to: OrderStatus, actingRole: RoleName) {
