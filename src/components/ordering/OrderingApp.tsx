@@ -14,6 +14,7 @@ import type { Order } from "../../types/order";
 import { supabaseBranchRepository } from "../../repositories/supabase/SupabaseBranchRepository";
 import { MenuBrowser } from "./MenuBrowser";
 import { CheckoutPanel } from "./CheckoutPanel";
+import { OrderStatusTracker } from "./OrderStatusTracker";
 
 type Step = "browsing" | "checkout" | "confirmed";
 
@@ -43,7 +44,7 @@ export function OrderingApp() {
   return (
     <div>
       {step === "confirmed" && confirmedOrder && (
-        <div className="mx-auto max-w-md rounded-2xl border border-[#14100D]/10 bg-white p-8 text-center">
+        <div className="mx-auto max-w-lg rounded-2xl border border-[#14100D]/10 bg-white p-8 text-center">
           <h2 className="font-serif text-2xl font-semibold text-[#14100D]">Order Placed!</h2>
           <p className="mt-2 text-sm text-[#14100D]/60">
             Order <span className="font-semibold text-[#14100D]">{confirmedOrder.orderNumber}</span> has been sent to
@@ -52,6 +53,14 @@ export function OrderingApp() {
           <p className="mt-4 text-lg font-semibold text-[#14100D]">
             UGX {confirmedOrder.total.toLocaleString("en-UG")}
           </p>
+
+          {confirmedOrder.guestPhone && (
+            <OrderStatusTracker
+              order={{ id: confirmedOrder.id, channel: confirmedOrder.channel, guestPhone: confirmedOrder.guestPhone }}
+              initialStatus={confirmedOrder.status}
+            />
+          )}
+
           <button
             type="button"
             onClick={() => {

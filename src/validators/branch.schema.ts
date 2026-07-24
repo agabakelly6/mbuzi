@@ -1,6 +1,6 @@
 // src/validators/branch.schema.ts
 import { z } from "zod";
-import { emailSchema, nonEmptyStringSchema, phoneSchema } from "./shared";
+import { emailSchema, nonEmptyStringSchema, phoneSchema, uuidSchema } from "./shared";
 
 export const branchStatusSchema = z.enum(["active", "coming-soon", "suspended", "closed"]);
 
@@ -22,7 +22,7 @@ export const createBranchInputSchema = z.object({
   whatsapp: phoneSchema,
   email: emailSchema,
   status: branchStatusSchema,
-  managerId: z.uuid().nullable(),
+  managerId: uuidSchema.nullable(),
   settings: branchSettingsSchema,
 });
 

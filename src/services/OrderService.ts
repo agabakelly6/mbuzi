@@ -16,6 +16,8 @@ export interface OrderService {
   placeOrder(input: CreateOrderInput): Promise<RepositoryResult<Order>>;
   /** No login required — the only order-placement path /order uses now. Runs entirely through a SECURITY DEFINER RPC (place_guest_order) rather than direct table writes; see that migration for why. */
   placeGuestOrder(input: CreateGuestOrderInput): Promise<RepositoryResult<Order>>;
+  /** Powers the guest confirmation page's live status tracker. Requires the exact phone number that placed the order, not just its id — see get_guest_order_status's migration comment for why. */
+  getGuestOrderStatus(orderId: string, guestPhone: string): Promise<RepositoryResult<Pick<Order, "id" | "orderNumber" | "status" | "channel" | "total" | "updatedAt">>>;
   transitionStatus(id: string, to: OrderStatus, actingRole: RoleName): Promise<RepositoryResult<Order>>;
   cancelOrder(id: string, input: CancelOrderInput, actingRole: RoleName): Promise<RepositoryResult<Order>>;
 }

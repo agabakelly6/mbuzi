@@ -262,6 +262,28 @@ export const supabaseOrderService: OrderService = {
     return { data: order, error: null };
   },
 
+  async getGuestOrderStatus(orderId, guestPhone) {
+    const { data, error } = await supabase.rpc("get_guest_order_status", {
+      p_order_id: orderId,
+      p_guest_phone: guestPhone,
+    });
+    if (error) return { data: null, error: mapDbError(error) };
+    if (!data) return { data: null, error: dbError("not_found") };
+
+    const result = data as { id: string; orderNumber: string; status: OrderStatus; channel: Order["channel"]; total: number; updatedAt: string };
+    return {
+      data: {
+        id: result.id,
+        orderNumber: result.orderNumber,
+        status: result.status,
+        channel: result.channel,
+        total: result.total,
+        updatedAt: result.updatedAt,
+      },
+      error: null,
+    };
+  },
+
   async transitionStatus(id: string, to: OrderStatus, actingRole: RoleName) {
     const { data: order, error } = await supabaseOrderRepository.findById(id);
     if (error || !order) return { data: null, error: error ?? dbError("not_found") };
