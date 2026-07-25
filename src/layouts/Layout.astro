@@ -12,7 +12,6 @@
 import "../styles/global.css";
 import { DEFAULT_SEO } from "../config/seo";
 import { COLORS } from "../config/theme";
-import { CartWidget } from "../components/cart/CartWidget";
 import { AssistantWidget } from "../components/assistant/AssistantWidget";
 
 interface Props {
@@ -107,12 +106,16 @@ const absoluteOgImage = new URL(ogImage, Astro.site ?? Astro.url.origin).toStrin
     <slot />
 
     <!--
-      Mounted here (not per-page like Navbar/Footer) so both floating
-      widgets appear on every route with one change — the assistant in
-      particular must be openable from any page, so it answers entirely
-      from imported data rather than page-specific props.
+      Mounted here (not per-page like Navbar/Footer) so the assistant
+      widget appears on every route with one change — it must be openable
+      from any page, so it answers entirely from imported data rather
+      than page-specific props. The old WhatsApp-checkout cart
+      (CartWidget) that used to be mounted alongside it is retired —
+      /order is the only ordering path now (nav's "Order Now" ->
+      /order's payment step). CartWidget/CartFAB/OrderDrawer/useCart/
+      CartStore are left in the repo, just unused, in case this needs
+      reverting.
     -->
-    <CartWidget client:load />
     <AssistantWidget client:load />
 
     <script>
