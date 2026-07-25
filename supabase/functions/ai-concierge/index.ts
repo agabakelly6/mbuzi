@@ -87,9 +87,38 @@ function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });
 }
 
+// Per-IP, per-minute cap via the check_rate_limit DB function — this
+// endpoint is anonymously callable and proxies a metered Gemini call, so
+// with no limit at all a scripted caller could burn through the free
+// tier's daily quota and lock out real customers. 6/min per IP keeps a
+// real conversation comfortable while capping any single source well
+// under Gemini's own 15/min ceiling.
+async function checkRateLimit(req: Request): Promise<boolean> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) return true;
+
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data, error } = await admin.rpc("check_rate_limit", {
+    p_bucket: "ai-concierge",
+    p_client_key: ip,
+    p_max_per_minute: 6,
+  });
+  if (error) {
+    console.error("ai-concierge: rate limit check failed:", error);
+    return true; // fail open — a limiter outage shouldn't take the feature down
+  }
+  return data === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+
+  if (!(await checkRateLimit(req))) {
+    return json({ error: "rate_limited", message: "Too many requests — please wait a moment and try again." }, 429);
+  }
 
   let body: RequestBody;
   try {

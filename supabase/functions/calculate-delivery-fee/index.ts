@@ -39,6 +39,25 @@ interface RequestBody {
   customerLng?: number;
 }
 
+// Per-IP, per-minute cap via the check_rate_limit DB function — this
+// endpoint is anonymously callable and proxies a metered OpenRouteService
+// call, so with no limit a scripted caller could burn through the free
+// tier's daily quota. 10/min per IP is generous for a real checkout flow
+// (one call per "Share My Location" press) while capping abuse.
+async function checkRateLimit(req: Request, admin: ReturnType<typeof createClient>): Promise<boolean> {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+  const { data, error } = await admin.rpc("check_rate_limit", {
+    p_bucket: "calculate-delivery-fee",
+    p_client_key: ip,
+    p_max_per_minute: 10,
+  });
+  if (error) {
+    console.error("calculate-delivery-fee: rate limit check failed:", error);
+    return true; // fail open — a limiter outage shouldn't block real checkouts
+  }
+  return data === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -68,6 +87,10 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceKey);
+
+  if (!(await checkRateLimit(req, admin))) {
+    return json({ error: "rate_limited", message: "Too many requests — please wait a moment and try again." }, 429);
+  }
 
   const { data: branch, error: branchError } = await admin
     .from("branches")

@@ -102,15 +102,31 @@ Deno.serve(async (req: Request) => {
     data: {
       full_name: fullName,
       phone,
-      role,
-      branch_id: branchId,
-      status: "invited",
     },
   });
 
   if (inviteError) {
     const isDuplicate = /already been registered|already exists/i.test(inviteError.message);
     return json({ error: isDuplicate ? "conflict" : "invite_failed", message: inviteError.message }, isDuplicate ? 409 : 400);
+  }
+
+  // role/branch_id/status are set via app_metadata, not the invite's
+  // `data` above (which becomes user_metadata) — app_metadata can only be
+  // written through this service-role-backed admin API, never by a public
+  // self-signup, so this is the one place a staff role can actually be
+  // granted from. handle_user_app_metadata_update() (the DB trigger) picks
+  // this up and syncs it onto public.users.
+  const { error: metaError } = await adminClient.auth.admin.updateUserById(invited.user.id, {
+    app_metadata: {
+      role,
+      branch_id: branchId,
+      status: "invited",
+    },
+  });
+
+  if (metaError) {
+    await adminClient.auth.admin.deleteUser(invited.user.id).catch(() => {});
+    return json({ error: "invite_failed", message: metaError.message }, 400);
   }
 
   return json(
