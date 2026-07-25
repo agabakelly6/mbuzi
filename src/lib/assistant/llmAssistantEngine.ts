@@ -11,6 +11,8 @@
 // customer "I don't have access," so degrading to a real (if less
 // natural) answer beats surfacing an error.
 import { getKnowledgeBase } from "./knowledgeBase";
+import { retrieve } from "./retrieval";
+import { detectRelevantCategories } from "./intentDetection";
 import { buildSystemPrompt } from "./systemPrompt";
 import { retrievalAssistantEngine, type AssistantEngine } from "./assistantEngine";
 import { MENU_ITEMS } from "../../data/menu";
@@ -60,6 +62,8 @@ async function streamFromEdgeFunction(
   message: string,
   history: AssistantMessage[],
   system: string,
+  categories: string[],
+  pageContext: string | undefined,
   onToken?: (delta: string) => void
 ): Promise<string> {
   const response = await fetch(AI_CONCIERGE_URL, {
@@ -73,6 +77,11 @@ async function streamFromEdgeFunction(
       message,
       history: history.map((m) => ({ role: m.role, text: m.text })),
       system,
+      // Sent for analytics only (see ai-concierge/index.ts) — the
+      // categories the client already computed to scope retrieval,
+      // reused rather than re-detecting intent a second time server-side.
+      categories,
+      pageContext,
     }),
   });
 
@@ -104,9 +113,18 @@ export const llmAssistantEngine: AssistantEngine = {
     onToken?: (delta: string) => void
   ): Promise<AssistantResponse> {
     try {
-      const knowledgeContext = serializeKnowledgeBase(getKnowledgeBase());
-      const system = buildSystemPrompt(knowledgeContext, getPageContext());
-      const text = await streamFromEdgeFunction(question, history, system, onToken);
+      // True RAG, not "send everything": scope to the categories this
+      // message (plus recent turns) actually touches, then rank within
+      // that scope with the same retrieve() the fallback engine already
+      // uses — reused, not reinvented. Keeps the prompt to ~10-15
+      // relevant chunks instead of the whole ~80-chunk knowledge base.
+      const categories = detectRelevantCategories(question, history);
+      const scoped = getKnowledgeBase().filter((chunk) => categories.includes(chunk.category));
+      const topChunks = retrieve(question, scoped, 15).map((s) => s.chunk);
+      const knowledgeContext = serializeKnowledgeBase(topChunks.length > 0 ? topChunks : scoped);
+      const pageContext = getPageContext();
+      const system = buildSystemPrompt(knowledgeContext, pageContext);
+      const text = await streamFromEdgeFunction(question, history, system, categories, pageContext, onToken);
       return { text, intent: "general", recommendedItemId: findMentionedItemId(text) };
     } catch (error) {
       console.error("llmAssistantEngine: falling back to retrieval engine:", error);

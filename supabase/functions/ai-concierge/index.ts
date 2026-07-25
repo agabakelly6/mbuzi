@@ -19,16 +19,37 @@
 // Gemini's streamGenerateContent with alt=sse, and re-parses Gemini's
 // SSE frames into a plain text stream (no SSE framing the client needs
 // to parse — just read and append).
+//
+// Also logs anonymous analytics (assistant_analytics table) — the
+// question plus the knowledge categories the client already detected
+// for retrieval scoping (src/lib/assistant/intentDetection.ts), reused
+// here rather than re-running the same heuristic a second time in Deno.
+// No customer identifier of any kind is stored. The insert is handed to
+// EdgeRuntime.waitUntil() so it runs in the background without adding
+// latency to the actual reply, and without the function's isolate being
+// torn down before it finishes (a real risk for genuinely fire-and-forget
+// work here — a plain unawaited promise isn't reliably safe on this
+// runtime).
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
+
 const MAX_MESSAGE_LENGTH = 1000;
 const MAX_HISTORY_MESSAGES = 20;
 const MAX_HISTORY_MESSAGE_LENGTH = 2000;
 const MAX_KNOWLEDGE_CONTEXT_LENGTH = 40000;
-const MODEL = "gemini-3.6-flash";
+// gemini-3.6-flash (the newest model) has a free-tier cap of just 20
+// requests/day — unusable even for testing, confirmed by exhausting it
+// during development. gemini-3.5-flash-lite's free tier is 1,000/day,
+// 15/minute — the actually-usable choice for a real small-business
+// concierge on the free tier. Slightly lower reasoning ceiling than the
+// full Flash tier, not noticeably so for this use case in testing.
+const MODEL = "gemini-3.5-flash-lite";
 
 interface HistoryMessage {
   role: "user" | "assistant";
@@ -39,6 +60,27 @@ interface RequestBody {
   message?: string;
   history?: HistoryMessage[];
   system?: string;
+  categories?: string[];
+  pageContext?: string;
+}
+
+function logAnalytics(message: string, categories: string[], pageContext: string | undefined): void {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) return;
+
+  const admin = createClient(supabaseUrl, serviceKey);
+  const insert = admin.from("assistant_analytics").insert({
+    question: message.slice(0, 1000),
+    categories: Array.isArray(categories) ? categories.slice(0, 20) : [],
+    page_context: pageContext ?? null,
+  });
+
+  if (typeof EdgeRuntime !== "undefined") {
+    EdgeRuntime.waitUntil(insert.then(() => {}).catch((error) => console.error("assistant_analytics insert failed:", error)));
+  } else {
+    void insert.catch((error) => console.error("assistant_analytics insert failed:", error));
+  }
 }
 
 function json(body: unknown, status: number): Response {
@@ -135,6 +177,8 @@ Deno.serve(async (req: Request) => {
       }
     },
   });
+
+  logAnalytics(message, body.categories ?? [], body.pageContext);
 
   return new Response(stream, {
     headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
