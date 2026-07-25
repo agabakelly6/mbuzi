@@ -19,7 +19,9 @@ export type AssistantIntent =
   | "farmStory"
   | "founderStory"
   | "faq"
-  | "fallback";
+  | "fallback"
+  /** The LLM engine's free-form replies — not one fixed category the way the retrieval engine's chunk-derived intents are. */
+  | "general";
 
 export interface AssistantMessage {
   id: string;
@@ -30,6 +32,8 @@ export interface AssistantMessage {
   recommendedItemId?: string;
   /** Set when this assistant message is scoped to a specific branch — Location["id"]. */
   branchId?: string;
+  /** True while this message's text is still arriving token-by-token from llmAssistantEngine.ts. */
+  streaming?: boolean;
 }
 
 export type RecommendationContext =

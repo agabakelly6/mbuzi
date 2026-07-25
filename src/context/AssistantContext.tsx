@@ -8,7 +8,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { getAssistantEngine } from "../lib/assistant/assistantEngine";
 import { GREETING } from "../content/assistant";
-import type { AssistantMessage, RecommendationContext } from "../types/assistant";
+import type { AssistantMessage } from "../types/assistant";
 
 interface AssistantContextValue {
   messages: AssistantMessage[];
@@ -21,7 +21,6 @@ interface AssistantContextValue {
   closePanel: () => void;
   togglePanel: () => void;
   sendQuestion: (question: string) => void;
-  sendRecommendation: (context: RecommendationContext) => void;
 }
 
 const AssistantContext = createContext<AssistantContextValue | undefined>(undefined);
@@ -40,38 +39,40 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   const [lastQuestion, setLastQuestion] = useState("");
   const [lastSummary, setLastSummary] = useState(GREETING);
 
-  const pushAssistantReply = useCallback((text: string, recommendedItemId?: string) => {
-    setIsTyping(true);
-    window.setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { id: nextMessageId(), role: "assistant", text, timestamp: Date.now(), recommendedItemId },
-      ]);
-      setLastSummary(text);
-      if (recommendedItemId) setLastRecommendedItemId(recommendedItemId);
-      setIsTyping(false);
-    }, 350);
-  }, []);
-
   const sendQuestion = useCallback(
-    (question: string) => {
+    async (question: string) => {
       const trimmed = question.trim();
       if (!trimmed) return;
+      const historySoFar = messages;
       setMessages((prev) => [...prev, { id: nextMessageId(), role: "user", text: trimmed, timestamp: Date.now() }]);
       setLastQuestion(trimmed);
-      const response = getAssistantEngine().answer(trimmed, messages);
-      pushAssistantReply(response.text, response.recommendedItemId);
-    },
-    [messages, pushAssistantReply]
-  );
 
-  const sendRecommendation = useCallback(
-    (context: RecommendationContext) => {
-      const response = getAssistantEngine().recommend(context);
-      setLastQuestion(`Recommend something for: ${context}`);
-      pushAssistantReply(response.text, response.recommendedItemId);
+      const assistantId = nextMessageId();
+      setIsTyping(true);
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantId, role: "assistant", text: "", timestamp: Date.now(), streaming: true },
+      ]);
+
+      const response = await getAssistantEngine().answer(trimmed, historySoFar, (delta) => {
+        setIsTyping(false);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, text: m.text + delta } : m))
+        );
+      });
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, text: response.text, streaming: false, recommendedItemId: response.recommendedItemId }
+            : m
+        )
+      );
+      setLastSummary(response.text);
+      if (response.recommendedItemId) setLastRecommendedItemId(response.recommendedItemId);
+      setIsTyping(false);
     },
-    [pushAssistantReply]
+    [messages]
   );
 
   // Memoized so AssistantPanel's focus-trap effect (deps: [isOpen, closePanel])
@@ -96,7 +97,6 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     closePanel,
     togglePanel,
     sendQuestion,
-    sendRecommendation,
   };
 
   return <AssistantContext.Provider value={value}>{children}</AssistantContext.Provider>;

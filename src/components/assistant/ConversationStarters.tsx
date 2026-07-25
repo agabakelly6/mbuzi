@@ -1,23 +1,26 @@
 // src/components/assistant/ConversationStarters.tsx
 //
 // Renders the CONVERSATION_STARTERS chips from content/assistant.ts —
-// never hardcoded here. A starter with a `context` triggers a direct
-// recommendation; otherwise it's treated as a free-text question through
-// the same engine.answer() path a typed message would take.
+// never hardcoded here. Every starter is just a natural-language
+// question through the same sendQuestion()/engine.answer() path a typed
+// message takes — the old context-based direct-recommendation branch
+// was only needed for the old deterministic rule engine; the LLM engine
+// answers "what do you recommend?" and "what's popular today?" naturally
+// as free text, so there's no separate path to maintain anymore.
 import { CONVERSATION_STARTERS } from "../../content/assistant";
 import { useAssistant } from "../../context/AssistantContext";
 
 export function ConversationStarters() {
-  const { sendQuestion, sendRecommendation } = useAssistant();
+  const { sendQuestion } = useAssistant();
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap justify-center gap-2.5">
       {CONVERSATION_STARTERS.map((starter) => (
         <button
           key={starter.id}
           type="button"
-          onClick={() => (starter.context ? sendRecommendation(starter.context) : sendQuestion(starter.question))}
-          className="rounded-full border border-white/15 bg-white/[0.03] px-3 py-1.5 text-[12px] text-white/85 transition-colors duration-300 hover:border-[#C89A4B] hover:text-[#C89A4B]"
+          onClick={() => sendQuestion(starter.question)}
+          className="rounded-full border border-white/15 bg-white/[0.03] px-4 py-2.5 text-[13px] text-white/85 transition-colors duration-300 hover:border-[#C89A4B] hover:bg-[#C89A4B]/10 hover:text-[#C89A4B]"
         >
           {starter.label}
         </button>
