@@ -36,4 +36,7 @@ export interface Branch extends Entity {
   /** User.id of the assigned Branch Manager, or null while unstaffed. */
   managerId: string | null;
   settings: BranchSettings;
+  /** Approximate coordinates (town/neighborhood-center, not necessarily the exact street pin) — used for straight-line delivery-fee estimation, see lib/geo.ts. Null until set. */
+  latitude: number | null;
+  longitude: number | null;
 }

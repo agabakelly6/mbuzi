@@ -19,9 +19,21 @@ interface MenuBrowserProps {
   onSelectBranch: (branch: Branch) => void;
   cart: UseOrderCartResult;
   onProceedToCheckout: () => void;
+  /** Item name to auto-add the moment this branch's menu finishes loading — set when arriving via an OrderNowButton on /menu. Matched case-insensitively by exact name, since the static /menu catalog and this live one are separate data sources seeded from the same real menu. */
+  autoAddItemName?: string | null;
+  /** Called once the auto-add has been attempted (found or not) so the caller can clear it and avoid re-adding on a later branch switch. */
+  onAutoAdded?: () => void;
 }
 
-export function MenuBrowser({ branches, selectedBranch, onSelectBranch, cart, onProceedToCheckout }: MenuBrowserProps) {
+export function MenuBrowser({
+  branches,
+  selectedBranch,
+  onSelectBranch,
+  cart,
+  onProceedToCheckout,
+  autoAddItemName,
+  onAutoAdded,
+}: MenuBrowserProps) {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,11 +58,20 @@ export function MenuBrowser({ branches, selectedBranch, onSelectBranch, cart, on
       setItems(itemsResult.data.items);
       setCategories(categoriesResult.data ?? []);
       setIsLoading(false);
+
+      if (autoAddItemName) {
+        const match = itemsResult.data.items.find(
+          (item) => item.name.toLowerCase() === autoAddItemName.toLowerCase()
+        );
+        if (match) cart.addItem(match);
+        onAutoAdded?.();
+      }
     });
 
     return () => {
       isMounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBranch]);
 
   const categoryName = (categoryId: string) =>

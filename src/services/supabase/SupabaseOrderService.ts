@@ -36,6 +36,7 @@ import { supabasePaymentRepository } from "../../repositories/supabase/SupabaseP
 import { supabasePromotionService } from "./SupabasePromotionService";
 import { supabase } from "../../lib/supabase/client";
 import { DELIVERY_ZONES } from "../../data/delivery";
+import { calculateDeliveryFee } from "../../lib/geo";
 
 export const supabaseOrderService: OrderService = {
   async getOrder(id) {
@@ -180,9 +181,8 @@ export const supabaseOrderService: OrderService = {
 
     let deliveryFee = 0;
     if (parsed.data.channel === "delivery") {
-      const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
-      if (!zone) return { data: null, error: dbError("validation_error") };
-      deliveryFee = zone.fee;
+      if (parsed.data.deliveryDistanceKm === undefined) return { data: null, error: dbError("validation_error") };
+      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm);
     }
 
     let discountTotal = 0;

@@ -1,6 +1,6 @@
 // src/components/cards/FoodCard.tsx
 import type { MenuItem } from "../../data/menu";
-import { OrderControls } from "../cart/OrderControls";
+import { OrderNowButton } from "../ordering/OrderNowButton";
 
 interface FoodCardProps {
   item: MenuItem;
@@ -27,11 +27,13 @@ interface FoodCardProps {
    */
   showCta?: boolean;
   /**
-   * Renders Add to Order / quantity controls (components/cart/OrderControls.tsx)
-   * below the card's existing content. Defaults to false so every other
-   * FoodCard usage (homepage Signature Dishes, Chef Recommendation) stays
-   * pixel-identical — only MenuGrid.astro (the real /menu page) sets this,
-   * and only there does the card need client-side JS at all.
+   * Renders an "Order Now" button (components/ordering/OrderNowButton.tsx)
+   * below the card's existing content, taking the customer into the real
+   * /order flow with this dish already in the cart. Defaults to false so
+   * every other FoodCard usage (homepage Signature Dishes, Chef
+   * Recommendation) stays pixel-identical — only MenuGrid.astro (the real
+   * /menu page) sets this, and only there does the card need client-side
+   * JS at all.
    */
   orderable?: boolean;
 }
@@ -39,7 +41,7 @@ interface FoodCardProps {
 /**
  * Presentation-only by default — no internal state or animation. Hover
  * treatment is pure CSS, and entrance animation is applied by the caller
- * via FadeIn. When `orderable` is set, OrderControls below adds the only
+ * via FadeIn. When `orderable` is set, OrderNowButton below adds the only
  * client-side interactivity this component ever has.
  */
 export function FoodCard({
@@ -120,7 +122,7 @@ export function FoodCard({
             <span aria-hidden="true">&rarr;</span>
           </a>
         )}
-        {orderable && <OrderControls item={item} imageSrc={imageSrc} tone={tone} />}
+        {orderable && <OrderNowButton itemName={item.name} />}
       </div>
     </article>
   );

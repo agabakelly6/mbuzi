@@ -13,6 +13,8 @@ export interface BranchRow {
   status: BranchStatus;
   manager_id: string | null;
   settings: BranchSettings;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +32,8 @@ export function mapBranchRow(row: BranchRow): Branch {
     status: row.status,
     managerId: row.manager_id,
     settings: row.settings,
+    latitude: row.latitude,
+    longitude: row.longitude,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
