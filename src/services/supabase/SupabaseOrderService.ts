@@ -36,6 +36,7 @@ import { supabasePaymentRepository } from "../../repositories/supabase/SupabaseP
 import { supabasePromotionService } from "./SupabasePromotionService";
 import { supabase } from "../../lib/supabase/client";
 import { DELIVERY_ZONES } from "../../data/delivery";
+import { calculateDeliveryFee } from "../../lib/geo";
 
 export const supabaseOrderService: OrderService = {
   async getOrder(id) {
@@ -180,9 +181,19 @@ export const supabaseOrderService: OrderService = {
 
     let deliveryFee = 0;
     if (parsed.data.channel === "delivery") {
-      const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
-      if (!zone) return { data: null, error: dbError("validation_error") };
-      deliveryFee = zone.fee;
+      if (parsed.data.deliveryDistanceKm !== undefined) {
+        // Trusted path: real routed distance from OpenRouteService (see
+        // CheckoutPanel.tsx / calculate-delivery-fee Edge Function) — the
+        // fee is (re)computed here from the raw distance, never trusted
+        // as a client-sent amount directly.
+        deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm);
+      } else {
+        // Fallback path: the routing call failed and the customer picked
+        // a flat zone manually instead.
+        const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
+        if (!zone) return { data: null, error: dbError("validation_error") };
+        deliveryFee = zone.fee;
+      }
     }
 
     let discountTotal = 0;

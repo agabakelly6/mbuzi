@@ -59,17 +59,20 @@ export const createGuestOrderInputSchema = z.object({
   channel: z.enum(["pickup", "delivery"]),
   items: z.array(createOrderItemInputSchema).min(1),
   deliveryAddress: z.string().min(5).optional(),
+  /** Either a real data/delivery.ts zone id (manual fallback path) or, when set alongside deliveryDistanceKm, a human-readable distance string (e.g. "2.3 km") for display/staff reference only — deliveryDistanceKm is the trusted value the fee is actually computed from in that case. */
   deliveryZoneId: nonEmptyStringSchema.optional(),
+  /** Real routed road distance in km from OpenRouteService (see CheckoutPanel.tsx's "Share My Location" flow) — the primary, trusted source for delivery fee calculation. Falls back to deliveryZoneId's flat-band fee (data/delivery.ts's DELIVERY_ZONES) if this is absent, e.g. the routing call failed and the customer picked a zone manually instead. */
+  deliveryDistanceKm: z.number().positive().optional(),
   promoCode: nonEmptyStringSchema.optional(),
   notes: z.string().max(500).optional(),
   paymentMethod: z.enum(["mobile_money", "card"]),
-}).refine((value) => value.channel !== "delivery" || value.deliveryAddress !== undefined, {
-  message: "deliveryAddress is required for delivery orders",
-  path: ["deliveryAddress"],
-}).refine((value) => value.channel !== "delivery" || value.deliveryZoneId !== undefined, {
-  message: "deliveryZoneId is required for delivery orders",
-  path: ["deliveryZoneId"],
-});
+}).refine(
+  (value) => value.channel !== "delivery" || value.deliveryDistanceKm !== undefined || value.deliveryZoneId !== undefined,
+  {
+    message: "Share your location or select a delivery zone",
+    path: ["deliveryZoneId"],
+  }
+);
 
 export const updateOrderStatusInputSchema = z.object({
   status: orderStatusSchema,
