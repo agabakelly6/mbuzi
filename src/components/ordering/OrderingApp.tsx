@@ -29,11 +29,12 @@ export function OrderingApp() {
   const [pendingOrderTotal, setPendingOrderTotal] = useState(0);
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // Set from ?branch=<slug>&addItem=<name> when arriving via an
-  // OrderNowButton on the public /menu page — resolved to a real branch
-  // once `branches` loads below, and handed to MenuBrowser to auto-add
-  // the matching live item the moment its (branch-scoped) menu loads.
-  const [autoAddItemName, setAutoAddItemName] = useState<string | null>(null);
+  // Set from ?branch=<slug>&addItems=<json> when arriving via
+  // PendingCartFAB's "Continue To Order" on the public /menu page —
+  // resolved to a real branch once `branches` loads below, and handed
+  // to MenuBrowser to auto-add each matching live item (by name, with
+  // its accumulated quantity) the moment its (branch-scoped) menu loads.
+  const [autoAddItems, setAutoAddItems] = useState<{ name: string; quantity: number }[] | null>(null);
 
   useEffect(() => {
     supabaseBranchRepository.list({ pageSize: 50 }).then(({ data, error }) => {
@@ -46,12 +47,18 @@ export function OrderingApp() {
 
       const params = new URLSearchParams(window.location.search);
       const branchSlug = params.get("branch");
-      const addItem = params.get("addItem");
+      const addItemsParam = params.get("addItems");
       if (branchSlug) {
         const match = loaded.find((b) => b.slug === branchSlug);
         if (match) setSelectedBranch(match);
       }
-      if (addItem) setAutoAddItemName(addItem);
+      if (addItemsParam) {
+        try {
+          setAutoAddItems(JSON.parse(addItemsParam));
+        } catch {
+          // Malformed/tampered query string — ignore rather than crash the page.
+        }
+      }
     });
   }, []);
 
@@ -126,8 +133,8 @@ export function OrderingApp() {
           onSelectBranch={setSelectedBranch}
           cart={cart}
           onProceedToCheckout={() => setStep("checkout")}
-          autoAddItemName={autoAddItemName}
-          onAutoAdded={() => setAutoAddItemName(null)}
+          autoAddItems={autoAddItems}
+          onAutoAdded={() => setAutoAddItems(null)}
         />
       )}
     </div>

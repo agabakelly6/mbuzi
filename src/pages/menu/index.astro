@@ -5,6 +5,7 @@ import Navbar from "../../components/layout/Navbar.astro";
 import Hero from "../../components/hero/Hero.astro";
 import { MenuCategories } from "../../components/sections/MenuCategories";
 import MenuGrid from "../../components/sections/MenuGrid.astro";
+import { PendingCartFAB } from "../../components/ordering/PendingCartFAB";
 import ChefRecommendation from "../../components/sections/ChefRecommendation.astro";
 import FoodQualityStory from "../../components/sections/FoodQualityStory.astro";
 import CTASection from "../../components/sections/CTASection.astro";
@@ -118,4 +119,5 @@ const { hero, categorySections, cta } = MENU_CONTENT;
     <CTASection headline={cta.headline} supportingText={cta.description} />
   </main>
   <Footer />
+  <PendingCartFAB client:load />
 </Layout>

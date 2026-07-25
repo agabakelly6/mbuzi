@@ -19,8 +19,8 @@ interface MenuBrowserProps {
   onSelectBranch: (branch: Branch) => void;
   cart: UseOrderCartResult;
   onProceedToCheckout: () => void;
-  /** Item name to auto-add the moment this branch's menu finishes loading — set when arriving via an OrderNowButton on /menu. Matched case-insensitively by exact name, since the static /menu catalog and this live one are separate data sources seeded from the same real menu. */
-  autoAddItemName?: string | null;
+  /** Items (name + quantity) to auto-add the moment this branch's menu finishes loading — set when arriving via PendingCartFAB's "Continue To Order" on /menu. Matched case-insensitively by exact name, since the static /menu catalog and this live one are separate data sources seeded from the same real menu. */
+  autoAddItems?: { name: string; quantity: number }[] | null;
   /** Called once the auto-add has been attempted (found or not) so the caller can clear it and avoid re-adding on a later branch switch. */
   onAutoAdded?: () => void;
 }
@@ -31,7 +31,7 @@ export function MenuBrowser({
   onSelectBranch,
   cart,
   onProceedToCheckout,
-  autoAddItemName,
+  autoAddItems,
   onAutoAdded,
 }: MenuBrowserProps) {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -59,11 +59,13 @@ export function MenuBrowser({
       setCategories(categoriesResult.data ?? []);
       setIsLoading(false);
 
-      if (autoAddItemName) {
-        const match = itemsResult.data.items.find(
-          (item) => item.name.toLowerCase() === autoAddItemName.toLowerCase()
-        );
-        if (match) cart.addItem(match);
+      if (autoAddItems && autoAddItems.length > 0) {
+        for (const pending of autoAddItems) {
+          const match = itemsResult.data.items.find(
+            (item) => item.name.toLowerCase() === pending.name.toLowerCase()
+          );
+          if (match) cart.addItem(match, undefined, pending.quantity);
+        }
         onAutoAdded?.();
       }
     });

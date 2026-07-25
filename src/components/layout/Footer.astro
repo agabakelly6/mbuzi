@@ -82,8 +82,11 @@ const whatsapp = NAV_CTAS.find((cta) => cta.icon === "whatsapp");
       </div>
     </div>
 
-    <div class="mt-16 flex flex-col items-center justify-center border-t border-white/10 pt-8 text-xs text-white/50 sm:flex-row">
+    <div class="mt-16 flex flex-col items-center justify-center gap-2 border-t border-white/10 pt-8 text-xs text-white/50 sm:flex-row sm:justify-between sm:gap-4">
       <p>{getCopyrightText()}</p>
+      <a href="/staff" class="text-white/40 transition-colors duration-300 hover:text-[#C89A4B]">
+        Staff Login
+      </a>
     </div>
   </div>
 </footer>

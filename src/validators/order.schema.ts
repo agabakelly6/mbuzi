@@ -58,18 +58,17 @@ export const createGuestOrderInputSchema = z.object({
   guestPhone: phoneSchema,
   channel: z.enum(["pickup", "delivery"]),
   items: z.array(createOrderItemInputSchema).min(1),
-  /** Optional landmark/note for the rider — no longer a required street address, since the actual fee is computed from shared live location, not this text. */
-  deliveryAddress: z.string().max(300).optional(),
-  /** Repurposed: no longer a static zone id (data/delivery.ts's old "near"/"mid"/"far" bands) — holds a human-readable computed distance (e.g. "2.3 km") for display/staff reference only. `deliveryDistanceKm` below is the trusted value the fee is actually (re)computed from. */
+  deliveryAddress: z.string().min(5).optional(),
   deliveryZoneId: nonEmptyStringSchema.optional(),
-  /** Straight-line km from the branch to the customer's shared live location (lib/geo.ts) — SupabaseOrderService re-derives deliveryFee from this itself via calculateDeliveryFee rather than trusting a client-computed fee number directly, same trust-boundary pattern the old zone-lookup used. */
-  deliveryDistanceKm: z.number().positive().optional(),
   promoCode: nonEmptyStringSchema.optional(),
   notes: z.string().max(500).optional(),
   paymentMethod: z.enum(["mobile_money", "card"]),
-}).refine((value) => value.channel !== "delivery" || value.deliveryDistanceKm !== undefined, {
-  message: "Share your live location to calculate the delivery fee",
-  path: ["deliveryDistanceKm"],
+}).refine((value) => value.channel !== "delivery" || value.deliveryAddress !== undefined, {
+  message: "deliveryAddress is required for delivery orders",
+  path: ["deliveryAddress"],
+}).refine((value) => value.channel !== "delivery" || value.deliveryZoneId !== undefined, {
+  message: "deliveryZoneId is required for delivery orders",
+  path: ["deliveryZoneId"],
 });
 
 export const updateOrderStatusInputSchema = z.object({
