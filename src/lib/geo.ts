@@ -30,12 +30,13 @@ export function haversineDistanceKm(
 }
 
 /**
- * Placeholder rate — a flat base fee plus a per-km rate, rounded to the
- * nearest 500 UGX for a clean-looking price. Tune these two numbers once
- * real operating costs are known; nothing else needs to change.
+ * Calibrated against real SafeBoda fares for two Kampala routes (base fee
+ * + per-km rate, rounded to the nearest 500 UGX): Rubaga branch → Kibuli
+ * Hospital (6.52km routed, UGX 5,000) and Kibuli Hospital → Arena Mall
+ * (~3km, UGX 3,000). Re-calibrate the same way if real fares drift.
  */
-const BASE_FEE_UGX = 3000;
-const PER_KM_RATE_UGX = 1500;
+const BASE_FEE_UGX = 1500;
+const PER_KM_RATE_UGX = 500;
 
 export function calculateDeliveryFee(distanceKm: number): number {
   const raw = BASE_FEE_UGX + distanceKm * PER_KM_RATE_UGX;
