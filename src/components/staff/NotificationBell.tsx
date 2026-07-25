@@ -4,7 +4,7 @@
 // ordering page too — nothing here is staff-specific beyond its folder).
 // Live via Realtime; falls back to whatever listForUser returned on mount
 // until the first postgres_changes event arrives.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, BellRing } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { usePushNotifications } from "../../hooks/usePushNotifications";
@@ -15,6 +15,13 @@ export function NotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  // The panel is `fixed` and anchored to the viewport's right edge, not to
+  // this button — the button itself usually isn't the rightmost thing in
+  // its header (a Sign Out button sits to its right), so anchoring the
+  // panel to the button directly pushed it off-screen to the left on
+  // narrow phones. Only the vertical offset is read from the button.
+  const [panelTop, setPanelTop] = useState(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const push = usePushNotifications(user?.id);
 
   useEffect(() => {
@@ -47,8 +54,12 @@ export function NotificationBell() {
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          setPanelTop((buttonRef.current?.getBoundingClientRect().bottom ?? 0) + 8);
+          setIsOpen((prev) => !prev);
+        }}
         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#14100D]/15 bg-white text-[#14100D] transition-colors hover:border-[#C89A4B] hover:text-[#C89A4B]"
       >
         {unreadCount > 0 ? <BellRing size={17} strokeWidth={2} /> : <Bell size={17} strokeWidth={2} />}
@@ -60,7 +71,10 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-2 w-80 rounded-2xl border border-[#14100D]/10 bg-white p-3 shadow-[0_20px_45px_-20px_rgba(20,16,13,0.35)]">
+        <div
+          style={{ top: panelTop }}
+          className="fixed right-4 z-10 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-[#14100D]/10 bg-white p-3 shadow-[0_20px_45px_-20px_rgba(20,16,13,0.35)]"
+        >
           <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-[#14100D]/40">Notifications</p>
           {notifications.length === 0 && <p className="p-3 text-sm text-[#14100D]/50">No notifications yet.</p>}
           {notifications.map((notification) => (

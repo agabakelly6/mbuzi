@@ -52,7 +52,7 @@ export function StaffShell({ title, icon: Icon, children }: StaffShellProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3">
           <NotificationBell />
           <button
             type="button"
