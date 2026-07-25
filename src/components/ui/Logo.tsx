@@ -24,7 +24,7 @@ export function Logo({ tone = "light", className = "" }: LogoProps) {
     <a
       href="/"
       aria-label={`${SITE.name} — home`}
-      className={`group flex items-center gap-2.5 ${className}`}
+      className={`group flex items-center gap-3 ${className}`}
     >
       {LOGO_SRC ? (
         // Real logo file present (src/assets/branding/logo.*) — a compact
@@ -36,10 +36,10 @@ export function Logo({ tone = "light", className = "" }: LogoProps) {
         <img
           src={LOGO_SRC}
           alt={`${SITE.name} logo`}
-          className="h-9 w-9 shrink-0 rounded-full border border-[#C89A4B]/70 object-cover transition-colors duration-300 group-hover:border-[#C89A4B]"
+          className="h-12 w-12 shrink-0 rounded-full border border-[#C89A4B]/70 object-cover transition-colors duration-300 group-hover:border-[#C89A4B]"
         />
       ) : (
-        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#C89A4B]/70 transition-colors duration-300 group-hover:border-[#C89A4B]">
+        <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#C89A4B]/70 transition-colors duration-300 group-hover:border-[#C89A4B]">
           <svg
             viewBox="0 0 40 40"
             className="absolute inset-0 h-full w-full"
@@ -55,7 +55,7 @@ export function Logo({ tone = "light", className = "" }: LogoProps) {
             />
           </svg>
           <span
-            className={`font-serif text-[11px] font-semibold tracking-[0.03em] ${ink}`}
+            className={`font-serif text-sm font-semibold tracking-[0.03em] ${ink}`}
           >
             YPA
           </span>
@@ -63,7 +63,7 @@ export function Logo({ tone = "light", className = "" }: LogoProps) {
       )}
 
       <span
-        className={`font-serif text-[14px] font-semibold uppercase tracking-[0.12em] ${ink} transition-opacity duration-300 group-hover:opacity-80`}
+        className={`font-serif text-[17px] font-semibold uppercase tracking-[0.12em] ${ink} transition-opacity duration-300 group-hover:opacity-80`}
       >
         {SITE.name}
       </span>
