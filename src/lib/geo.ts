@@ -34,14 +34,15 @@ export function haversineDistanceKm(
  * that's the real cost this business pays to actually get an order to a
  * customer:
  *  - A flat base fee covering the first 1–2 km (SafeBoda's own published
- *    range is UGX 1,500–2,000; this uses the low end).
+ *    range is UGX 1,500–2,000; this was tried at 1,500 and brought down
+ *    further to 1,300 since fees were still coming out high).
  *  - The first 500 m of the trip is deducted from the distance before the
  *    per-km rate is applied — SafeBoda absorbs that stretch into the base
  *    fee rather than metering it.
- *  - UGX 700/km beyond that (SafeBoda's own range goes up to UGX 800/km in
- *    traffic-heavy zones; this uses the flat, non-traffic-adjusted rate
- *    since this app has no live traffic-zone data to key the higher rate
- *    off of).
+ *  - UGX 600/km beyond that (SafeBoda's own range goes up to UGX 800/km in
+ *    traffic-heavy zones; started at 700, brought down to 600 for the same
+ *    reason as the base fee — this app has no live traffic-zone data to
+ *    key a higher rate off of anyway).
  *  - A UGX 3,000 minimum — even an 800 m delivery is floored up to this
  *    before rounding.
  * Result is rounded to the nearest 500 UGX (never a flat table — see
@@ -52,9 +53,9 @@ export function haversineDistanceKm(
  * intended. Re-add only alongside a re-check of the other constants below,
  * not in isolation.
  */
-const BASE_FEE_UGX = 1500;
+const BASE_FEE_UGX = 1300;
 const FIRST_STRETCH_DEDUCTED_KM = 0.5;
-const PER_KM_RATE_UGX = 700;
+const PER_KM_RATE_UGX = 600;
 const MIN_FEE_UGX = 3000;
 
 export function calculateDeliveryFee(distanceKm: number): number {
