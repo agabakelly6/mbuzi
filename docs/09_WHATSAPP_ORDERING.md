@@ -64,8 +64,8 @@ updateQuantity(lineId, quantity): void   // quantity <= 0 removes the line
 removeItem(lineId): void
 updateLineInstructions(lineId, text): void
 setOrderType(type: "delivery" | "pickup"): void
-setBranch(branchId): void                 // also resets deliveryZoneId
-setDeliveryZone(zoneId): void
+setBranch(branchId): void                 // also resets deliveryDistanceKm
+setDeliveryDistance(distanceKm: number | null): void
 updateCustomer(patch: Partial<CustomerDetails>): void
 openDrawer() / closeDrawer() / toggleDrawer()
 clearCart(): void                          // called after successful checkout
@@ -79,10 +79,10 @@ A `CartLine`'s `id` is `${menuItemId}::${variationLabel ?? "base"}` — so "Mbuz
 
 ```ts
 useCart() → {
-  lines, orderType, branchId, branch, deliveryZoneId, customer, isDrawerOpen,
+  lines, orderType, branchId, branch, deliveryDistanceKm, customer, isDrawerOpen,
   itemCount, subtotal, deliveryFee, total,   // derived fresh on every read, never stored
   addItem, updateQuantity, removeItem, updateLineInstructions,
-  setOrderType, setBranch, setDeliveryZone, updateCustomer,
+  setOrderType, setBranch, setDeliveryDistance, updateCustomer,
   openDrawer, closeDrawer, toggleDrawer, clearCart,
   buildOrderDetails(): OrderDetails,
   buildWhatsAppMessage(): string,
@@ -102,8 +102,9 @@ parsePrice("UGX 40,000") → 40000          // strips everything but digits
 formatPrice(40000) → "UGX 40,000"          // hand-rolled thousands separator, no Intl dependency
 computeLineSubtotal(line) → unitPrice × quantity
 computeCartSubtotal(lines) → sum of all lines
-computeDeliveryFee(orderType, zoneId, branch) → calls getDeliveryInfo(branch) from data/delivery.ts —
-                                                   never reimplements delivery logic
+computeDeliveryFee(orderType, distanceKm, branch) → 0 until a routed distance is captured (share-location)
+                                                       or if it's beyond MAX_DELIVERY_RADIUS_KM (lib/geo.ts);
+                                                       otherwise calculateDeliveryFee(distanceKm) — never a flat table
 buildOrderDetails(state, branch) → OrderDetails
 buildOrderWhatsAppMessage(order) → the final formatted string
 ```
@@ -127,10 +128,12 @@ sequenceDiagram
 
     Drawer->>Store: setOrderType("delivery"|"pickup")
     Drawer->>Store: setBranch(branchId)
-    Drawer->>Store: setDeliveryZone(zoneId)   [delivery only]
+    Note over Drawer: customer clicks "Share My Location" [delivery only]
+    Drawer->>Drawer: resolve Supabase branch row by slug, call<br/>getRoutedDeliveryDistance(branch.id, lat, lng)
+    Drawer->>Store: setDeliveryDistance(distanceKm)
     Drawer->>Store: updateCustomer({name, phone, deliveryAddress, specialInstructions})
 
-    Drawer->>Drawer: validate() — name, phone, branch,<br/>+ zone/address if delivery
+    Drawer->>Drawer: validate() — name, phone, branch,<br/>+ address if delivery, blocks if &gt; MAX_DELIVERY_RADIUS_KM
     Drawer->>Store: buildWhatsAppMessage()
     Drawer->>WA: window.open(getWhatsAppUrl(message, branch.whatsapp))
     Drawer->>Store: clearCart()
@@ -139,8 +142,9 @@ sequenceDiagram
 1. On `/menu`, every `FoodCard` is rendered with `orderable` (set only by `MenuGrid.astro`, `client:visible`). `OrderControls` shows a variation `<select>` (if the item has variations) + an "Add to Order" button, which switches to a live `+`/`−` stepper once a line for that item+variation exists.
 2. `CartFAB` (mounted globally via `Layout.astro`) appears — it renders `null` entirely while the cart is empty, not just visually hidden.
 3. Clicking it opens `OrderDrawer` — a slide-over that explicitly clones `MobileMenu.tsx`'s recipe (scrim, `AnimatePresence`, focus trap, `useBodyScrollLock`, same panel-slide easing).
-4. The drawer shows line items (image, name, variation, quantity stepper, per-line note, remove), a Delivery/Pickup toggle, a branch `<select>` (`ACTIVE_LOCATIONS`), a delivery zone `<select>` populated from `getDeliveryInfo(selectedBranch)?.zones` (delivery only — reused from `data/delivery.ts`, never duplicated), customer name/phone/address fields, an order-level notes field, and a live Subtotal/Delivery Fee/Estimated Total footer.
-5. "Checkout via WhatsApp" validates required fields (name, phone, branch, plus zone+address if delivery), builds the message, opens `wa.me/{branch.whatsapp}?text=...`, then clears the cart.
+4. The drawer shows line items (image, name, variation, quantity stepper, per-line note, remove), a Delivery/Pickup toggle, a branch `<select>` (`ACTIVE_LOCATIONS`), a "Share My Location" button (delivery only), customer name/phone/address fields, an order-level notes field, and a live Subtotal/Delivery Fee/Estimated Total footer.
+5. Sharing location resolves the selected branch's real Supabase row by slug (`supabaseBranchRepository.findBySlug`), then calls `getRoutedDeliveryDistance` (the same `calculate-delivery-fee` Edge Function `CheckoutPanel.tsx` uses) to get real routed road distance, and derives the fee via `calculateDeliveryFee`. If the distance exceeds `MAX_DELIVERY_RADIUS_KM`, delivery is blocked for that address ("choose pickup instead"). If location sharing fails for any other reason, the guest enters their address manually instead and the fee isn't auto-computed — the branch confirms it by phone.
+6. "Checkout via WhatsApp" validates required fields (name, phone, branch, address if delivery, and that the address isn't outside the delivery radius), builds the message, opens `wa.me/{branch.whatsapp}?text=...`, then clears the cart.
 
 ## The WhatsApp message format
 
@@ -161,12 +165,12 @@ Estimated Total: UGX 15,000
 Please confirm my order.
 ```
 
-Notes on the format: `Delivery Address` only appears for delivery orders; `Special Instructions` only appears if the customer typed something; `Branch` uses the branch's short `city` name (not its full display `name`) to match the requested format exactly. Built by the same line-array-joined-with-`\n` style as `BookingForm.tsx`'s WhatsApp message builder and the Assistant's handoff builder — one consistent pattern for turning structured data into a WhatsApp-ready message across the whole codebase.
+Notes on the format: `Delivery Address` only appears for delivery orders; a `Delivery Fee: To be confirmed by phone` line appears instead of a computed total when no routed distance was captured; `Special Instructions` only appears if the customer typed something; `Branch` uses the branch's short `city` name (not its full display `name`) to match the requested format exactly. Built by the same line-array-joined-with-`\n` style as `BookingForm.tsx`'s WhatsApp message builder and the Assistant's handoff builder — one consistent pattern for turning structured data into a WhatsApp-ready message across the whole codebase.
 
 ## Branch and delivery selection — reused, not duplicated
 
 - **Branches**: the drawer's branch `<select>` iterates `ACTIVE_LOCATIONS` from `data/locations.ts` — the exact same array `BookingForm` and `ContactForm` use. A "coming soon" branch (Nansana) is automatically excluded.
-- **Delivery fees**: `getDeliveryInfo(branch)` (`data/delivery.ts`) — the same function `DeliveryDetails.tsx` uses on the Locations page. Three flat distance-band zones (Within 3km / 3–8km / Beyond 8km, UGX 5,000/10,000/15,000), identical for every active branch today (no per-branch fee table exists yet — see [14_FUTURE_ROADMAP.md](./14_FUTURE_ROADMAP.md) if that changes).
+- **Delivery fees**: there is no flat table. `getDeliveryInfo(branch)` (`data/delivery.ts`) only says whether delivery is offered at all and the area/radius text (the same function `DeliveryDetails.tsx` uses on the Locations page) — the actual fee comes from `lib/geo.ts`'s `calculateDeliveryFee(distanceKm)`, fed by real routed distance from `lib/deliveryFee.ts`'s `getRoutedDeliveryDistance`, identical to the guest checkout's pricing (`CheckoutPanel.tsx`). One formula, one radius cap (`MAX_DELIVERY_RADIUS_KM`), shared by both ordering flows.
 
 ## Hydration strategy
 
@@ -183,7 +187,7 @@ interface OrderDetails {
   lines: CartLine[];
   branchId: string; branchName: string;
   orderType: OrderType;
-  deliveryZoneId?: string;
+  deliveryDistanceKm?: number;
   customer: CustomerDetails;
   subtotal: number; deliveryFee: number; total: number;
 }
@@ -194,5 +198,5 @@ Adding Flutterwave, Pesapal, MTN MoMo, Airtel Money, or Stripe later means: buil
 ## Known limitations
 
 - All branch WhatsApp numbers are still the `256700000000`-series placeholders (see [07_CONFIGURATION.md](./07_CONFIGURATION.md)) — checkout messages will send correctly once real numbers are filled into `data/locations.ts`.
-- Delivery fees are a flat 3-zone schedule shared by every branch — there's no per-branch override or real distance calculation (see `data/delivery.ts`'s own header comment, which documents this as a known placeholder).
+- Resolving the Supabase branch row by slug (for the routed-distance call) does one extra network round-trip per "Share My Location" click — acceptable at this scale, but a candidate to cache if the branch list grows.
 - No automated test suite verifies checkout math — verified manually/via Playwright during development, not as a committed regression test.

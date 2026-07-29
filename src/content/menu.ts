@@ -59,6 +59,18 @@ export const MENU_CONTENT = {
       eyebrow: "To Drink",
       heading: "Drinks Menu",
     } satisfies SectionContent,
+    sides: {
+      eyebrow: "On The Side",
+      heading: "Bits & Sides",
+    } satisfies SectionContent,
+    "cake-slices": {
+      eyebrow: "Something Sweet",
+      heading: "Cake Slices",
+    } satisfies SectionContent,
+    dessert: {
+      eyebrow: "To Finish",
+      heading: "Dessert",
+    } satisfies SectionContent,
   },
 
   // Note: the section's <h2> is the dish name itself ({CHEF_PICK.name}

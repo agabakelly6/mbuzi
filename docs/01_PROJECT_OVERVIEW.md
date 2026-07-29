@@ -24,7 +24,7 @@ It is a **static site** — there is no backend, no database, and no API routes.
 
 | Feature | Where |
 |---|---|
-| Full menu across 8 categories (44 dishes) | `/menu` |
+| Full menu across 11 categories (59 dishes) | `/menu` |
 | Table reservations (WhatsApp/call handoff) | `/booking` |
 | Catering & event packages | `/catering` |
 | Branch locator with static map, hours, delivery info | `/locations` |

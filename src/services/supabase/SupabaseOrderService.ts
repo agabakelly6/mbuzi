@@ -35,8 +35,14 @@ import { supabasePromotionRepository } from "../../repositories/supabase/Supabas
 import { supabasePaymentRepository } from "../../repositories/supabase/SupabasePaymentRepository";
 import { supabasePromotionService } from "./SupabasePromotionService";
 import { supabase } from "../../lib/supabase/client";
-import { DELIVERY_ZONES } from "../../data/delivery";
-import { calculateDeliveryFee } from "../../lib/geo";
+import { calculateDeliveryFee, isWithinDeliveryRadius } from "../../lib/geo";
+
+/** deliveries.delivery_zone_id is NOT NULL — always resolves to a human-readable label, never trusted for money. */
+function deliveryLabel(zoneId: string | undefined, distanceKm: number | undefined): string {
+  if (zoneId) return zoneId;
+  if (distanceKm !== undefined) return `${distanceKm.toFixed(1)} km`;
+  return "Address-based (fee pending)";
+}
 
 export const supabaseOrderService: OrderService = {
   async getOrder(id) {
@@ -78,11 +84,13 @@ export const supabaseOrderService: OrderService = {
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
 
     let deliveryFee = 0;
-    if (parsed.data.channel === "delivery") {
-      const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
-      if (!zone) return { data: null, error: dbError("validation_error") };
-      deliveryFee = zone.fee;
+    if (parsed.data.channel === "delivery" && parsed.data.deliveryDistanceKm !== undefined) {
+      if (!isWithinDeliveryRadius(parsed.data.deliveryDistanceKm)) return { data: null, error: dbError("validation_error") };
+      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm, parsed.data.deliveryDurationMin ?? 0);
     }
+    // else, for a delivery order with no routed distance: fee stays 0 here
+    // and is confirmed manually against deliveryAddress, same as the guest
+    // checkout's fallback path below — there's no flat-fee table anymore.
 
     let discountTotal = 0;
     let appliedPromotionId: string | undefined;
@@ -128,7 +136,7 @@ export const supabaseOrderService: OrderService = {
       const deliveryResult = await supabaseDeliveryRepository.create({
         branchId: parsed.data.branchId,
         orderId: orderResult.data.id,
-        deliveryZoneId: parsed.data.deliveryZoneId as string,
+        deliveryZoneId: deliveryLabel(parsed.data.deliveryZoneId, parsed.data.deliveryDistanceKm),
         fee: deliveryFee,
         address: parsed.data.deliveryAddress as string,
         customerPhone: parsed.data.deliveryPhone as string,
@@ -180,21 +188,20 @@ export const supabaseOrderService: OrderService = {
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
 
     let deliveryFee = 0;
-    if (parsed.data.channel === "delivery") {
-      if (parsed.data.deliveryDistanceKm !== undefined) {
-        // Trusted path: real routed distance from OpenRouteService (see
-        // CheckoutPanel.tsx / calculate-delivery-fee Edge Function) — the
-        // fee is (re)computed here from the raw distance, never trusted
-        // as a client-sent amount directly.
-        deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm);
-      } else {
-        // Fallback path: the routing call failed and the customer picked
-        // a flat zone manually instead.
-        const zone = DELIVERY_ZONES.find((z) => z.id === parsed.data.deliveryZoneId);
-        if (!zone) return { data: null, error: dbError("validation_error") };
-        deliveryFee = zone.fee;
-      }
+    if (parsed.data.channel === "delivery" && parsed.data.deliveryDistanceKm !== undefined) {
+      // Trusted path: real routed distance from OpenRouteService (see
+      // CheckoutPanel.tsx / calculate-delivery-fee Edge Function) — the
+      // fee is (re)computed here from the raw distance, never trusted as
+      // a client-sent amount directly. The schema already caps distance
+      // at MAX_DELIVERY_RADIUS_KM; re-checked here too since this is the
+      // one place money actually gets derived from it.
+      if (!isWithinDeliveryRadius(parsed.data.deliveryDistanceKm)) return { data: null, error: dbError("validation_error") };
+      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm, parsed.data.deliveryDurationMin ?? 0);
     }
+    // else: no routed distance was captured (location sharing failed) —
+    // there is no flat-zone fallback fee anymore. deliveryFee stays 0 and
+    // the branch confirms the real fee by phone against deliveryAddress
+    // before the order is prepared.
 
     let discountTotal = 0;
     let appliedPromotionId: string | undefined;
@@ -220,7 +227,10 @@ export const supabaseOrderService: OrderService = {
       p_total: total,
       p_applied_promotion_id: appliedPromotionId ?? null,
       p_notes: parsed.data.notes ?? null,
-      p_delivery_zone_id: parsed.data.channel === "delivery" ? parsed.data.deliveryZoneId : null,
+      p_delivery_zone_id:
+        parsed.data.channel === "delivery"
+          ? deliveryLabel(parsed.data.deliveryZoneId, parsed.data.deliveryDistanceKm)
+          : null,
       p_delivery_address: parsed.data.channel === "delivery" ? parsed.data.deliveryAddress : null,
       p_items: items.map((item) => ({
         menuItemId: item.menuItemId,

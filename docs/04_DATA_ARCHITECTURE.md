@@ -85,7 +85,7 @@ sequenceDiagram
 
 A concrete trace, using the Menu page:
 
-1. `pages/menu/index.astro` imports `MENU_CONTENT` from `content/menu.ts` (copy: hero text, per-category eyebrow/heading) and the eight category arrays from `data/menu.ts` (`BREAKFAST_ITEMS`, `MAIN_COURSE_ITEMS`, …).
+1. `pages/menu/index.astro` imports `MENU_CONTENT` from `content/menu.ts` (copy: hero text, per-category eyebrow/heading) and the eleven category arrays from `data/menu.ts` (`BREAKFAST_ITEMS`, `MAIN_COURSE_ITEMS`, …).
 2. For each category, the page renders one `<MenuGrid>` (`components/sections/MenuGrid.astro`), passing the content strings and the data array.
 3. `MenuGrid.astro` groups items by `subcategory` (Drinks only), and for every item calls `resolveImageSrc(item.image)` (`lib/images.ts`) to turn the data layer's plain path string (`"/images/food/goat-katogo.jpg"`) into a real, build-time-optimized image URL.
 4. `MenuGrid.astro` renders one `<FoodCard>` per item, passing the resolved image URL down as a plain prop (React components can't call `astro:assets` themselves).

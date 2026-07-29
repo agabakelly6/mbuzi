@@ -47,7 +47,7 @@ This is a static Astro site with no build-time ML pipeline and no backend to hos
 |---|---|
 | Every dish (name, description, price, variations) | `data/menu.ts` `MENU_ITEMS` |
 | Every branch (address, hours, services, description) | `data/locations.ts` `LOCATIONS` |
-| Delivery zones and fees | `data/delivery.ts` |
+| Delivery availability and pricing policy (share-location based, radius cap) | `data/delivery.ts`, `lib/geo.ts` |
 | Reservation policies, how booking works | `data/booking.ts` `RESERVATION_POLICIES` |
 | Payment options (MTN/Airtel merchant codes) | `data/booking.ts` `MERCHANT_PAYMENT_OPTIONS` |
 | Catering event types, packages, booking process | `data/catering.ts` |

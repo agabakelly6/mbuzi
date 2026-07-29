@@ -21,7 +21,10 @@ export type MenuCategory =
   | "pizza"
   | "lusaniya"
   | "smoothies"
-  | "drinks";
+  | "drinks"
+  | "sides"
+  | "cake-slices"
+  | "dessert";
 
 /** A secondary price for a portion size or add-on (e.g. "4 People", "With Accompaniments"). */
 export interface MenuItemVariation {
@@ -493,6 +496,108 @@ export const MENU_ITEMS: MenuItem[] = [
     category: "drinks",
     subcategory: "Wine",
   },
+
+  // Bits & Sides
+  {
+    id: "cookies",
+    name: "Cookies",
+    description: "A plate of freshly baked cookies.",
+    price: "UGX 10,000",
+    image: "/images/food/cookies.jpg",
+    category: "sides",
+  },
+  {
+    id: "chapati",
+    name: "Chapati",
+    description: "Freshly made chapati.",
+    price: "UGX 3,000",
+    image: "/images/food/chapati.jpg",
+    category: "sides",
+  },
+  {
+    id: "goat-roasted-bite",
+    name: "Goat Roasted Bite",
+    description: "Bite-sized pieces of goat, roasted over charcoal.",
+    price: "UGX 15,000",
+    image: "/images/food/goat-roasted-bite.jpg",
+    category: "sides",
+  },
+  {
+    id: "veggie-samosas",
+    name: "Veggie Samosas",
+    description: "Crisp pastry parcels filled with spiced vegetables.",
+    price: "UGX 3,000",
+    image: "/images/food/veggie-samosas.jpg",
+    category: "sides",
+  },
+  {
+    id: "goats-samosas",
+    name: "Goat's Samosas",
+    description: "Crisp pastry parcels filled with spiced goat mince.",
+    price: "UGX 5,000",
+    image: "/images/food/goats-samosas.jpg",
+    category: "sides",
+  },
+  {
+    id: "plain-chips",
+    name: "Plain Chips",
+    description: "A side of golden fried potato chips.",
+    price: "UGX 10,000",
+    image: "/images/food/plain-chips.jpg",
+    category: "sides",
+  },
+  {
+    id: "plantain",
+    name: "Plantain",
+    description: "Fried sweet plantain.",
+    price: "UGX 12,000",
+    image: "/images/food/plantain.jpg",
+    category: "sides",
+  },
+  {
+    id: "pair-of-sausages",
+    name: "Pair of Sausages",
+    description: "Two grilled sausages.",
+    price: "UGX 6,000",
+    image: "/images/food/pair-of-sausages.jpg",
+    category: "sides",
+  },
+
+  // Cake Slices
+  {
+    id: "orange-cake-slice",
+    name: "Orange Cake Slice",
+    description: "A slice of moist orange cake.",
+    price: "UGX 8,000",
+    image: "/images/food/orange-cake-slice.jpg",
+    category: "cake-slices",
+  },
+  {
+    id: "vanilla-cake-slice",
+    name: "Vanilla Cake Slice",
+    description: "A slice of classic vanilla cake.",
+    price: "UGX 8,000",
+    image: "/images/food/vanilla-cake-slice.jpg",
+    category: "cake-slices",
+  },
+  {
+    id: "banana-cake-slice",
+    name: "Banana Cake Slice",
+    description: "A slice of banana cake.",
+    price: "UGX 8,000",
+    image: "/images/food/banana-cake-slice.jpg",
+    category: "cake-slices",
+  },
+
+  // Dessert
+  {
+    id: "ice-cream",
+    name: "Ice Cream",
+    description: "Priced per scoop.",
+    price: "UGX 8,000",
+    image: "/images/food/ice-cream.jpg",
+    category: "dessert",
+  },
 ];
 
 export const FEATURED_MENU_ITEMS = MENU_ITEMS.filter((item) => item.featured);
@@ -504,4 +609,7 @@ export const PIZZA_ITEMS = MENU_ITEMS.filter((item) => item.category === "pizza"
 export const LUSANIYA_ITEMS = MENU_ITEMS.filter((item) => item.category === "lusaniya");
 export const SMOOTHIE_ITEMS = MENU_ITEMS.filter((item) => item.category === "smoothies");
 export const DRINK_ITEMS = MENU_ITEMS.filter((item) => item.category === "drinks");
+export const SIDE_ITEMS = MENU_ITEMS.filter((item) => item.category === "sides");
+export const CAKE_SLICE_ITEMS = MENU_ITEMS.filter((item) => item.category === "cake-slices");
+export const DESSERT_ITEMS = MENU_ITEMS.filter((item) => item.category === "dessert");
 export const CHEF_PICK = MENU_ITEMS.find((item) => item.chefPick);

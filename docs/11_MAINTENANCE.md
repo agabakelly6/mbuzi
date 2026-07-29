@@ -55,9 +55,9 @@ To change the photo, just replace the file at `src/assets/hero/{filename}` with 
 
 Photos are grouped by category, each its own file under `src/media/`: `food.ts`, `farm.ts`, `restaurant.ts`, `team.ts`, `event.ts`. To swap a photo, overwrite the file in `src/assets/` at the matching filename. To add a *new* gallery photo, add an entry to the relevant `media/*.ts` array (`{id, title, description, src, alt, category, featured, width, height}`) and add the file to `src/assets/`. It will automatically appear in `/gallery`'s filtered grid (via `media/gallery.ts`'s `GALLERY_IMAGES` merge) — no change needed to `GalleryFilters.tsx` or the Gallery page itself.
 
-## Update delivery fees
+## Update delivery pricing
 
-Edit `src/data/delivery.ts`'s `DELIVERY_ZONES` array (`{id, label, fee}` — fee in UGX). This one array is shared by **every** active branch today (there's no per-branch override) and feeds both the Locations page's `DeliveryDetails` card and the Cart's `OrderDrawer` zone selector — one edit updates both. If a future requirement needs per-branch fees, see [14_FUTURE_ROADMAP.md](./14_FUTURE_ROADMAP.md).
+There's no flat fee table to edit anymore — the delivery fee is always computed from the customer's shared live location and the real routed road distance to the branch (`lib/geo.ts`'s `calculateDeliveryFee`, called after `lib/deliveryFee.ts`'s `getRoutedDeliveryDistance` resolves a distance via the `calculate-delivery-fee` Edge Function). To change the pricing formula, edit `calculateDeliveryFee`'s `BASE_FEE_UGX`/`PER_KM_RATE_UGX` constants. To change the maximum delivery distance, edit `MAX_DELIVERY_RADIUS_KM` in the same file — both the guest checkout (`CheckoutPanel.tsx`) and the WhatsApp cart (`OrderDrawer.tsx`) import it, so one edit updates both. If a location's share fails, the fee isn't guessed — the guest enters an address instead and the branch confirms the fee by phone.
 
 ## Update business hours
 

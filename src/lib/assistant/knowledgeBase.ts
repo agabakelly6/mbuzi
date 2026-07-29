@@ -14,7 +14,8 @@
 // captions, low-value for Q&A, so it isn't exhaustively indexed.
 import { MENU_ITEMS } from "../../data/menu";
 import { LOCATIONS, ACTIVE_LOCATIONS } from "../../data/locations";
-import { DELIVERY_ZONES, DEFAULT_DELIVERY } from "../../data/delivery";
+import { DEFAULT_DELIVERY } from "../../data/delivery";
+import { MAX_DELIVERY_RADIUS_KM } from "../geo";
 import { RESERVATION_POLICIES, MERCHANT_PAYMENT_OPTIONS } from "../../data/booking";
 import { EVENT_TYPES, EVENT_PACKAGES, CATERING_SERVICES, BOOKING_PROCESS } from "../../data/catering";
 import { DEPARTMENTS, RESPONSE_EXPECTATIONS } from "../../data/contact";
@@ -69,14 +70,13 @@ function locationChunks(): KnowledgeChunk[] {
 }
 
 function deliveryChunks(): KnowledgeChunk[] {
-  const zoneText = DELIVERY_ZONES.map((z) => `${z.label}: UGX ${z.fee.toLocaleString()}`).join(", ");
   const branches = ACTIVE_LOCATIONS.map((l) => l.city).join(", ");
   return [
     {
       id: "delivery-zones",
       category: "delivery",
-      title: "Delivery zones and fees",
-      text: `We deliver from every active branch (${branches}), ${DEFAULT_DELIVERY.area.toLowerCase()}. Delivery fees by distance: ${zoneText}.`,
+      title: "Delivery fees",
+      text: `We deliver from every active branch (${branches}), ${DEFAULT_DELIVERY.area.toLowerCase()}. There's no fixed price list — the exact delivery fee is calculated from the real routed road distance once a customer shares their live location at checkout. Addresses beyond ${MAX_DELIVERY_RADIUS_KM} km from the branch aren't eligible for delivery.`,
       keywords: ["delivery fee", "how much is delivery", "do you deliver"],
     },
   ];

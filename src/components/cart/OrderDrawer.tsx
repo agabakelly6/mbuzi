@@ -8,12 +8,15 @@
 // exactly like BookingForm/ContactForm already do.
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
-import { X, Trash2, Truck, Store } from "lucide-react";
+import { X, Trash2, Truck, Store, LocateFixed, CircleAlert } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { ACTIVE_LOCATIONS } from "../../data/locations";
 import { getDeliveryInfo } from "../../data/delivery";
 import { formatPrice } from "../../lib/cart/cartUtils";
+import { MAX_DELIVERY_RADIUS_KM } from "../../lib/geo";
+import { getRoutedDeliveryDistance } from "../../lib/deliveryFee";
+import { supabaseBranchRepository } from "../../repositories/supabase/SupabaseBranchRepository";
 import { FORM_INPUT_CLASSES, FORM_ERROR_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
 import { isValidName, isValidPhone } from "../../lib/helpers";
 import { getButtonClasses } from "../../lib/button-variants";
@@ -31,7 +34,6 @@ interface FormErrors {
   phone?: string;
   branchId?: string;
   deliveryAddress?: string;
-  deliveryZoneId?: string;
 }
 
 export function OrderDrawer() {
@@ -41,7 +43,7 @@ export function OrderDrawer() {
     orderType,
     branchId,
     branch,
-    deliveryZoneId,
+    deliveryDistanceKm,
     customer,
     isDrawerOpen,
     subtotal,
@@ -52,7 +54,7 @@ export function OrderDrawer() {
     updateLineInstructions,
     setOrderType,
     setBranch,
-    setDeliveryZone,
+    setDeliveryLocation,
     updateCustomer,
     closeDrawer,
     clearCart,
@@ -60,14 +62,26 @@ export function OrderDrawer() {
   } = cart;
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "granted" | "error">("idle");
+  const [locationError, setLocationError] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerFocusRef = useRef<HTMLButtonElement>(null);
   const externalTriggerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  const deliveryZones = branch ? getDeliveryInfo(branch)?.zones ?? [] : [];
+  const deliveryAvailable = branch ? getDeliveryInfo(branch) !== null : false;
+  const deliveryTooFar = deliveryDistanceKm !== null && deliveryDistanceKm > MAX_DELIVERY_RADIUS_KM;
 
   useBodyScrollLock(isDrawerOpen);
+
+  // A distance/location result is only valid for the branch it was measured
+  // against — switching branches invalidates it (CartStore.setBranch already
+  // clears deliveryDistanceKm; this clears the local share-location UI state
+  // to match rather than showing a stale "granted" result for a new branch).
+  useEffect(() => {
+    setLocationStatus("idle");
+    setLocationError(null);
+  }, [branchId]);
 
   // Captures whatever had focus before opening (the CartFAB, in
   // practice) and restores it when the drawer closes via any path — X
@@ -113,6 +127,55 @@ export function OrderDrawer() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isDrawerOpen, closeDrawer]);
 
+  async function handleShareLocation() {
+    if (!branch) return;
+    // Every press re-acquires a fresh fix and clears whatever the last
+    // press produced first — a stale distance/fee must never linger (or
+    // get sent in the WhatsApp message) while a new one is in flight, and
+    // maximumAge: 0 below forces a live GPS reading, never a cached one.
+    setDeliveryLocation(null, null);
+    setLocationStatus("requesting");
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationStatus("error");
+      setLocationError("Location sharing isn't available on this device or browser — enter your delivery address instead.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { data: branchRow, error: branchError } = await supabaseBranchRepository.findBySlug(branch.id);
+          if (branchError || !branchRow || branchRow.latitude === null || branchRow.longitude === null) {
+            throw new Error("branch coordinates unavailable");
+          }
+          const { distanceKm, durationMin } = await getRoutedDeliveryDistance(
+            branchRow.id,
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setDeliveryLocation(distanceKm, durationMin);
+          setLocationStatus("granted");
+        } catch {
+          setLocationStatus("error");
+          setLocationError(
+            "We couldn't calculate your exact delivery fee right now — enter your delivery address instead and we'll confirm the fee by phone."
+          );
+        }
+      },
+      (geoError) => {
+        setLocationStatus("error");
+        setLocationError(
+          geoError.code === geoError.PERMISSION_DENIED
+            ? "Location permission was denied. Enter your delivery address instead, or allow location access to get an exact quote."
+            : "Couldn't get your location — enter your delivery address instead and we'll confirm the fee by phone."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
   function validate(): boolean {
     const next: FormErrors = {};
     if (!isValidName(customer.name)) next.name = "Enter your name.";
@@ -120,7 +183,9 @@ export function OrderDrawer() {
     if (!branchId) next.branchId = "Choose a branch.";
     if (orderType === "delivery") {
       if (!customer.deliveryAddress.trim()) next.deliveryAddress = "Enter a delivery address.";
-      if (deliveryZones.length > 0 && !deliveryZoneId) next.deliveryZoneId = "Choose a delivery zone.";
+      else if (deliveryTooFar) {
+        next.deliveryAddress = `This address is outside our ${MAX_DELIVERY_RADIUS_KM} km delivery radius — choose pickup instead.`;
+      }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -290,25 +355,52 @@ export function OrderDrawer() {
 
                 {orderType === "delivery" && (
                   <>
-                    {deliveryZones.length > 0 && (
-                      <div>
-                        <label className={`${FORM_LABEL_CLASSES} text-white`}>Delivery Zone</label>
-                        <select
-                          value={deliveryZoneId}
-                          onChange={(event) => setDeliveryZone(event.target.value)}
-                          className={`mt-1.5 ${FORM_INPUT_CLASSES} ${
-                            errors.deliveryZoneId ? FORM_ERROR_INPUT_CLASSES : ""
-                          }`}
-                        >
-                          <option value="">Choose a zone</option>
-                          {deliveryZones.map((zone) => (
-                            <option key={zone.id} value={zone.id}>
-                              {zone.label} — {formatPrice(zone.fee)}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.deliveryZoneId && (
-                          <p className="mt-1 text-[12px] text-red-400">{errors.deliveryZoneId}</p>
+                    {deliveryAvailable && (
+                      <div className="flex flex-col gap-2">
+                        <label className={`${FORM_LABEL_CLASSES} text-white`}>Delivery Location</label>
+                        {locationStatus === "granted" && deliveryDistanceKm !== null ? (
+                          deliveryTooFar ? (
+                            <div className="flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2.5 text-[12px] text-red-300">
+                              <CircleAlert size={14} className="shrink-0" />
+                              About {deliveryDistanceKm.toFixed(1)} km away — outside our {MAX_DELIVERY_RADIUS_KM} km
+                              delivery radius. Please choose pickup instead.
+                              <button
+                                type="button"
+                                onClick={handleShareLocation}
+                                className="ml-auto shrink-0 font-semibold underline underline-offset-4"
+                              >
+                                Update
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2.5 text-[12px] text-emerald-300">
+                              <LocateFixed size={14} className="shrink-0" />
+                              Location shared — about {deliveryDistanceKm.toFixed(1)} km ({formatPrice(deliveryFee)}).
+                              <button
+                                type="button"
+                                onClick={handleShareLocation}
+                                className="ml-auto shrink-0 font-semibold underline underline-offset-4"
+                              >
+                                Update
+                              </button>
+                            </div>
+                          )
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleShareLocation}
+                            disabled={locationStatus === "requesting"}
+                            className={getButtonClasses({ variant: "outline", size: "md", className: "disabled:opacity-60" })}
+                          >
+                            <LocateFixed size={16} className="mr-1.5" />
+                            {locationStatus === "requesting" ? "Getting Your Location…" : "Share My Location"}
+                          </button>
+                        )}
+                        {locationStatus === "error" && locationError && (
+                          <p role="alert" className="flex items-start gap-2 text-[12px] text-red-400">
+                            <CircleAlert size={14} className="mt-0.5 shrink-0" />
+                            {locationError}
+                          </p>
                         )}
                       </div>
                     )}
@@ -325,6 +417,11 @@ export function OrderDrawer() {
                       />
                       {errors.deliveryAddress && (
                         <p className="mt-1 text-[12px] text-red-400">{errors.deliveryAddress}</p>
+                      )}
+                      {deliveryDistanceKm === null && !errors.deliveryAddress && (
+                        <p className="mt-1 text-[12px] text-white/40">
+                          We'll confirm your exact delivery fee by phone before your order is prepared.
+                        </p>
                       )}
                     </div>
                   </>
@@ -371,10 +468,14 @@ export function OrderDrawer() {
                     <span>Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Delivery Fee</span>
-                    <span>{formatPrice(deliveryFee)}</span>
-                  </div>
+                  {orderType === "delivery" && (
+                    <div className="flex justify-between">
+                      <span>Delivery Fee</span>
+                      <span className={deliveryTooFar ? "font-semibold text-red-400" : undefined}>
+                        {deliveryTooFar ? "Unavailable" : deliveryDistanceKm !== null ? formatPrice(deliveryFee) : "To be confirmed"}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm font-semibold text-white">
                     <span>Estimated Total</span>
                     <span>{formatPrice(total)}</span>

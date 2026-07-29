@@ -1,10 +1,10 @@
 // src/types/delivery.ts
 //
 // The operational delivery run for one order — rider assignment, live
-// status, timestamps. Distinct from data/delivery.ts's `DeliveryZone`,
-// which is just the marketing site's static fee lookup table; this entity
-// references a zone by id for fee calculation but owns the actual
-// fulfillment lifecycle, which DeliveryZone was never meant to model.
+// status, timestamps. `deliveryZoneId` is a free-text label (e.g. "6.5 km"
+// or "Address-based (fee pending)"), not a lookup key — the fee itself is
+// computed from real routed distance (see lib/geo.ts's calculateDeliveryFee),
+// never a flat zone table.
 import type { BranchEntity, Money } from "./base";
 
 export type DeliveryStatus =
@@ -21,7 +21,7 @@ export interface Delivery extends BranchEntity {
   /** User['id'] of the assigned rider, or null before assignment. */
   riderId: string | null;
   status: DeliveryStatus;
-  /** References data/delivery.ts's DeliveryZone['id'] for the fee band applied. */
+  /** Human-readable distance/method label for staff reference (e.g. "6.5 km"), not a fee lookup key. */
   deliveryZoneId: string;
   fee: Money;
   address: string;

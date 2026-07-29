@@ -19,10 +19,10 @@ Every page (except Home and 404) passes `breadcrumbs: [Home, <PageName>]` to `ge
 
 ## `/menu` (`src/pages/menu/index.astro`)
 
-- **Purpose**: the full menu, 8 categories, 44 dishes.
-- **Components**: `Layout` → `Navbar` → `Hero` → `MenuCategories` (`client:load`) → `MenuGrid` ×8 (Breakfast, Main Course, Burgers, Sandwiches, Pizza, Lusaniya, Smoothies, Drinks — alternating `tone="light"`/`"dark"`) → `ChefRecommendation` → `FoodQualityStory` → `CTASection` → `Footer`.
-- **Content source**: `MENU_CONTENT` (`content/menu.ts`) — `hero`, `categorySections.{breakfast,main-course,burgers,sandwiches,pizza,lusaniya,smoothies,drinks}`, `cta`, `seo`.
-- **Data source**: `MENU_SECTIONS` (`data/menu-sections.ts`, feeds the sticky nav); `BREAKFAST_ITEMS` / `MAIN_COURSE_ITEMS` / `BURGER_ITEMS` / `SANDWICH_ITEMS` / `PIZZA_ITEMS` / `LUSANIYA_ITEMS` / `SMOOTHIE_ITEMS` / `DRINK_ITEMS` (`data/menu.ts`).
+- **Purpose**: the full menu, 11 categories, 59 dishes.
+- **Components**: `Layout` → `Navbar` → `Hero` → `MenuCategories` (`client:load`) → `MenuGrid` ×11 (Breakfast, Main Course, Burgers, Sandwiches, Pizza, Lusaniya, Smoothies, Drinks, Bits & Sides, Cake Slices, Dessert — alternating `tone="light"`/`"dark"`) → `ChefRecommendation` → `FoodQualityStory` → `CTASection` → `Footer`.
+- **Content source**: `MENU_CONTENT` (`content/menu.ts`) — `hero`, `categorySections.{breakfast,main-course,burgers,sandwiches,pizza,lusaniya,smoothies,drinks,sides,cake-slices,dessert}`, `cta`, `seo`.
+- **Data source**: `MENU_SECTIONS` (`data/menu-sections.ts`, feeds the sticky nav); `BREAKFAST_ITEMS` / `MAIN_COURSE_ITEMS` / `BURGER_ITEMS` / `SANDWICH_ITEMS` / `PIZZA_ITEMS` / `LUSANIYA_ITEMS` / `SMOOTHIE_ITEMS` / `DRINK_ITEMS` / `SIDE_ITEMS` / `CAKE_SLICE_ITEMS` / `DESSERT_ITEMS` (`data/menu.ts`).
 - **SEO**: `title={MENU_CONTENT.seo.title}`, `description={MENU_CONTENT.seo.description}`.
 - **Structured data**: `getPageStructuredData({ ..., breadcrumbs: [Home, Menu], includeMenu: true })` — **the only page with `includeMenu: true`**, which adds a full `Menu`/`MenuSection`/`MenuItem` JSON-LD graph.
 - **Special functionality**:

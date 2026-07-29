@@ -1,6 +1,7 @@
 // src/validators/order.schema.ts
 import { z } from "zod";
 import { nonEmptyStringSchema, phoneSchema, uuidSchema } from "./shared";
+import { MAX_DELIVERY_RADIUS_KM } from "../lib/geo";
 
 export const orderChannelSchema = z.enum(["dine_in", "pickup", "delivery", "whatsapp"]);
 
@@ -31,8 +32,12 @@ export const createOrderInputSchema = z.object({
   items: z.array(createOrderItemInputSchema).min(1),
   tableId: uuidSchema.optional(),
   deliveryAddress: z.string().min(5).optional(),
-  /** data/delivery.ts's DeliveryZone['id'] — the customer/cashier's self-reported distance band, same as the existing WhatsApp cart's flow (types/cart.ts's CartState.deliveryZoneId). There's no geocoding to derive this automatically. */
+  /** Human-readable label for staff reference only (e.g. "6.5 km" or "Address-based (fee pending)") — never the trusted fee source. */
   deliveryZoneId: nonEmptyStringSchema.optional(),
+  /** Real routed road distance in km (see lib/geo.ts's calculateDeliveryFee) — the only trusted source for delivery fee. Capped at MAX_DELIVERY_RADIUS_KM; addresses beyond that aren't deliverable. */
+  deliveryDistanceKm: z.number().positive().max(MAX_DELIVERY_RADIUS_KM).optional(),
+  /** Routed transit time in minutes for the same trip — the fee formula's per-minute component. Set alongside deliveryDistanceKm, never independently. */
+  deliveryDurationMin: z.number().nonnegative().optional(),
   /** Contact number for the rider — distinct from the linked Customer's phone since an anonymous/guest delivery order has no Customer record to read it from. */
   deliveryPhone: phoneSchema.optional(),
   promoCode: nonEmptyStringSchema.optional(),
@@ -43,9 +48,6 @@ export const createOrderInputSchema = z.object({
 }).refine((value) => value.channel !== "delivery" || value.deliveryAddress !== undefined, {
   message: "deliveryAddress is required for delivery orders",
   path: ["deliveryAddress"],
-}).refine((value) => value.channel !== "delivery" || value.deliveryZoneId !== undefined, {
-  message: "deliveryZoneId is required for delivery orders",
-  path: ["deliveryZoneId"],
 }).refine((value) => value.channel !== "delivery" || value.deliveryPhone !== undefined, {
   message: "deliveryPhone is required for delivery orders",
   path: ["deliveryPhone"],
@@ -59,18 +61,20 @@ export const createGuestOrderInputSchema = z.object({
   channel: z.enum(["pickup", "delivery"]),
   items: z.array(createOrderItemInputSchema).min(1),
   deliveryAddress: z.string().min(5).optional(),
-  /** Either a real data/delivery.ts zone id (manual fallback path) or, when set alongside deliveryDistanceKm, a human-readable distance string (e.g. "2.3 km") for display/staff reference only — deliveryDistanceKm is the trusted value the fee is actually computed from in that case. */
+  /** Human-readable label for display/staff reference only (e.g. "2.3 km" or "Address-based (fee pending)") — never the trusted fee source. */
   deliveryZoneId: nonEmptyStringSchema.optional(),
-  /** Real routed road distance in km from OpenRouteService (see CheckoutPanel.tsx's "Share My Location" flow) — the primary, trusted source for delivery fee calculation. Falls back to deliveryZoneId's flat-band fee (data/delivery.ts's DELIVERY_ZONES) if this is absent, e.g. the routing call failed and the customer picked a zone manually instead. */
-  deliveryDistanceKm: z.number().positive().optional(),
+  /** Real routed road distance in km from OpenRouteService (see CheckoutPanel.tsx's "Share My Location" flow) — the only trusted source for delivery fee calculation. Capped at MAX_DELIVERY_RADIUS_KM; there is no flat-fee fallback. If absent, the fee isn't auto-computed and the branch confirms it by phone against deliveryAddress instead. */
+  deliveryDistanceKm: z.number().positive().max(MAX_DELIVERY_RADIUS_KM).optional(),
+  /** Routed transit time in minutes for the same trip — the fee formula's per-minute component. Set alongside deliveryDistanceKm, never independently. */
+  deliveryDurationMin: z.number().nonnegative().optional(),
   promoCode: nonEmptyStringSchema.optional(),
   notes: z.string().max(500).optional(),
   paymentMethod: z.enum(["mobile_money", "card"]),
 }).refine(
-  (value) => value.channel !== "delivery" || value.deliveryDistanceKm !== undefined || value.deliveryZoneId !== undefined,
+  (value) => value.channel !== "delivery" || value.deliveryDistanceKm !== undefined || value.deliveryAddress !== undefined,
   {
-    message: "Share your location or select a delivery zone",
-    path: ["deliveryZoneId"],
+    message: "Share your location or enter your delivery address",
+    path: ["deliveryAddress"],
   }
 );
 

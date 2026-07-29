@@ -36,8 +36,10 @@ export interface CartState {
   orderType: OrderType;
   /** Location["id"], or "" until the customer picks a branch. */
   branchId: string;
-  /** DeliveryZone["id"], or "" until picked / not applicable for pickup. */
-  deliveryZoneId: string;
+  /** Real routed road distance in km from the branch (see lib/geo.ts), set once the customer shares their live location. Null until shared, or if sharing failed — in which case the fee isn't auto-computed and is confirmed by phone against customer.deliveryAddress instead. */
+  deliveryDistanceKm: number | null;
+  /** Routed transit time in minutes for the same trip — the fee formula's per-minute component. Set alongside deliveryDistanceKm, never independently. */
+  deliveryDurationMin: number | null;
   customer: CustomerDetails;
   isDrawerOpen: boolean;
 }
@@ -48,7 +50,7 @@ export interface OrderDetails {
   branchId: string;
   branchName: string;
   orderType: OrderType;
-  deliveryZoneId?: string;
+  deliveryDistanceKm?: number;
   customer: CustomerDetails;
   subtotal: number;
   deliveryFee: number;

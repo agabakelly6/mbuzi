@@ -94,11 +94,11 @@ All paths are relative to `src/`.
 - **Performance**: ships zero client JS on its own (presentational).
 
 ### `DeliveryDetails.tsx`
-- **Purpose**: presentational block listing delivery availability, area, and per-zone fees for one branch.
+- **Purpose**: presentational block showing delivery availability and area for one branch. No fee is shown here — there's no flat fee table anymore; the real fee is only computed from a customer's shared live location at checkout (see [09_WHATSAPP_ORDERING.md](./09_WHATSAPP_ORDERING.md) and `CheckoutPanel.tsx`).
 - **Props**: `delivery: DeliveryInfo`. Returns `null` if `delivery.available` is false.
 - **Dependencies**: `lucide-react` (`Truck`), `data/delivery.ts`.
 - **Used in**: `LocationCard.tsx`.
-- **Reusability**: every number rendered is sourced from `data/delivery.ts` — never hardcoded here.
+- **Reusability**: area/radius text is sourced from `data/delivery.ts` — never hardcoded here.
 
 ### `TestimonialCard.tsx`
 - **Purpose**: a single testimonial quote (star rating, quote, name/location) on a dark surface.
@@ -274,7 +274,7 @@ See [09_WHATSAPP_ORDERING.md](./09_WHATSAPP_ORDERING.md) for the full data-flow 
 |---|---|---|
 | `CartWidget.tsx` | Top-level island — wraps `CartFAB` + `OrderDrawer`. | Mounted in `Layout.astro` with `client:load` |
 | `CartFAB.tsx` | Floating trigger showing item count; renders `null` entirely (not just hidden) when the cart is empty. | Part of `CartWidget`'s tree |
-| `OrderDrawer.tsx` | Full checkout slide-over — line items, delivery/pickup toggle, branch + zone selection, customer info, totals, WhatsApp checkout. Explicitly clones the `MobileMenu.tsx` recipe. | Part of `CartWidget`'s tree |
+| `OrderDrawer.tsx` | Full checkout slide-over — line items, delivery/pickup toggle, branch selection, share-location delivery pricing, customer info, totals, WhatsApp checkout. Explicitly clones the `MobileMenu.tsx` recipe. | Part of `CartWidget`'s tree |
 | `OrderControls.tsx` | "Add to Order" / quantity stepper embedded inside an orderable `FoodCard`. | Only present when `FoodCard`'s `orderable` prop is true (i.e. only on `/menu`, via `client:visible`) |
 
 **Architecture note**: unlike the Assistant, the cart's state is **not** React Context — `OrderControls` instances live in up to ~44 *separate* `client:visible` islands on the Menu page, each an independent React root that Context cannot span. Instead, `hooks/useCart.ts` reads a module-level external store (`lib/cart/CartStore.ts`) via React 19's `useSyncExternalStore`, which works correctly across independently-hydrated islands because ES modules are evaluated once and shared by reference. See [09_WHATSAPP_ORDERING.md](./09_WHATSAPP_ORDERING.md) for the full reasoning.

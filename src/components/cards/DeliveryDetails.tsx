@@ -1,14 +1,12 @@
 // src/components/cards/DeliveryDetails.tsx
 import { Truck } from "lucide-react";
-import { DELIVERY_CURRENCY, type DeliveryInfo } from "../../data/delivery";
+import type { DeliveryInfo } from "../../data/delivery";
 
 interface DeliveryDetailsProps {
   delivery: DeliveryInfo;
 }
 
-const feeFormatter = new Intl.NumberFormat("en-UG");
-
-/** Presentational only — every fee and the delivery area come from data/delivery.ts, never hardcoded here. */
+/** Presentational only — no fee is shown here since the real fee depends on the customer's shared location at checkout, not a fixed table. */
 export function DeliveryDetails({ delivery }: DeliveryDetailsProps) {
   if (!delivery.available) return null;
 
@@ -19,16 +17,9 @@ export function DeliveryDetails({ delivery }: DeliveryDetailsProps) {
         Delivery Available
       </div>
       <p className="mt-1.5 text-xs text-[#14100D]/60">{delivery.area}</p>
-      <ul className="mt-3 flex flex-col gap-1.5">
-        {delivery.zones.map((zone) => (
-          <li key={zone.id} className="flex items-center justify-between gap-4 text-xs text-[#14100D]/70">
-            <span>{zone.label}</span>
-            <span className="font-semibold text-[#14100D]">
-              {DELIVERY_CURRENCY} {feeFormatter.format(zone.fee)}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <p className="mt-1.5 text-xs text-[#14100D]/60">
+        Exact fee is calculated from your shared location at checkout. Addresses beyond {delivery.maxRadiusKm} km aren't eligible for delivery.
+      </p>
     </div>
   );
 }

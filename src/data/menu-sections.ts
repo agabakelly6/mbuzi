@@ -21,4 +21,7 @@ export const MENU_SECTIONS: MenuSection[] = [
   { id: "lusaniya", label: "Lusaniya" },
   { id: "smoothies", label: "Smoothies" },
   { id: "drinks", label: "Drinks" },
+  { id: "sides", label: "Bits & Sides" },
+  { id: "cake-slices", label: "Cake Slices" },
+  { id: "dessert", label: "Dessert" },
 ];

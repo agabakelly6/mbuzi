@@ -16,20 +16,23 @@
 // Delivery fee: the customer shares their live location, and
 // calculate-delivery-fee (an Edge Function proxying OpenRouteService)
 // returns the real routed road distance from the branch — not straight-
-// line distance, which was tried first and rejected as inaccurate. If
-// that call fails for any reason (quota, network, geolocation denied),
-// this falls back to the flat-zone picker (data/delivery.ts's
-// DELIVERY_ZONES) rather than blocking checkout or guessing — the same
-// "degrade to something real instead of silently wrong" pattern the AI
-// concierge's fallback engine already uses.
+// line distance, which was tried first and rejected as inaccurate, and
+// not a flat distance-band fee either (data/delivery.ts used to have one;
+// it was inaccurate and has been removed). There is no fallback fee
+// table anymore — if routed distance is beyond MAX_DELIVERY_RADIUS_KM,
+// delivery isn't offered for that address at all. If the location call
+// fails for some other reason (denied permission, no GPS, API outage),
+// the guest can still proceed by entering their address manually; the
+// fee then isn't computed automatically and the branch confirms it by
+// phone before preparing the order, rather than charging a guessed flat
+// rate.
 import { useState, type SyntheticEvent } from "react";
 import { LocateFixed, CircleAlert } from "lucide-react";
 import type { Branch } from "../../types/branch";
 import type { OrderChannel } from "../../types/order";
 import type { UseOrderCartResult } from "../../hooks/useOrderCart";
 import type { CreateGuestOrderInput } from "../../validators/order.schema";
-import { DELIVERY_ZONES } from "../../data/delivery";
-import { calculateDeliveryFee } from "../../lib/geo";
+import { calculateDeliveryFee, MAX_DELIVERY_RADIUS_KM } from "../../lib/geo";
 import { getRoutedDeliveryDistance } from "../../lib/deliveryFee";
 import { getButtonClasses } from "../../lib/button-variants";
 import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "../../lib/constants";
@@ -50,66 +53,74 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
   const [guestPhone, setGuestPhone] = useState("");
   const [channel, setChannel] = useState<Extract<OrderChannel, "pickup" | "delivery">>("pickup");
   const [deliveryDistanceKm, setDeliveryDistanceKm] = useState<number | null>(null);
-  const [deliveryZoneId, setDeliveryZoneId] = useState("");
-  const [deliveryLandmark, setDeliveryLandmark] = useState("");
+  const [deliveryDurationMin, setDeliveryDurationMin] = useState<number | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "granted" | "error">("idle");
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [showZoneFallback, setShowZoneFallback] = useState(false);
+  const [showManualAddress, setShowManualAddress] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const deliveryTooFar = deliveryDistanceKm !== null && deliveryDistanceKm > MAX_DELIVERY_RADIUS_KM;
   const deliveryFee =
-    channel !== "delivery"
-      ? 0
-      : deliveryDistanceKm !== null
-        ? calculateDeliveryFee(deliveryDistanceKm)
-        : DELIVERY_ZONES.find((z) => z.id === deliveryZoneId)?.fee ?? 0;
+    channel === "delivery" && deliveryDistanceKm !== null && !deliveryTooFar
+      ? calculateDeliveryFee(deliveryDistanceKm, deliveryDurationMin ?? 0)
+      : 0;
   const total = cart.subtotal + deliveryFee;
 
   async function handleShareLocation() {
+    // Every press re-acquires a fresh fix and clears whatever the last
+    // press produced first — a stale distance/fee must never linger on
+    // screen (or get submitted) while a new one is in flight, and
+    // maximumAge: 0 below forces the browser to take a live GPS reading
+    // instead of handing back a cached position.
+    setDeliveryDistanceKm(null);
+    setDeliveryDurationMin(null);
+    setLocationStatus("requesting");
+    setLocationError(null);
+
     if (!navigator.geolocation) {
       setLocationStatus("error");
       setLocationError("Location sharing isn't available on this device or browser.");
-      setShowZoneFallback(true);
+      setShowManualAddress(true);
       return;
     }
     if (branch.latitude === null || branch.longitude === null) {
       setLocationStatus("error");
-      setLocationError("This branch doesn't have delivery coordinates set up yet — please choose a zone instead.");
-      setShowZoneFallback(true);
+      setLocationError("This branch doesn't have delivery coordinates set up yet — please enter your address instead.");
+      setShowManualAddress(true);
       return;
     }
-    setLocationStatus("requesting");
-    setLocationError(null);
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const { distanceKm } = await getRoutedDeliveryDistance(
+          const { distanceKm, durationMin } = await getRoutedDeliveryDistance(
             branch.id,
             position.coords.latitude,
             position.coords.longitude
           );
           setDeliveryDistanceKm(distanceKm);
+          setDeliveryDurationMin(durationMin);
           setLocationStatus("granted");
-          setShowZoneFallback(false);
+          setShowManualAddress(false);
         } catch {
           setLocationStatus("error");
-          setLocationError("We couldn't calculate your exact delivery fee right now — please choose the distance band closest to you instead.");
-          setShowZoneFallback(true);
+          setLocationError("We couldn't calculate your exact delivery fee right now — please enter your address instead and we'll confirm the fee by phone.");
+          setShowManualAddress(true);
         }
       },
       (geoError) => {
         setLocationStatus("error");
         setLocationError(
           geoError.code === geoError.PERMISSION_DENIED
-            ? "Location permission was denied. Choose the distance band closest to you instead, or allow location access to get an exact quote."
-            : "Couldn't get your location — please choose the distance band closest to you instead."
+            ? "Location permission was denied. Enter your address instead, or allow location access to get an exact quote."
+            : "Couldn't get your location — please enter your address instead and we'll confirm the fee by phone."
         );
-        setShowZoneFallback(true);
+        setShowManualAddress(true);
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }
 
@@ -121,8 +132,12 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
       setError("Enter your name and phone number.");
       return;
     }
-    if (channel === "delivery" && deliveryDistanceKm === null && !deliveryZoneId) {
-      setError("Share your location or select a delivery zone.");
+    if (channel === "delivery" && deliveryTooFar) {
+      setError(`This delivery address is outside our ${MAX_DELIVERY_RADIUS_KM} km delivery radius — please choose pickup instead.`);
+      return;
+    }
+    if (channel === "delivery" && deliveryDistanceKm === null && !deliveryAddress.trim()) {
+      setError("Share your location or enter your delivery address.");
       return;
     }
 
@@ -142,11 +157,12 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
           channel === "delivery"
             ? deliveryDistanceKm !== null
               ? `${deliveryDistanceKm.toFixed(1)} km`
-              : deliveryZoneId
+              : "Address-based (fee pending)"
             : undefined,
         deliveryDistanceKm: channel === "delivery" && deliveryDistanceKm !== null ? deliveryDistanceKm : undefined,
-        deliveryAddress:
-          channel === "delivery" ? deliveryLandmark.trim() || "No landmark provided." : undefined,
+        deliveryDurationMin:
+          channel === "delivery" && deliveryDistanceKm !== null ? deliveryDurationMin ?? 0 : undefined,
+        deliveryAddress: channel === "delivery" ? deliveryAddress.trim() || "No address provided." : undefined,
         promoCode: promoCode.trim() || undefined,
         notes: notes.trim() || undefined,
       },
@@ -180,8 +196,8 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
             <span className="text-[#14100D]/60">
               Delivery fee{deliveryDistanceKm !== null ? ` (${deliveryDistanceKm.toFixed(1)} km)` : ""}
             </span>
-            <span className="text-[#14100D]">
-              {deliveryDistanceKm !== null || deliveryZoneId ? formatUgx(deliveryFee) : "Choose below"}
+            <span className={deliveryTooFar ? "font-semibold text-red-600" : "text-[#14100D]"}>
+              {deliveryTooFar ? "Unavailable" : deliveryDistanceKm !== null ? formatUgx(deliveryFee) : "To be confirmed"}
             </span>
           </div>
         )}
@@ -254,18 +270,33 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
           </div>
 
           {locationStatus === "granted" && deliveryDistanceKm !== null ? (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              <LocateFixed size={16} className="shrink-0" />
-              Location shared — about {deliveryDistanceKm.toFixed(1)} km from {branch.name} ({formatUgx(deliveryFee)}
-              ).
-              <button
-                type="button"
-                onClick={handleShareLocation}
-                className="ml-auto text-xs font-semibold underline underline-offset-4"
-              >
-                Update
-              </button>
-            </div>
+            deliveryTooFar ? (
+              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <CircleAlert size={16} className="shrink-0" />
+                Delivery location too far — about {deliveryDistanceKm.toFixed(1)} km from {branch.name}, outside our{" "}
+                {MAX_DELIVERY_RADIUS_KM} km delivery radius. Please choose pickup instead.
+                <button
+                  type="button"
+                  onClick={handleShareLocation}
+                  className="ml-auto text-xs font-semibold underline underline-offset-4"
+                >
+                  Update
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <LocateFixed size={16} className="shrink-0" />
+                Location shared — about {deliveryDistanceKm.toFixed(1)} km from {branch.name} ({formatUgx(deliveryFee)}
+                ).
+                <button
+                  type="button"
+                  onClick={handleShareLocation}
+                  className="ml-auto text-xs font-semibold underline underline-offset-4"
+                >
+                  Update
+                </button>
+              </div>
+            )
           ) : (
             <button
               type="button"
@@ -285,40 +316,30 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
             </p>
           )}
 
-          {showZoneFallback && (
-            <div className="flex flex-col gap-1.5 border-t border-[#14100D]/10 pt-3">
-              <label htmlFor="checkout-zone" className={FORM_LABEL_CLASSES}>
-                Or Select Your Delivery Zone
-              </label>
-              <select
-                id="checkout-zone"
-                value={deliveryZoneId}
-                onChange={(e) => setDeliveryZoneId(e.target.value)}
-                className={FORM_INPUT_CLASSES}
-              >
-                <option value="">Select the band closest to you…</option>
-                {DELIVERY_ZONES.map((zone) => (
-                  <option key={zone.id} value={zone.id}>
-                    {zone.label} — {formatUgx(zone.fee)}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {showManualAddress && !deliveryTooFar && (
+            <p className="border-t border-[#14100D]/10 pt-3 text-xs text-[#14100D]/60">
+              No problem — enter your delivery address below and our team will confirm the exact delivery fee by
+              phone before your order is prepared.
+            </p>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="checkout-landmark" className={FORM_LABEL_CLASSES}>
-              Nearest Landmark (Optional)
+            <label htmlFor="checkout-address" className={FORM_LABEL_CLASSES}>
+              {deliveryDistanceKm !== null && !deliveryTooFar ? "Nearest Landmark (Optional)" : "Delivery Address"}
             </label>
             <input
-              id="checkout-landmark"
+              id="checkout-address"
               type="text"
               placeholder="e.g. blue gate opposite Total fuel station"
-              value={deliveryLandmark}
-              onChange={(e) => setDeliveryLandmark(e.target.value)}
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
               className={FORM_INPUT_CLASSES}
             />
-            <p className="text-xs text-[#14100D]/50">Helps the rider find you faster once they're close.</p>
+            <p className="text-xs text-[#14100D]/50">
+              {deliveryDistanceKm !== null && !deliveryTooFar
+                ? "Helps the rider find you faster once they're close."
+                : "Street, area, and a nearby landmark help our team confirm your fee and find you."}
+            </p>
           </div>
         </div>
       )}
@@ -369,7 +390,11 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
         </button>
         <button
           type="submit"
-          disabled={cart.lines.length === 0 || (channel === "delivery" && deliveryDistanceKm === null && !deliveryZoneId)}
+          disabled={
+            cart.lines.length === 0 ||
+            (channel === "delivery" && deliveryTooFar) ||
+            (channel === "delivery" && deliveryDistanceKm === null && !deliveryAddress.trim())
+          }
           className={getButtonClasses({ variant: "solid", size: "md", className: "flex-1 disabled:opacity-60" })}
         >
           {`Continue To Payment — ${formatUgx(total)}`}

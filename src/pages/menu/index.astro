@@ -20,6 +20,9 @@ import {
   LUSANIYA_ITEMS,
   SMOOTHIE_ITEMS,
   DRINK_ITEMS,
+  SIDE_ITEMS,
+  CAKE_SLICE_ITEMS,
+  DESSERT_ITEMS,
 } from "../../data/menu";
 import { MENU_CONTENT } from "../../content/menu";
 import { getPageStructuredData } from "../../config/seo";
@@ -112,6 +115,27 @@ const { hero, categorySections, cta } = MENU_CONTENT;
       heading={categorySections.drinks.heading}
       items={DRINK_ITEMS}
       tone="dark"
+    />
+    <MenuGrid
+      id="sides"
+      eyebrow={categorySections.sides.eyebrow}
+      heading={categorySections.sides.heading}
+      items={SIDE_ITEMS}
+      tone="light"
+    />
+    <MenuGrid
+      id="cake-slices"
+      eyebrow={categorySections["cake-slices"].eyebrow}
+      heading={categorySections["cake-slices"].heading}
+      items={CAKE_SLICE_ITEMS}
+      tone="dark"
+    />
+    <MenuGrid
+      id="dessert"
+      eyebrow={categorySections.dessert.eyebrow}
+      heading={categorySections.dessert.heading}
+      items={DESSERT_ITEMS}
+      tone="light"
     />
 
     <ChefRecommendation />

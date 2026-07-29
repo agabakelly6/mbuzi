@@ -10,6 +10,7 @@
 import type { Location } from "../../types/location";
 import type { CartLine, CartState, CustomerDetails, OrderDetails, OrderType } from "../../types/cart";
 import { getDeliveryInfo } from "../../data/delivery";
+import { calculateDeliveryFee, isWithinDeliveryRadius } from "../geo";
 
 /** "UGX 40,000" -> 40000. Strips everything but digits. */
 export function parsePrice(price: string): number {
@@ -33,28 +34,30 @@ export function computeCartSubtotal(lines: CartLine[]): number {
   return lines.reduce((sum, line) => sum + computeLineSubtotal(line), 0);
 }
 
-/** Resolves the delivery fee for the current order type/zone via the existing delivery system — never reimplements zone/fee logic. */
+/** Resolves the delivery fee from real routed distance + transit time — 0 until both are captured (fee then confirmed by phone) or if distance is beyond the delivery radius. Never a flat zone/fee table. */
 export function computeDeliveryFee(
   orderType: OrderType,
-  deliveryZoneId: string,
+  deliveryDistanceKm: number | null,
+  deliveryDurationMin: number | null,
   branch: Location | undefined
 ): number {
   if (orderType !== "delivery" || !branch) return 0;
-  const delivery = getDeliveryInfo(branch);
-  if (!delivery) return 0;
-  return delivery.zones.find((zone) => zone.id === deliveryZoneId)?.fee ?? 0;
+  if (!getDeliveryInfo(branch)) return 0;
+  if (deliveryDistanceKm === null || !isWithinDeliveryRadius(deliveryDistanceKm)) return 0;
+  return calculateDeliveryFee(deliveryDistanceKm, deliveryDurationMin ?? 0);
 }
 
 export function buildOrderDetails(state: CartState, branch: Location | undefined): OrderDetails {
   const subtotal = computeCartSubtotal(state.lines);
-  const deliveryFee = computeDeliveryFee(state.orderType, state.deliveryZoneId, branch);
+  const deliveryFee = computeDeliveryFee(state.orderType, state.deliveryDistanceKm, state.deliveryDurationMin, branch);
 
   return {
     lines: state.lines,
     branchId: state.branchId,
     branchName: branch?.city ?? "",
     orderType: state.orderType,
-    deliveryZoneId: state.orderType === "delivery" ? state.deliveryZoneId : undefined,
+    deliveryDistanceKm:
+      state.orderType === "delivery" && state.deliveryDistanceKm !== null ? state.deliveryDistanceKm : undefined,
     customer: state.customer,
     subtotal,
     deliveryFee,
@@ -91,6 +94,9 @@ export function buildOrderWhatsAppMessage(order: OrderDetails): string {
     `Branch: ${order.branchName}`,
     `Order Type: ${order.orderType === "delivery" ? "Delivery" : "Pickup"}`,
     ...formatCustomerDetailsLines(order.customer, order.orderType),
+    ...(order.orderType === "delivery" && order.deliveryDistanceKm === undefined
+      ? ["Delivery Fee: To be confirmed by phone"]
+      : []),
     `Estimated Total: ${formatPrice(order.total)}`,
     "",
     "Please confirm my order.",
