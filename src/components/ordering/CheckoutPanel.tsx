@@ -53,7 +53,6 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
   const [guestPhone, setGuestPhone] = useState("");
   const [channel, setChannel] = useState<Extract<OrderChannel, "pickup" | "delivery">>("pickup");
   const [deliveryDistanceKm, setDeliveryDistanceKm] = useState<number | null>(null);
-  const [deliveryDurationMin, setDeliveryDurationMin] = useState<number | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "granted" | "error">("idle");
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -65,7 +64,7 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
   const deliveryTooFar = deliveryDistanceKm !== null && deliveryDistanceKm > MAX_DELIVERY_RADIUS_KM;
   const deliveryFee =
     channel === "delivery" && deliveryDistanceKm !== null && !deliveryTooFar
-      ? calculateDeliveryFee(deliveryDistanceKm, deliveryDurationMin ?? 0)
+      ? calculateDeliveryFee(deliveryDistanceKm)
       : 0;
   const total = cart.subtotal + deliveryFee;
 
@@ -76,7 +75,6 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
     // maximumAge: 0 below forces the browser to take a live GPS reading
     // instead of handing back a cached position.
     setDeliveryDistanceKm(null);
-    setDeliveryDurationMin(null);
     setLocationStatus("requesting");
     setLocationError(null);
 
@@ -96,13 +94,12 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const { distanceKm, durationMin } = await getRoutedDeliveryDistance(
+          const { distanceKm } = await getRoutedDeliveryDistance(
             branch.id,
             position.coords.latitude,
             position.coords.longitude
           );
           setDeliveryDistanceKm(distanceKm);
-          setDeliveryDurationMin(durationMin);
           setLocationStatus("granted");
           setShowManualAddress(false);
         } catch {
@@ -160,8 +157,6 @@ export function CheckoutPanel({ branch, cart, onDetailsConfirmed, onBack }: Chec
               : "Address-based (fee pending)"
             : undefined,
         deliveryDistanceKm: channel === "delivery" && deliveryDistanceKm !== null ? deliveryDistanceKm : undefined,
-        deliveryDurationMin:
-          channel === "delivery" && deliveryDistanceKm !== null ? deliveryDurationMin ?? 0 : undefined,
         deliveryAddress: channel === "delivery" ? deliveryAddress.trim() || "No address provided." : undefined,
         promoCode: promoCode.trim() || undefined,
         notes: notes.trim() || undefined,

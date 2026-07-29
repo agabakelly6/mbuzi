@@ -86,7 +86,7 @@ export const supabaseOrderService: OrderService = {
     let deliveryFee = 0;
     if (parsed.data.channel === "delivery" && parsed.data.deliveryDistanceKm !== undefined) {
       if (!isWithinDeliveryRadius(parsed.data.deliveryDistanceKm)) return { data: null, error: dbError("validation_error") };
-      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm, parsed.data.deliveryDurationMin ?? 0);
+      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm);
     }
     // else, for a delivery order with no routed distance: fee stays 0 here
     // and is confirmed manually against deliveryAddress, same as the guest
@@ -196,7 +196,7 @@ export const supabaseOrderService: OrderService = {
       // at MAX_DELIVERY_RADIUS_KM; re-checked here too since this is the
       // one place money actually gets derived from it.
       if (!isWithinDeliveryRadius(parsed.data.deliveryDistanceKm)) return { data: null, error: dbError("validation_error") };
-      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm, parsed.data.deliveryDurationMin ?? 0);
+      deliveryFee = calculateDeliveryFee(parsed.data.deliveryDistanceKm);
     }
     // else: no routed distance was captured (location sharing failed) —
     // there is no flat-zone fallback fee anymore. deliveryFee stays 0 and

@@ -34,22 +34,21 @@ export function computeCartSubtotal(lines: CartLine[]): number {
   return lines.reduce((sum, line) => sum + computeLineSubtotal(line), 0);
 }
 
-/** Resolves the delivery fee from real routed distance + transit time — 0 until both are captured (fee then confirmed by phone) or if distance is beyond the delivery radius. Never a flat zone/fee table. */
+/** Resolves the delivery fee from real routed distance — 0 until a distance is captured (fee then confirmed by phone) or if it's beyond the delivery radius. Never a flat zone/fee table. */
 export function computeDeliveryFee(
   orderType: OrderType,
   deliveryDistanceKm: number | null,
-  deliveryDurationMin: number | null,
   branch: Location | undefined
 ): number {
   if (orderType !== "delivery" || !branch) return 0;
   if (!getDeliveryInfo(branch)) return 0;
   if (deliveryDistanceKm === null || !isWithinDeliveryRadius(deliveryDistanceKm)) return 0;
-  return calculateDeliveryFee(deliveryDistanceKm, deliveryDurationMin ?? 0);
+  return calculateDeliveryFee(deliveryDistanceKm);
 }
 
 export function buildOrderDetails(state: CartState, branch: Location | undefined): OrderDetails {
   const subtotal = computeCartSubtotal(state.lines);
-  const deliveryFee = computeDeliveryFee(state.orderType, state.deliveryDistanceKm, state.deliveryDurationMin, branch);
+  const deliveryFee = computeDeliveryFee(state.orderType, state.deliveryDistanceKm, branch);
 
   return {
     lines: state.lines,

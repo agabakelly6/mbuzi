@@ -42,22 +42,24 @@ export function haversineDistanceKm(
  *    traffic-heavy zones; this uses the flat, non-traffic-adjusted rate
  *    since this app has no live traffic-zone data to key the higher rate
  *    off of).
- *  - UGX 50/minute of transit time, from the same routed-directions call
- *    that supplies distance (see lib/deliveryFee.ts's durationMin).
- *  - A UGX 3,000 minimum — even an 800 m, 3-minute delivery is floored up
- *    to this before rounding.
+ *  - A UGX 3,000 minimum — even an 800 m delivery is floored up to this
+ *    before rounding.
  * Result is rounded to the nearest 500 UGX (never a flat table — see
  * data/delivery.ts's header comment for why that was removed).
+ *
+ * No time-based (per-minute transit) component — tried and removed; it
+ * stacked on top of the distance charge and pushed fees higher than
+ * intended. Re-add only alongside a re-check of the other constants below,
+ * not in isolation.
  */
 const BASE_FEE_UGX = 1500;
 const FIRST_STRETCH_DEDUCTED_KM = 0.5;
 const PER_KM_RATE_UGX = 700;
-const PER_MIN_RATE_UGX = 50;
 const MIN_FEE_UGX = 3000;
 
-export function calculateDeliveryFee(distanceKm: number, durationMin: number): number {
+export function calculateDeliveryFee(distanceKm: number): number {
   const billableKm = Math.max(distanceKm - FIRST_STRETCH_DEDUCTED_KM, 0);
-  const raw = BASE_FEE_UGX + billableKm * PER_KM_RATE_UGX + durationMin * PER_MIN_RATE_UGX;
+  const raw = BASE_FEE_UGX + billableKm * PER_KM_RATE_UGX;
   const floored = Math.max(raw, MIN_FEE_UGX);
   return Math.round(floored / 500) * 500;
 }

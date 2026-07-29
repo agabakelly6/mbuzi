@@ -36,8 +36,6 @@ export const createOrderInputSchema = z.object({
   deliveryZoneId: nonEmptyStringSchema.optional(),
   /** Real routed road distance in km (see lib/geo.ts's calculateDeliveryFee) — the only trusted source for delivery fee. Capped at MAX_DELIVERY_RADIUS_KM; addresses beyond that aren't deliverable. */
   deliveryDistanceKm: z.number().positive().max(MAX_DELIVERY_RADIUS_KM).optional(),
-  /** Routed transit time in minutes for the same trip — the fee formula's per-minute component. Set alongside deliveryDistanceKm, never independently. */
-  deliveryDurationMin: z.number().nonnegative().optional(),
   /** Contact number for the rider — distinct from the linked Customer's phone since an anonymous/guest delivery order has no Customer record to read it from. */
   deliveryPhone: phoneSchema.optional(),
   promoCode: nonEmptyStringSchema.optional(),
@@ -65,8 +63,6 @@ export const createGuestOrderInputSchema = z.object({
   deliveryZoneId: nonEmptyStringSchema.optional(),
   /** Real routed road distance in km from OpenRouteService (see CheckoutPanel.tsx's "Share My Location" flow) — the only trusted source for delivery fee calculation. Capped at MAX_DELIVERY_RADIUS_KM; there is no flat-fee fallback. If absent, the fee isn't auto-computed and the branch confirms it by phone against deliveryAddress instead. */
   deliveryDistanceKm: z.number().positive().max(MAX_DELIVERY_RADIUS_KM).optional(),
-  /** Routed transit time in minutes for the same trip — the fee formula's per-minute component. Set alongside deliveryDistanceKm, never independently. */
-  deliveryDurationMin: z.number().nonnegative().optional(),
   promoCode: nonEmptyStringSchema.optional(),
   notes: z.string().max(500).optional(),
   paymentMethod: z.enum(["mobile_money", "card"]),

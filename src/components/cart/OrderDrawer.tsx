@@ -54,7 +54,7 @@ export function OrderDrawer() {
     updateLineInstructions,
     setOrderType,
     setBranch,
-    setDeliveryLocation,
+    setDeliveryDistance,
     updateCustomer,
     closeDrawer,
     clearCart,
@@ -133,7 +133,7 @@ export function OrderDrawer() {
     // press produced first — a stale distance/fee must never linger (or
     // get sent in the WhatsApp message) while a new one is in flight, and
     // maximumAge: 0 below forces a live GPS reading, never a cached one.
-    setDeliveryLocation(null, null);
+    setDeliveryDistance(null);
     setLocationStatus("requesting");
     setLocationError(null);
 
@@ -150,12 +150,12 @@ export function OrderDrawer() {
           if (branchError || !branchRow || branchRow.latitude === null || branchRow.longitude === null) {
             throw new Error("branch coordinates unavailable");
           }
-          const { distanceKm, durationMin } = await getRoutedDeliveryDistance(
+          const { distanceKm } = await getRoutedDeliveryDistance(
             branchRow.id,
             position.coords.latitude,
             position.coords.longitude
           );
-          setDeliveryLocation(distanceKm, durationMin);
+          setDeliveryDistance(distanceKm);
           setLocationStatus("granted");
         } catch {
           setLocationStatus("error");

@@ -34,7 +34,6 @@ function createInitialState(): CartState {
     orderType: "delivery",
     branchId: "",
     deliveryDistanceKm: null,
-    deliveryDurationMin: null,
     customer: { ...EMPTY_CUSTOMER },
     isDrawerOpen: false,
   };
@@ -159,12 +158,11 @@ export function setOrderType(orderType: OrderType): void {
 }
 
 export function setBranch(branchId: string): void {
-  setState({ branchId, deliveryDistanceKm: null, deliveryDurationMin: null });
+  setState({ branchId, deliveryDistanceKm: null });
 }
 
-/** Sets distance and duration together — they always come from the same routed-directions call and must never be individually stale. Pass both null to clear (e.g. before re-requesting a fresh location, so an old fee is never shown while the new one is in flight). */
-export function setDeliveryLocation(deliveryDistanceKm: number | null, deliveryDurationMin: number | null): void {
-  setState({ deliveryDistanceKm, deliveryDurationMin });
+export function setDeliveryDistance(deliveryDistanceKm: number | null): void {
+  setState({ deliveryDistanceKm });
 }
 
 export function updateCustomer(patch: Partial<CustomerDetails>): void {

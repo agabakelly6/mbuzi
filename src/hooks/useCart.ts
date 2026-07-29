@@ -27,7 +27,7 @@ export function useCart() {
   const branch = LOCATIONS.find((location) => location.id === state.branchId);
   const itemCount = state.lines.reduce((sum, line) => sum + line.quantity, 0);
   const subtotal = computeCartSubtotal(state.lines);
-  const deliveryFee = computeDeliveryFee(state.orderType, state.deliveryDistanceKm, state.deliveryDurationMin, branch);
+  const deliveryFee = computeDeliveryFee(state.orderType, state.deliveryDistanceKm, branch);
   const total = subtotal + deliveryFee;
 
   return {
@@ -36,7 +36,6 @@ export function useCart() {
     branchId: state.branchId,
     branch,
     deliveryDistanceKm: state.deliveryDistanceKm,
-    deliveryDurationMin: state.deliveryDurationMin,
     customer: state.customer,
     isDrawerOpen: state.isDrawerOpen,
 
@@ -52,7 +51,7 @@ export function useCart() {
     updateLineInstructions: CartStore.updateLineInstructions,
     setOrderType: CartStore.setOrderType,
     setBranch: CartStore.setBranch,
-    setDeliveryLocation: CartStore.setDeliveryLocation,
+    setDeliveryDistance: CartStore.setDeliveryDistance,
     updateCustomer: CartStore.updateCustomer,
     openDrawer: CartStore.openDrawer,
     closeDrawer: CartStore.closeDrawer,
