@@ -2,14 +2,15 @@
 -- Minimal development seed data.
 -- Run automatically by `supabase db reset` against the Supabase CLI's local
 -- dev stack. No fake customers, no fake orders, no fake order history —
--- only what the milestone brief asked for: branches, and one staff account
--- per role.
+-- only branches, and one staff account per role (owner, branch_manager,
+-- cashier — the only three staff/admin roles this platform has; waiter,
+-- chef, and rider were removed, see the simplify_staff_roles migration).
 --
 -- IMPORTANT: the auth.users/auth.identities insert below targets the
 -- schema used by Supabase's managed Postgres. That schema is managed by
 -- Supabase and can change between versions. If this section ever fails,
 -- check the columns used here against the current auth schema, or create
--- these six accounts via the Auth Admin API (`supabase.auth.admin.createUser`)
+-- these accounts via the Auth Admin API (`supabase.auth.admin.createUser`)
 -- instead — the public.branches inserts below have no such dependency and
 -- are safe regardless.
 --
@@ -19,15 +20,11 @@
 -- names fail with "function does not exist" (confirmed against a live
 -- project while writing this).
 --
--- Every seeded account uses `<role>1234` as its password — simple on
--- purpose for testing, per explicit request. Replace with real credentials
--- before this is ever used for real:
---   owner@ypambuzichoma.com           owner1234
---   manager.rubaga@ypambuzichoma.com  manager1234
---   cashier.rubaga@ypambuzichoma.com  cashier1234
---   chef.rubaga@ypambuzichoma.com     chef1234
---   waiter.rubaga@ypambuzichoma.com   waiter1234
---   rider.rubaga@ypambuzichoma.com    rider1234
+-- Simple, easy-to-demo credentials, per explicit request:
+--   owner@ypambuzichoma.com     owner1234
+--   manager@ypambuzichoma.com   manager123
+--   cashier@ypambuzichoma.com   cashier123
+-- Replace with real credentials before this is ever used for real.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -73,11 +70,8 @@ begin
   for v_staff in
     select * from (values
       ('10000000-0000-0000-0000-000000000001'::uuid, 'owner@ypambuzichoma.com', 'David Kato', 'owner'::public.role_name, null::uuid, 'owner1234'),
-      ('10000000-0000-0000-0000-000000000002'::uuid, 'manager.rubaga@ypambuzichoma.com', 'Grace Nakato', 'branch_manager'::public.role_name, v_rubaga, 'manager1234'),
-      ('10000000-0000-0000-0000-000000000003'::uuid, 'cashier.rubaga@ypambuzichoma.com', 'Peter Ssemwogerere', 'cashier'::public.role_name, v_rubaga, 'cashier1234'),
-      ('10000000-0000-0000-0000-000000000004'::uuid, 'chef.rubaga@ypambuzichoma.com', 'Moses Okello', 'chef'::public.role_name, v_rubaga, 'chef1234'),
-      ('10000000-0000-0000-0000-000000000005'::uuid, 'waiter.rubaga@ypambuzichoma.com', 'Sarah Namutebi', 'waiter'::public.role_name, v_rubaga, 'waiter1234'),
-      ('10000000-0000-0000-0000-000000000006'::uuid, 'rider.rubaga@ypambuzichoma.com', 'Ronald Mugisha', 'rider'::public.role_name, v_rubaga, 'rider1234')
+      ('10000000-0000-0000-0000-000000000002'::uuid, 'manager@ypambuzichoma.com', 'Grace Nakato', 'branch_manager'::public.role_name, v_rubaga, 'manager123'),
+      ('10000000-0000-0000-0000-000000000003'::uuid, 'cashier@ypambuzichoma.com', 'Peter Ssemwogerere', 'cashier'::public.role_name, v_rubaga, 'cashier123')
     ) as t(id, email, full_name, role, branch_id, password)
   loop
     insert into auth.users (

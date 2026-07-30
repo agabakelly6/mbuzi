@@ -28,7 +28,7 @@ export interface Timestamps {
 /** Base shape for any platform-wide record (not tied to one branch) — e.g. Customer, User, Notification. */
 export interface Entity extends Identifiable, Timestamps {}
 
-/** Base shape for any record that belongs to exactly one branch — the overwhelming majority of operational entities (Order, Table, Reservation, KitchenTicket...). Branch scoping is enforced at three layers that must all agree: this field, lib/rbac.ts's `isWithinScope`, and — once Phase 3 lands — Postgres RLS policies keyed on the same column. */
+/** Base shape for any record that belongs to exactly one branch — the overwhelming majority of operational entities (Order, Table, Reservation...). Branch scoping is enforced at three layers that must all agree: this field, lib/rbac.ts's `isWithinScope`, and — once Phase 3 lands — Postgres RLS policies keyed on the same column. */
 export interface BranchEntity extends Entity {
   branchId: UUID;
 }

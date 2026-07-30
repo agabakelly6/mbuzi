@@ -12,10 +12,7 @@ import type { User } from "../../types/user";
 
 const VALID_ROLES: readonly RoleName[] = [
   "customer",
-  "waiter",
   "cashier",
-  "chef",
-  "rider",
   "branch_manager",
   "owner",
 ];

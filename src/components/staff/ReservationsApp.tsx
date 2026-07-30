@@ -8,7 +8,7 @@ import { StaffShell } from "./StaffShell";
 import { AccessDenied } from "./AccessDenied";
 import { ReservationsDashboard } from "./ReservationsDashboard";
 
-const ALLOWED_ROLES = ["waiter", "cashier", "branch_manager", "owner"];
+const ALLOWED_ROLES = ["cashier", "branch_manager", "owner"];
 
 function ReservationsFlow() {
   useAuthBootstrap();

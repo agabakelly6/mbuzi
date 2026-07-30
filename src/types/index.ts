@@ -18,7 +18,6 @@ export * from "./payment";
 export * from "./delivery";
 export * from "./table";
 export * from "./reservation";
-export * from "./kitchen";
 export * from "./notification";
 export * from "./promotion";
 export * from "./loyalty";

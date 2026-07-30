@@ -10,7 +10,6 @@ import type { OrderStatus } from "../types/order";
 import type { PaymentStatus } from "../types/payment";
 import type { DeliveryStatus } from "../types/delivery";
 import type { ReservationStatus } from "../types/reservation";
-import type { KitchenTicketStatus } from "../types/kitchen";
 import type { TableStatus } from "../types/table";
 
 function canTransition<S extends string>(table: Record<S, S[]>, from: S, to: S): boolean {
@@ -101,24 +100,6 @@ export const RESERVATION_STATUS_TRANSITIONS: Record<ReservationStatus, Reservati
 
 export function canTransitionReservationStatus(from: ReservationStatus, to: ReservationStatus): boolean {
   return canTransition(RESERVATION_STATUS_TRANSITIONS, from, to);
-}
-
-// ---------------------------------------------------------------------------
-// Kitchen ticket
-//
-//   queued --> in_progress --> ready --> served
-//      |             |
-//      +-------------+--> cancelled
-export const KITCHEN_TICKET_STATUS_TRANSITIONS: Record<KitchenTicketStatus, KitchenTicketStatus[]> = {
-  queued: ["in_progress", "cancelled"],
-  in_progress: ["ready", "cancelled"],
-  ready: ["served"],
-  served: [],
-  cancelled: [],
-};
-
-export function canTransitionKitchenTicketStatus(from: KitchenTicketStatus, to: KitchenTicketStatus): boolean {
-  return canTransition(KITCHEN_TICKET_STATUS_TRANSITIONS, from, to);
 }
 
 // ---------------------------------------------------------------------------

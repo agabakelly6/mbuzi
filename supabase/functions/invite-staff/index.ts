@@ -12,8 +12,9 @@
 // in this project: only 'owner' and 'branch_manager' may call this at all,
 // a branch_manager may only hire into their OWN branch (branchId from the
 // request body is ignored and overridden) and only into a subordinate role
-// (waiter/cashier/chef/rider) — never another branch_manager or owner,
-// which would let a manager mint a peer or superior account.
+// (cashier — the only operational staff role left after waiter/chef/rider
+// were removed) — never another branch_manager or owner, which would let
+// a manager mint a peer or superior account.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const CORS_HEADERS = {
@@ -21,7 +22,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SUBORDINATE_ROLES = ["waiter", "cashier", "chef", "rider"];
+const SUBORDINATE_ROLES = ["cashier"];
 const HIRABLE_ROLES = [...SUBORDINATE_ROLES, "branch_manager"];
 
 function json(body: unknown, status: number): Response {
@@ -86,7 +87,7 @@ Deno.serve(async (req: Request) => {
 
   if (callerRow.role === "branch_manager") {
     if (!SUBORDINATE_ROLES.includes(role)) {
-      return json({ error: "forbidden_role", message: "A branch manager can only hire waiter, cashier, chef, or rider." }, 403);
+      return json({ error: "forbidden_role", message: "A branch manager can only hire cashiers." }, 403);
     }
     // Ignore whatever branchId the client sent — a manager can only ever hire into their own branch.
     branchId = callerRow.branch_id as string;

@@ -65,7 +65,7 @@ const PROMO_INITIAL: PromoFormState = {
 // the invite-staff Edge Function itself, mirrored here just so the
 // dropdown doesn't offer a choice the server will reject. An owner sees
 // this same list plus branch_manager.
-const SUBORDINATE_ROLES: RoleName[] = ["waiter", "cashier", "chef", "rider"];
+const SUBORDINATE_ROLES: RoleName[] = ["cashier"];
 
 interface HireFormState {
   fullName: string;
@@ -74,7 +74,7 @@ interface HireFormState {
   role: RoleName;
 }
 
-const HIRE_INITIAL: HireFormState = { fullName: "", email: "", phone: "", role: "waiter" };
+const HIRE_INITIAL: HireFormState = { fullName: "", email: "", phone: "", role: "cashier" };
 
 interface MenuItemFormState {
   name: string;

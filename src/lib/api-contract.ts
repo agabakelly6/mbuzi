@@ -17,7 +17,6 @@ import type { Payment } from "../types/payment";
 import type { Delivery } from "../types/delivery";
 import type { Table } from "../types/table";
 import type { Reservation } from "../types/reservation";
-import type { KitchenTicket } from "../types/kitchen";
 import type { Notification } from "../types/notification";
 import type { Promotion } from "../types/promotion";
 import type { LoyaltyMember } from "../types/loyalty";
@@ -32,7 +31,6 @@ import type { CreatePaymentInput, UpdatePaymentStatusInput, RefundPaymentInput }
 import type { CreateDeliveryInput, UpdateDeliveryStatusInput, AssignRiderInput } from "../validators/delivery.schema";
 import type { UpdateTableStatusInput } from "../validators/table.schema";
 import type { CreateReservationInput, UpdateReservationStatusInput } from "../validators/reservation.schema";
-import type { UpdateKitchenTicketStatusInput } from "../validators/kitchen.schema";
 import type { CreatePromotionInput } from "../validators/promotion.schema";
 
 export interface AuthApi {
@@ -71,11 +69,6 @@ export interface ReservationApi {
   "GET /reservations": { query: { branchId?: string; status?: string; date?: string }; response: Paginated<Reservation> };
   "POST /reservations": { body: CreateReservationInput; response: Reservation };
   "PATCH /reservations/:id/status": { params: { id: string }; body: UpdateReservationStatusInput; response: Reservation };
-}
-
-export interface KitchenApi {
-  "GET /branches/:branchId/kitchen-tickets": { params: { branchId: string }; response: KitchenTicket[] };
-  "PATCH /kitchen-tickets/:id/status": { params: { id: string }; body: UpdateKitchenTicketStatusInput; response: KitchenTicket };
 }
 
 export interface DeliveryApi {
@@ -123,7 +116,6 @@ export type ApiContract = AuthApi &
   OrderApi &
   TableApi &
   ReservationApi &
-  KitchenApi &
   DeliveryApi &
   PaymentApi &
   CustomerApi &

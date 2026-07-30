@@ -15,9 +15,6 @@ import type { RoleName } from "../../types/role";
 
 const ROLE_DESTINATIONS: Partial<Record<RoleName, string>> = {
   cashier: "/staff/orders",
-  waiter: "/staff/orders",
-  chef: "/staff/kitchen",
-  rider: "/staff/deliveries",
   branch_manager: "/staff/branch",
   owner: "/staff/branch",
 };

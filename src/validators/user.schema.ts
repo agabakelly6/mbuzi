@@ -4,10 +4,7 @@ import { emailSchema, nonEmptyStringSchema, phoneSchema, uuidSchema } from "./sh
 
 export const roleNameSchema = z.enum([
   "customer",
-  "waiter",
   "cashier",
-  "chef",
-  "rider",
   "branch_manager",
   "owner",
 ]);

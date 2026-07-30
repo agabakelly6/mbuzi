@@ -15,7 +15,6 @@ import { supabaseBranchRepository } from "../../repositories/supabase/SupabaseBr
 import { MenuBrowser } from "./MenuBrowser";
 import { CheckoutPanel, type GuestOrderDraft } from "./CheckoutPanel";
 import { PaymentStep } from "./PaymentStep";
-import { OrderStatusTracker } from "./OrderStatusTracker";
 
 type Step = "browsing" | "checkout" | "payment" | "confirmed";
 
@@ -78,13 +77,6 @@ export function OrderingApp() {
           <p className="mt-4 text-lg font-semibold text-[#14100D]">
             UGX {confirmedOrder.total.toLocaleString("en-UG")}
           </p>
-
-          {confirmedOrder.guestPhone && (
-            <OrderStatusTracker
-              order={{ id: confirmedOrder.id, channel: confirmedOrder.channel, guestPhone: confirmedOrder.guestPhone }}
-              initialStatus={confirmedOrder.status}
-            />
-          )}
 
           <button
             type="button"

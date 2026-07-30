@@ -12,7 +12,6 @@ export type PermissionResource =
   | "menu_item"
   | "table"
   | "reservation"
-  | "kitchen_ticket"
   | "delivery"
   | "payment"
   | "customer"
@@ -41,7 +40,7 @@ export interface Permission {
   action: PermissionAction;
 }
 
-/** Descriptive record of a role's full grant — what lib/rbac.ts's ROLE_PERMISSIONS resolves to for one role, useful for admin UIs that need to display "what can a Waiter do" rather than just check it. */
+/** Descriptive record of a role's full grant — what lib/rbac.ts's ROLE_PERMISSIONS resolves to for one role, useful for admin UIs that need to display "what can a Cashier do" rather than just check it. */
 export interface RolePermissions {
   role: RoleName;
   scope: RoleScope;

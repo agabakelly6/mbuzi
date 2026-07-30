@@ -15,7 +15,6 @@ export * from "./PaymentRepository";
 export * from "./DeliveryRepository";
 export * from "./TableRepository";
 export * from "./ReservationRepository";
-export * from "./KitchenTicketRepository";
 export * from "./NotificationRepository";
 export * from "./PromotionRepository";
 export * from "./LoyaltyRepository";

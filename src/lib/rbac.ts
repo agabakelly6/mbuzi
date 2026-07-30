@@ -1,9 +1,9 @@
 // src/lib/rbac.ts
 //
 // The single source of truth for "who can do what." Route guards, service-
-// layer checks, and — once Phase 3 lands — Postgres RLS policies should all
-// trace back to this table; RLS re-implements the same rules at the
-// database layer, it doesn't invent new ones.
+// layer checks, and Postgres RLS policies should all trace back to this
+// table; RLS re-implements the same rules at the database layer, it
+// doesn't invent new ones.
 //
 // This is an allow-list, not a deny-list: anything not explicitly granted
 // to a role is denied by default. That means a new resource added later
@@ -16,10 +16,7 @@ import type { Permission, PermissionAction, PermissionResource } from "../types/
 
 export const ROLE_SCOPE: Record<RoleName, RoleScope> = {
   customer: "own",
-  waiter: "branch",
   cashier: "branch",
-  chef: "branch",
-  rider: "branch",
   branch_manager: "branch",
   owner: "all",
 };
@@ -34,7 +31,6 @@ const ALL_RESOURCES: PermissionResource[] = [
   "menu_item",
   "table",
   "reservation",
-  "kitchen_ticket",
   "delivery",
   "payment",
   "customer",
@@ -60,7 +56,7 @@ const ALL_ACTIONS: PermissionAction[] = [
   "export",
 ];
 
-/** What each role is granted. Notable restrictions (the complement of this list) are called out per role in docs/16_PLATFORM_ARCHITECTURE.md's RBAC table — e.g. a Waiter can update an order but never refund a payment; a Chef can read orders but never touch payments; a Rider only ever sees their own assigned deliveries (enforced by `isWithinScope` below, not by this table alone). */
+/** What each role is granted. Notable restrictions (the complement of this list) are called out per role in docs/16_PLATFORM_ARCHITECTURE.md's RBAC table. */
 export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
   customer: [
     ...perm("order", "create", "read", "cancel"),
@@ -74,36 +70,17 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     ...perm("customer", "read", "update"),
   ],
 
-  waiter: [
-    ...perm("order", "create", "read", "list", "update"),
-    ...perm("table", "read", "list", "update"),
-    ...perm("reservation", "read", "list", "update"),
-    ...perm("kitchen_ticket", "read", "list"),
-    ...perm("menu_item", "read", "list"),
-    ...perm("notification", "read"),
-  ],
-
+  // Absorbs what waiter/chef/rider used to do — an order is now handled by
+  // whichever cashier is on shift from the moment it's accepted through to
+  // completion/delivery, instead of being split across three staff roles.
   cashier: [
     ...perm("order", "create", "read", "list", "update", "cancel"),
     ...perm("payment", "create", "read", "list", "update"),
     ...perm("table", "read", "list", "update"),
     ...perm("reservation", "read", "list", "update"),
+    ...perm("delivery", "read", "list", "update"),
     ...perm("customer", "create", "read", "list"),
     ...perm("menu_item", "read", "list"),
-    ...perm("notification", "read"),
-  ],
-
-  chef: [
-    ...perm("kitchen_ticket", "read", "list", "update"),
-    ...perm("order", "read", "list"),
-    ...perm("menu_item", "read", "list", "update"),
-    ...perm("inventory_item", "read", "list", "update"),
-    ...perm("notification", "read"),
-  ],
-
-  rider: [
-    ...perm("delivery", "read", "list", "update"),
-    ...perm("order", "read"),
     ...perm("notification", "read"),
   ],
 
@@ -117,7 +94,6 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     ...perm("payment", "create", "read", "list", "update", "refund"),
     ...perm("table", "create", "read", "list", "update", "delete"),
     ...perm("reservation", "create", "read", "list", "update", "cancel"),
-    ...perm("kitchen_ticket", "read", "list", "update"),
     ...perm("delivery", "read", "list", "update", "assign"),
     ...perm("menu_item", "create", "read", "list", "update", "delete"),
     ...perm("customer", "create", "read", "list", "update"),
@@ -129,11 +105,10 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     ...perm("notification", "read", "list"),
     // "create" added for staff hiring (invite-staff Edge Function) — "read/
     // list/update" already covered viewing the roster and firing (status ->
-    // 'deactivated'). Scoped to subordinate roles only (waiter, cashier,
-    // chef, rider) by the Edge Function itself, not by this flag — a
-    // branch_manager must never create another branch_manager or owner
-    // account, so that check has to live server-side where it can't be
-    // bypassed by calling the API directly.
+    // 'deactivated'). Scoped to cashier only by the Edge Function itself,
+    // not by this flag — a branch_manager must never create another
+    // branch_manager or owner account, so that check has to live
+    // server-side where it can't be bypassed by calling the API directly.
     ...perm("user", "create"),
   ],
 
@@ -152,7 +127,7 @@ export function hasPermission(role: RoleName, permission: Permission): boolean {
 
 /**
  * Branch-scope check, separate from `hasPermission` on purpose: an action
- * can be permitted in principle (a waiter can update orders) yet still be
+ * can be permitted in principle (a cashier can update orders) yet still be
  * refused because the specific record belongs to a different branch.
  * Owner (`scope: "all"`) bypasses this; every other staff role must match
  * the branch they're assigned to. Customers use `isOwnResource` instead —

@@ -9,7 +9,6 @@ export * from "./payment.schema";
 export * from "./delivery.schema";
 export * from "./table.schema";
 export * from "./reservation.schema";
-export * from "./kitchen.schema";
 export * from "./notification.schema";
 export * from "./promotion.schema";
 export * from "./loyalty.schema";

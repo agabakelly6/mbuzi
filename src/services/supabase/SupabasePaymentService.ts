@@ -10,7 +10,7 @@
 //    recorded "pending" and stays that way — there's nothing yet that
 //    confirms a merchant-code payment actually cleared. Cash is recorded
 //    "paid" immediately since a cashier collects it in person.
-//  - Same missing-actor-parameter gap as OrderService/KitchenService:
+//  - Same missing-actor-parameter gap as OrderService:
 //    collectPayment's interface has no "who collected this" field, so
 //    Payment.collectedByUserId is always left unset here.
 import type { PaymentService } from "../PaymentService";

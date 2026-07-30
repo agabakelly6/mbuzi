@@ -1,6 +1,6 @@
 # Platform Architecture (Phase 2)
 
-Phase 1 built the YPA Mbuzi Choma marketing site — content, menu, locations, a WhatsApp-handoff cart. Phase 2 designs the domain model for what the site grows into: a real multi-branch restaurant management platform with seven roles, live order/kitchen/delivery flows, and a future Supabase backend.
+Phase 1 built the YPA Mbuzi Choma marketing site — content, menu, locations, a WhatsApp-handoff cart. Phase 2 designs the domain model for what the site grows into: a real multi-branch restaurant management platform with four roles (customer, cashier, branch_manager, owner), live order/delivery flows, and a future Supabase backend.
 
 **Nothing in this phase touches Supabase, writes SQL, or creates a database table.** Everything below is TypeScript — types, interfaces, and pure functions — chosen so that Phase 3 (generating the SQL schema and implementing the repositories against Supabase) is a matter of filling in bodies behind existing contracts, not redesigning them.
 
@@ -50,7 +50,7 @@ flowchart LR
 Every entity extends one of two base shapes from `types/base.ts`:
 
 - **`Entity`** — `id`, `createdAt`, `updatedAt`. Platform-wide records (Customer, User, Notification, LoyaltyMember).
-- **`BranchEntity`** — `Entity` + `branchId`. Everything scoped to one branch (Order, Table, Reservation, KitchenTicket, Delivery, Payment, MenuItem, Promotion, InventoryItem).
+- **`BranchEntity`** — `Entity` + `branchId`. Everything scoped to one branch (Order, Table, Reservation, Delivery, Payment, MenuItem, Promotion, InventoryItem).
 
 | Entity | File | Key fields beyond id/timestamps |
 |---|---|---|
@@ -64,7 +64,6 @@ Every entity extends one of two base shapes from `types/base.ts`:
 | Delivery | `types/delivery.ts` | orderId, riderId, status, deliveryZoneId |
 | Table | `types/table.ts` | label, seats, status, currentOrderId |
 | Reservation | `types/reservation.ts` | guestName, partySize, reservedFor, status |
-| KitchenTicket | `types/kitchen.ts` | orderId, items[], status, assignedChefId |
 | Notification | `types/notification.ts` | recipientUserId, type, channel, isRead |
 | Promotion | `types/promotion.ts` | code, type, value, startsAt/endsAt |
 | LoyaltyMember | `types/loyalty.ts` | customerId, points, tier |
@@ -82,12 +81,11 @@ Roles live in `types/role.ts`; the grant matrix lives in `lib/rbac.ts`. It's an 
 | Role | Scope | Allowed (representative) | Explicitly restricted |
 |---|---|---|---|
 | **Customer** | own | Place/cancel own orders, book/cancel own reservations, read menu, view own loyalty balance | Cannot see other customers' orders; cannot touch payments directly (checkout handles that) |
-| **Waiter** | branch | Create/update orders, manage tables, update reservations, read kitchen tickets | Cannot process payments or refunds; cannot edit the menu; cannot see other branches |
-| **Cashier / Front Desk** | branch | Full order + payment lifecycle, register walk-in customers, manage tables/reservations | Cannot refund without branch_manager/owner approval; cannot edit the menu; cannot manage staff |
-| **Chef** | branch | Read/update kitchen tickets, mark menu items out of stock, adjust linked inventory | Cannot see or touch payments; cannot create orders; cannot manage staff or promotions |
-| **Rider** | branch | Read/update their assigned deliveries, read the related order | Cannot see other riders' deliveries; cannot touch kitchen tickets, payments, or the menu |
-| **Branch Manager** | branch (own) | Everything above for their branch, plus staff management, menu/promotion CRUD, refunds, branch analytics | Cannot access another branch's data; cannot manage platform-wide settings or other branches' staff |
+| **Cashier** | branch | Full order lifecycle end-to-end (accept, prep, serve/dispatch, complete), payments, deliveries, tables, reservations, register walk-in customers | Cannot refund without branch_manager/owner approval; cannot edit the menu; cannot manage staff |
+| **Branch Manager** | branch (own) | Everything above for their branch, plus staff management, menu/promotion CRUD, inventory, refunds, branch analytics | Cannot access another branch's data; cannot manage platform-wide settings or other branches' staff |
 | **Owner / Super Admin** | all | Every action, every resource, every branch | Nothing — the only role not scope-limited |
+
+Waiter, chef, and rider were removed — a cashier now handles an order's entire lifecycle instead of splitting it across three roles. The kitchen ticket queue (chef-only) was removed with them.
 
 Two checks compose on every action, both required:
 
@@ -140,20 +138,6 @@ stateDiagram-v2
     seated --> completed
     completed --> [*]
     no_show --> [*]
-    cancelled --> [*]
-```
-
-### Kitchen
-
-```mermaid
-stateDiagram-v2
-    [*] --> queued
-    queued --> in_progress
-    queued --> cancelled
-    in_progress --> ready
-    in_progress --> cancelled
-    ready --> served
-    served --> [*]
     cancelled --> [*]
 ```
 
@@ -217,15 +201,15 @@ stateDiagram-v2
 
 ## Repository pattern
 
-Every repository in `src/repositories/` is an interface only — `OrderRepository`, `UserRepository`, `BranchRepository`, `CustomerRepository`, `MenuRepository`, `PaymentRepository`, `DeliveryRepository`, `TableRepository`, `ReservationRepository`, `KitchenTicketRepository`, `NotificationRepository`, `PromotionRepository`, `LoyaltyRepository`, `InventoryRepository`, `AnalyticsRepository`.
+Every repository in `src/repositories/` is an interface only — `OrderRepository`, `UserRepository`, `BranchRepository`, `CustomerRepository`, `MenuRepository`, `PaymentRepository`, `DeliveryRepository`, `TableRepository`, `ReservationRepository`, `NotificationRepository`, `PromotionRepository`, `LoyaltyRepository`, `InventoryRepository`, `AnalyticsRepository`.
 
-Every method returns `RepositoryResult<T>` (`{ data, error }`, in `repositories/shared.ts`) instead of throwing — chosen because it's the exact shape `@supabase/supabase-js` already returns, so a `SupabaseOrderRepository implements OrderRepository` in Phase 3 is a body swap under an unchanged interface. The four repositories backing real-time surfaces (Order, KitchenTicket, Delivery, Notification) also declare a `subscribe()` method returning an `Unsubscribe` function, mirroring a Supabase Realtime channel subscription for the same reason.
+Every method returns `RepositoryResult<T>` (`{ data, error }`, in `repositories/shared.ts`) instead of throwing — chosen because it's the exact shape `@supabase/supabase-js` already returns, so a `SupabaseOrderRepository implements OrderRepository` in Phase 3 is a body swap under an unchanged interface. The repositories backing real-time surfaces (Order, Delivery, Notification) also declare a `subscribe()` method returning an `Unsubscribe` function, mirroring a Supabase Realtime channel subscription for the same reason.
 
 ---
 
 ## Services
 
-`src/services/` orchestrates repositories + models + permission checks — the layer UI code and hooks should actually depend on, never a repository directly. Interfaces only, matching the repository pattern's "no implementation yet": `AuthService`, `PermissionService`, `MenuService`, `OrderService`, `ReservationService`, `KitchenService`, `DeliveryService`, `PaymentService`, `NotificationService`, `LoyaltyService`, `AnalyticsService`.
+`src/services/` orchestrates repositories + models + permission checks — the layer UI code and hooks should actually depend on, never a repository directly. Interfaces only, matching the repository pattern's "no implementation yet": `AuthService`, `PermissionService`, `MenuService`, `OrderService`, `ReservationService`, `DeliveryService`, `PaymentService`, `NotificationService`, `LoyaltyService`, `AnalyticsService`.
 
 ---
 
@@ -265,9 +249,6 @@ GET    /reservations
 POST   /reservations
 PATCH  /reservations/:id/status
 
-GET    /branches/:branchId/kitchen-tickets
-PATCH  /kitchen-tickets/:id/status
-
 GET    /deliveries
 POST   /deliveries
 PATCH  /deliveries/:id/assign
@@ -300,7 +281,7 @@ GET    /branches/:branchId/analytics/summary
 - **10+ branches**: every operational entity is `BranchEntity`-scoped (`branchId` field). Nothing hardcodes a branch by id or name anywhere in this layer — the same pattern the marketing site already follows for `LOCATIONS` in `data/locations.ts`.
 - **100+ staff**: `User.role` + `User.branchId` is the entire staff model; adding a branch's staff roster is inserting `User` rows, not a schema change.
 - **Thousands of customers**: `Customer` is platform-wide (not branch-scoped) so one account works across every branch; `Paginated<T>` and `ListOptions` (page/pageSize/sort) are baked into every list-returning repository method from the start, not retrofitted later.
-- **Real-time updates**: `OrderRepository`, `KitchenTicketRepository`, `DeliveryRepository`, and `NotificationRepository` each declare `subscribe()` today, so the order board, kitchen display, and delivery tracker are designed for a live feed from day one — Phase 3 backs it with Supabase Realtime without an interface change.
+- **Real-time updates**: `OrderRepository`, `DeliveryRepository`, and `NotificationRepository` each declare `subscribe()` today, so the order board is designed for a live feed from day one — Phase 3 backs it with Supabase Realtime without an interface change.
 - **Future mobile app**: the mobile client would consume the exact same `services/` + `lib/api-contract.ts` surface as the web app — nothing here is web-specific except `contexts/`/`hooks/` (React state plumbing), which a React Native client reuses as-is.
 - **Future POS**: a POS terminal is just another `OrderService`/`PaymentService` consumer with a `cashier` role — no new domain concept required.
 - **Future inventory**: `types/inventory.ts` and `InventoryRepository` are deliberately placeholder-level today; `MenuItem.linkedInventoryItemId` is the one hook a real inventory system needs to attach to without a MenuItem schema change later.

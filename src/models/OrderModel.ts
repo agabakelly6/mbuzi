@@ -3,21 +3,23 @@
 // Pure business-rule functions over `Order` — no I/O, no repository calls.
 // lib/state-machines.ts answers "is this transition legal at all"; this
 // file adds "is this specific actor allowed to make it," which is a
-// different question — a chef can move preparing→ready, but only a
-// cashier/branch_manager can close out a completed pickup order.
+// different question. Every non-cancel transition is cashier/branch_manager/
+// owner now — waiter/chef/rider used to split an order's lifecycle into
+// separate stages (accept, prep, serve, deliver) each gated to a different
+// role; a cashier now drives the whole thing end-to-end.
 import type { Order, OrderStatus } from "../types/order";
 import type { RoleName } from "../types/role";
 import { canTransitionOrderStatus } from "../lib/state-machines";
 
 const ORDER_TRANSITION_ROLES: Partial<Record<OrderStatus, RoleName[]>> = {
-  accepted: ["cashier", "waiter", "branch_manager", "owner"],
-  rejected: ["cashier", "waiter", "branch_manager", "owner"],
-  preparing: ["chef", "branch_manager", "owner"],
-  ready: ["chef", "branch_manager", "owner"],
-  served: ["waiter", "branch_manager", "owner"],
-  out_for_delivery: ["rider", "branch_manager", "owner"],
-  delivered: ["rider", "branch_manager", "owner"],
-  completed: ["cashier", "waiter", "branch_manager", "owner"],
+  accepted: ["cashier", "branch_manager", "owner"],
+  rejected: ["cashier", "branch_manager", "owner"],
+  preparing: ["cashier", "branch_manager", "owner"],
+  ready: ["cashier", "branch_manager", "owner"],
+  served: ["cashier", "branch_manager", "owner"],
+  out_for_delivery: ["cashier", "branch_manager", "owner"],
+  delivered: ["cashier", "branch_manager", "owner"],
+  completed: ["cashier", "branch_manager", "owner"],
   cancelled: ["customer", "cashier", "branch_manager", "owner"],
 };
 

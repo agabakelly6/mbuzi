@@ -1,21 +1,14 @@
 // src/types/role.ts
 //
-// The seven roles the platform is designed around. "Front Desk" and
-// "Cashier" from the product brief are the same role here (`cashier`) —
-// front-of-house billing/order-entry duties, one title. "Super Admin" and
+// Four roles. Waiter, chef, and rider were removed — a cashier now
+// handles an order end-to-end (accept, prep, serve/dispatch, complete)
+// instead of splitting that lifecycle across three separate staff roles,
+// and branch_manager/owner are unchanged. "Front Desk" and "Cashier" from
+// the product brief were already the same role here; "Super Admin" and
 // "Owner" are likewise the same role (`owner`): the one platform-wide,
-// every-branch scope. Collapsing synonyms here keeps every downstream
-// table (RBAC matrix, repositories, RLS policies later) keyed on exactly
-// seven values instead of nine with two pairs that always behave identically.
+// every-branch scope.
 
-export type RoleName =
-  | "customer"
-  | "waiter"
-  | "cashier"
-  | "chef"
-  | "rider"
-  | "branch_manager"
-  | "owner";
+export type RoleName = "customer" | "cashier" | "branch_manager" | "owner";
 
 export type RoleScope = "all" | "branch" | "own";
 
@@ -31,37 +24,19 @@ export const ROLES: Record<RoleName, Role> = {
   customer: {
     name: "customer",
     label: "Customer",
-    description: "Places orders, books tables, tracks deliveries, and manages their own loyalty account.",
+    description: "Places orders, books tables, and manages their own loyalty account.",
     scope: "own",
-  },
-  waiter: {
-    name: "waiter",
-    label: "Waiter",
-    description: "Takes dine-in orders, manages tables, and coordinates service on the floor of one branch.",
-    scope: "branch",
   },
   cashier: {
     name: "cashier",
-    label: "Front Desk / Cashier",
-    description: "Handles order entry, billing, payments, and walk-in customer registration at one branch.",
-    scope: "branch",
-  },
-  chef: {
-    name: "chef",
-    label: "Chef",
-    description: "Runs the kitchen display, progresses tickets, and flags menu items as out of stock.",
-    scope: "branch",
-  },
-  rider: {
-    name: "rider",
-    label: "Rider",
-    description: "Handles delivery orders assigned to them, from pickup to drop-off.",
+    label: "Cashier",
+    description: "Handles every incoming order end-to-end — accept, prep, serve or dispatch, payment, and completion — plus billing, tables, and reservations at one branch.",
     scope: "branch",
   },
   branch_manager: {
     name: "branch_manager",
     label: "Branch Manager",
-    description: "Full operational control of one branch — staff, menu, promotions, and reporting.",
+    description: "Full operational control of one branch — staff, menu, promotions, inventory, and reporting.",
     scope: "branch",
   },
   owner: {

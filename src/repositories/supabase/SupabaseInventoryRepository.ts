@@ -1,11 +1,10 @@
 // src/repositories/supabase/SupabaseInventoryRepository.ts
 //
-// `adjustQuantity` is a read-modify-write, not an atomic RPC — the same
-// accepted tradeoff as SupabaseKitchenTicketRepository.updateItemStatus.
-// Unlike promotions' usage counter (many concurrent customers) or kitchen
-// tickets (a live queue), inventory adjustments are typically one chef
-// updating stock after use — low real concurrency, so the simpler
-// implementation is the right call here, not a gap.
+// `adjustQuantity` is a read-modify-write, not an atomic RPC. Unlike
+// promotions' usage counter (many concurrent customers), inventory
+// adjustments are typically one manager updating stock after use — low
+// real concurrency, so the simpler implementation is the right call here,
+// not a gap.
 import type { InventoryRepository } from "../InventoryRepository";
 import type { InventoryItem } from "../../types/inventory";
 import type { ListOptions, Paginated, RepositoryResult } from "../shared";

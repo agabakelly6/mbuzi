@@ -2,9 +2,9 @@
 //
 // Root of the staff order dashboard — its own AuthProvider, entirely
 // separate from components/ordering/OrderingApp.tsx's. Accepts
-// cashier/waiter/branch_manager/owner; a customer account (or an
-// unrecognized role) is turned away, matching the reverse check the
-// customer ordering page already does.
+// cashier/branch_manager/owner; a customer account (or an unrecognized
+// role) is turned away, matching the reverse check the customer ordering
+// page already does.
 import { ClipboardList } from "lucide-react";
 import { AuthProvider } from "../../contexts/AuthContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -14,7 +14,7 @@ import { StaffShell } from "./StaffShell";
 import { AccessDenied } from "./AccessDenied";
 import { OrdersDashboard } from "./OrdersDashboard";
 
-const ALLOWED_ROLES = ["cashier", "waiter", "branch_manager", "owner"];
+const ALLOWED_ROLES = ["cashier", "branch_manager", "owner"];
 
 function StaffFlow() {
   useAuthBootstrap();
